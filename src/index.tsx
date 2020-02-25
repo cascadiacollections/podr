@@ -1,31 +1,31 @@
 import './style';
-import { Component, render, createRef, Fragment } from 'preact';
-import { Result } from './result';
+import { Component, render, createRef, Fragment, JSX } from 'preact';
+import { Result } from './Result';
 import { version } from '../package.json';
 
-const FEED_URL = 'https://feeds.feedburner.com/TellEmSteveDave';
-const TOKEN = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
-const MAX_COUNT = 300;
-const PINNED_FEEDS = [
+const FEED_URL: string  = 'https://feeds.feedburner.com/TellEmSteveDave';
+const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
+const MAX_COUNT: number = 300;
+const PINNED_FEEDS: string[] = [
   'https://feeds.feedburner.com/SModcasts',
   'https://feeds.feedburner.com/TellEmSteveDave',
   'https://rss.art19.com/id10t',
 ];
 
-function getFeedUrl(feedUrl = FEED_URL) {
+function getFeedUrl(feedUrl: string = FEED_URL): string {
   return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
     feedUrl
   )}&api_key=${TOKEN}&count=${MAX_COUNT}`;
 }
 
-export default class App extends Component {
+export default class App extends Component<{}, { title: string, BUILD_DEBUG: boolean, feeds: string[], results: any[], version: string }> {
   ref = createRef();
-  pinnedFeeds = new Set(
-    JSON.parse(localStorage.getItem('podr_feeds')) || PINNED_FEEDS
+  pinnedFeeds = new Set<string>(
+    JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
   completedPlayback = new Set();
 
-  getPinnedFeeds = () => {
+  getPinnedFeeds = (): string[] => {
     return [...this.pinnedFeeds];
   };
 
@@ -70,7 +70,7 @@ export default class App extends Component {
       });
   }
 
-  getSecureUrl = (url) => {
+  getSecureUrl = (url: string) => {
     return url.replace('http', 'https');
   };
 
@@ -106,7 +106,7 @@ export default class App extends Component {
     localStorage.setItem('podr_feeds', JSON.stringify(this.getPinnedFeeds()));
   };
 
-  render(props, { feeds = [], results = [], version, title, BUILD_DEBUG }) {
+  render(props, { feeds = [], results = [], version, title, BUILD_DEBUG }): JSX.Element {
     return (
       <Fragment>
         {BUILD_DEBUG && (
@@ -169,5 +169,5 @@ export default class App extends Component {
 }
 
 if (typeof window !== 'undefined') {
-  render(<App />, document.getElementById('root'));
+  render(<App />, document.getElementById('root')!);
 }
