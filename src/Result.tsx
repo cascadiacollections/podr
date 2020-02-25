@@ -1,3 +1,5 @@
+import { h } from 'preact';
+
 function formatDuration(duration: number): string {
   return new Date(1000 * duration).toISOString().substr(11, 8);
 }
@@ -23,7 +25,7 @@ export const Result = ({ result, onClick, played = false }) => {
     <li
       class={`result ${played ? 'played' : ''}`}
       onClick={() => onClick(result)}
-      tabindex='0'>
+      tabIndex={0}>
       <h2 class='title'>{result.title}</h2>
       <strong class='pubDate'>{formatPubDate(result.pubDate)}</strong>
       <Divider />

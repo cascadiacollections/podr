@@ -1,5 +1,5 @@
 import './style';
-import { Component, render, createRef, Fragment, JSX } from 'preact';
+import { Component, render, h, createRef, JSX } from 'preact';
 import { Result } from './Result';
 import { version } from '../package.json';
 
@@ -65,9 +65,9 @@ export default class App extends Component<{}, IAppState> {
 
   public render(props: {}, { feeds = [], results = [], version: VERSION, title, BUILD_DEBUG }: IAppState): JSX.Element {
     return (
-      <Fragment>
+      <div>
         {BUILD_DEBUG && (
-          <Fragment>
+          <div>
             <h2>Favorites</h2>
             <ul>
               <li>
@@ -91,12 +91,12 @@ export default class App extends Component<{}, IAppState> {
                 </li>
               ))}
             </ul>
-          </Fragment>
+          </div>
         )}
         <h1>
           <a href='/'>{title}</a>
         </h1>
-        <ol class='list' reversed>
+        <ol class='list'>
           {results.map((result) => (
             <Result
               key={result.guid}
@@ -108,7 +108,7 @@ export default class App extends Component<{}, IAppState> {
             />
           ))}
         </ol>
-        <audio ref={this.ref} autoplay controls preload='auto' />
+        <audio ref={this.ref} controls preload='auto' />
         <br />
         <footer>
           Version: {VERSION}
@@ -120,7 +120,7 @@ export default class App extends Component<{}, IAppState> {
             @cascadiaco
           </a>
         </footer>
-      </Fragment>
+      </div>
     );
   }
 
@@ -151,7 +151,8 @@ export default class App extends Component<{}, IAppState> {
     (this.ref.current as HTMLAudioElement).src = this.getSecureUrl(url);
   }
 
-  private pinFeedUrl = (event: React.MouseEvent<HTMLInputElement>) => {
+  // tslint:disable-next-line
+  private pinFeedUrl = (event: any) => {
     const feedUrl: string = (event.target as HTMLInputElement).value;
     (event.target as HTMLInputElement).value = '';
 
