@@ -9,7 +9,7 @@ const MAX_COUNT: number = 300;
 const PINNED_FEEDS: string[] = [
   'https://feeds.feedburner.com/SModcasts',
   'https://feeds.feedburner.com/TellEmSteveDave',
-  'https://rss.art19.com/id10t',
+  'https://rss.art19.com/id10t'
 ];
 
 function getFeedUrl(feedUrl: string = FEED_URL): string {
@@ -18,32 +18,38 @@ function getFeedUrl(feedUrl: string = FEED_URL): string {
   )}&api_key=${TOKEN}&count=${MAX_COUNT}`;
 }
 
-export default class App extends Component<{}, { title: string, BUILD_DEBUG: boolean, feeds: string[], results: any[], version: string }> {
-  ref = createRef();
-  pinnedFeeds = new Set<string>(
+interface IAppState {
+  title: string;
+  BUILD_DEBUG: boolean;
+  feeds: string[];
+  // tslint:disable-next-line
+  results: any[];
+  version: string;
+}
+
+export default class App extends Component<{}, IAppState> {
+  private ref: preact.RefObject<HTMLAudioElement> = createRef();
+  private pinnedFeeds: Set<string> = new Set<string>(
     JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
-  completedPlayback = new Set();
+  private completedPlayback: Set<string> = new Set<string>();
 
-  getPinnedFeeds = (): string[] => {
-    return [...this.pinnedFeeds];
-  };
-
-  componentDidMount() {
-    const results = [];
+  public componentDidMount(): void {
+    // tslint:disable-next-line
+    const results: any[] = [];
 
     this.setState({
       feeds: this.getPinnedFeeds(),
       results,
       version,
-      BUILD_DEBUG: false,
+      BUILD_DEBUG: false
     });
 
     this.tryFetchFeed();
 
     if (this.ref.current) {
-      this.ref.current.addEventListener('ended', (event) => {
-        const url = event.target.src;
+      this.ref.current.addEventListener('ended', (event: Event) => {
+        const url: string = (event.target as HTMLAudioElement).src;
         this.completedPlayback.add(url);
         // @todo: hack
         this.forceUpdate();
@@ -57,56 +63,7 @@ export default class App extends Component<{}, { title: string, BUILD_DEBUG: boo
     });
   }
 
-  tryFetchFeed(feedUrl = FEED_URL) {
-    fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
-      .then((response) => response.json())
-      .then(({ items: results = [], feed = {} }) => {
-        const { title } = feed;
-
-        this.setState({
-          results,
-          title,
-        });
-      });
-  }
-
-  getSecureUrl = (url: string) => {
-    return url.replace('http', 'https');
-  };
-
-  onClick = (item) => {
-    const url = item.enclosure.link || '';
-    this.ref.current.src = this.getSecureUrl(url);
-  };
-
-  pinFeedUrl = (event) => {
-    const feedUrl = event.target.value;
-    event.target.value = '';
-
-    this.pinnedFeeds.add(feedUrl);
-
-    this.setState({
-      feeds: this.getPinnedFeeds(),
-    });
-
-    this.serializePinnedFeeds();
-  };
-
-  unpinFeedUrl = (feedUrl) => {
-    this.pinnedFeeds.delete(feedUrl);
-
-    this.setState({
-      feeds: this.getPinnedFeeds(),
-    });
-
-    this.serializePinnedFeeds();
-  };
-
-  serializePinnedFeeds = () => {
-    localStorage.setItem('podr_feeds', JSON.stringify(this.getPinnedFeeds()));
-  };
-
-  render(props, { feeds = [], results = [], version, title, BUILD_DEBUG }): JSX.Element {
+  public render(props: {}, { feeds = [], results = [], version: VERSION, title, BUILD_DEBUG }: IAppState): JSX.Element {
     return (
       <Fragment>
         {BUILD_DEBUG && (
@@ -115,8 +72,8 @@ export default class App extends Component<{}, { title: string, BUILD_DEBUG: boo
             <ul>
               <li>
                 <input
-                  type="url"
-                  placeholder="Feed URL"
+                  type='url'
+                  placeholder='Feed URL'
                   onInput={this.pinFeedUrl}
                 />
               </li>
@@ -124,7 +81,7 @@ export default class App extends Component<{}, { title: string, BUILD_DEBUG: boo
                 <li key={result}>
                   <span
                     onClick={() => this.unpinFeedUrl(result)}
-                    role="img"
+                    role='img'
                     aria-label={`Unfavorite ${result}`}>
                     🗑️
                   </span>
@@ -137,9 +94,9 @@ export default class App extends Component<{}, { title: string, BUILD_DEBUG: boo
           </Fragment>
         )}
         <h1>
-          <a href="/">{title}</a>
+          <a href='/'>{title}</a>
         </h1>
-        <ol class="list" reversed>
+        <ol class='list' reversed>
           {results.map((result) => (
             <Result
               key={result.guid}
@@ -151,20 +108,74 @@ export default class App extends Component<{}, { title: string, BUILD_DEBUG: boo
             />
           ))}
         </ol>
-        <audio ref={this.ref} autoplay controls preload="auto" />
+        <audio ref={this.ref} autoplay controls preload='auto' />
         <br />
         <footer>
-          Version: {version}
+          Version: {VERSION}
           <br />
           <a
-            href="https://twitter.com/cascadiaco"
-            target="_blank"
-            rel="noopener noreferrer">
+            href='https://twitter.com/cascadiaco'
+            target='_blank'
+            rel='noopener noreferrer'>
             @cascadiaco
           </a>
         </footer>
       </Fragment>
     );
+  }
+
+  private getPinnedFeeds = (): string[] => {
+    return [...this.pinnedFeeds];
+  }
+
+  private tryFetchFeed(feedUrl: string = FEED_URL): void {
+    void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
+      .then((response) => response.json())
+      .then(({ items: results = [], feed = {} }) => {
+        const { title } = feed;
+
+        this.setState({
+          results,
+          title
+        });
+      });
+  }
+
+  private getSecureUrl = (url: string) => {
+    return url.replace('http', 'https');
+  }
+
+  // tslint:disable-next-line
+  private onClick = (item: any) => {
+    const url: string = item.enclosure.link || '';
+    (this.ref.current as HTMLAudioElement).src = this.getSecureUrl(url);
+  }
+
+  private pinFeedUrl = (event: React.MouseEvent<HTMLInputElement>) => {
+    const feedUrl: string = (event.target as HTMLInputElement).value;
+    (event.target as HTMLInputElement).value = '';
+
+    this.pinnedFeeds.add(feedUrl);
+
+    this.setState({
+      feeds: this.getPinnedFeeds()
+    });
+
+    this.serializePinnedFeeds();
+  }
+
+  private unpinFeedUrl = (feedUrl: string) => {
+    this.pinnedFeeds.delete(feedUrl);
+
+    this.setState({
+      feeds: this.getPinnedFeeds()
+    });
+
+    this.serializePinnedFeeds();
+  }
+
+  private serializePinnedFeeds = () => {
+    localStorage.setItem('podr_feeds', JSON.stringify(this.getPinnedFeeds()));
   }
 }
 
