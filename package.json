@@ -5,7 +5,7 @@
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
-    "build": "gulp build --clean",
+    "build": "gulp build --clean && webpack",
     "start": "pnpm run build && webpack-dev-server --open",
     "serve": "preact build && preact serve"
   },

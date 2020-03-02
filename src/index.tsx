@@ -1,6 +1,6 @@
 import './style/index.scss';
 
-import { Component, render, h, createRef, JSX,} from 'preact';
+import { Component, render, h, createRef, JSX } from 'preact';
 import { Result } from './Result';
 import { version } from '../package.json';
 
