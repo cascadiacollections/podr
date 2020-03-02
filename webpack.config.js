@@ -23,7 +23,7 @@ module.exports = {
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       title: 'Development | SModr',
-      template: 'index.html'
+      template: 'src/index.html'
     }),
   ],
   devServer: {
