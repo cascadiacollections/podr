@@ -1,12 +1,12 @@
-# Smodr
+# podr
 
-## To-do
+[![Build Status](https://dev.azure.com/cascadiacollections/podr/_apis/build/status/cascadiacollections.podr?branchName=master)](https://dev.azure.com/cascadiacollections/podr/_build/latest?definitionId=1&branchName=master)
 
-```shell
-[23:18:07] Error - [tsc] src/index.tsx(99,26): error TS2322: Type '{ children: Element[]; class: string; reversed: true; }' is not assignable to type 'HTMLAttributes<HTMLOListElement>'.
-[23:18:07] [tsc] Property 'reversed' does not exist on type 'HTMLAttributes<HTMLOListElement>'.
-[23:18:07] Error - [tsc] src/index.tsx(111,31): error TS2322: Type '{ ref: RefObject<HTMLAudioElement>; autoplay: true; controls: true; preload: string; }' is not assignable to type 'HTMLAttributes<HTMLAudioElement>'.
-[23:18:07] [tsc] Property 'autoplay' does not exist on type 'HTMLAttributes<HTMLAudioElement>'.
-[23:18:07] Error - 'tsc' sub task errored after 2.98 s 
- exited with code 2
- ```
+A podcast player for the web.
+
+## Local development
+
+1. Git clone the repository to your workspace.
+1. Install `pnpm` via `npm i -g pnpm`.
+1. Run install for your package manager of choice e.g. `pnpm install`.
+1. Run `pnpm start` to launch the local development server.
