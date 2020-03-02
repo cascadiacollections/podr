@@ -5,15 +5,9 @@
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
-    "start": "webpack-dev-server --open",
-    "buildts": "gulp test --clean",
-    "build": "preact build",
-    "watch": "webpack --watch",
-    "webpack": "webpack",
-    "serve": "preact build && preact serve",
-    "dev": "preact watch",
-    "lint": "eslint src",
-    "test": "jest ./tests"
+    "build": "gulp test --clean",
+    "start": "pnpm run build && webpack-dev-server --open",
+    "serve": "preact build && preact serve"
   },
   "eslintConfig": {
     "extends": "eslint-config-synacor"
@@ -24,28 +18,27 @@
   "devDependencies": {
     "@microsoft/node-library-build": "6.4.4",
     "@microsoft/rush-stack-compiler-3.7": "0.2.3",
-    "@types/node": "10.17.13",
-    "@types/react": "16.9.21",
+    "@types/node": "12.12.6",
+    "@types/react": "16.9.23",
     "@types/react-dom": "16.9.5",
-    "clean-webpack-plugin": "^3.0.0",
-    "eslint": "^4.5.0",
-    "eslint-config-synacor": "^1.1.0",
+    "eslint": "6.8.0",
+    "eslint-config-synacor": "3.0.5",
     "gulp": "~4.0.2",
-    "html-webpack-plugin": "^3.2.0",
-    "if-env": "^1.0.0",
-    "less": "^2.7.2",
-    "less-loader": "^4.0.5",
-    "node-sass": "^4.5.3",
-    "preact-cli": "^1.4.1",
-    "sass-loader": "^6.0.6",
-    "stylus": "^0.54.5",
-    "stylus-loader": "^3.0.1",
+    "html-webpack-plugin": "^4.0.0-beta.11",
+    "if-env": "1.0.4",
+    "less": "3.11.1",
+    "less-loader": "5.0.0",
+    "node-sass": "4.13.1",
+    "preact-cli": "2.2.1",
+    "sass-loader": "8.0.2",
+    "stylus": "^0.54.7",
+    "stylus-loader": "^3.0.2",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"
   },
   "dependencies": {
-    "preact": "10.3.2"
+    "preact": "10.3.3"
   },
   "jest": {
     "verbose": true,
