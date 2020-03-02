@@ -36,7 +36,7 @@ ul, ol {
 }
 
 ol {
-	max-height: 525px;
+  max-height: calc(100vh - 280px);
 }
 
 .result {
@@ -48,7 +48,7 @@ ol {
 
 	&.played {
 		color: #a4a4a4;
-		
+
 		&:hover {
 			background: #a4a4a4;
 			border-color: #a4a4a4;
@@ -59,13 +59,13 @@ ol {
 	&:first-of-type {
 		border-top: 1px solid #F4F4F4;
 	}
-	
+
 	cursor: pointer;
 
 	h2 {
 		margin-bottom: 8px;
 	}
-	
+
 	&:hover, &:focus {
 		background: orange;
 		color: white;
