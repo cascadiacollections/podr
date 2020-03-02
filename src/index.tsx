@@ -1,4 +1,6 @@
-import { Component, render, h, createRef, JSX } from 'preact';
+import './style/index.scss';
+
+import { Component, render, h, createRef, JSX,} from 'preact';
 import { Result } from './Result';
 import { version } from '../package.json';
 
@@ -34,12 +36,9 @@ export default class App extends Component<{}, IAppState> {
   private completedPlayback: Set<string> = new Set<string>();
 
   public componentDidMount(): void {
-    // tslint:disable-next-line
-    const results: any[] = [];
-
     this.setState({
       feeds: this.getPinnedFeeds(),
-      results,
+      results: [],
       version,
       BUILD_DEBUG: false
     });
