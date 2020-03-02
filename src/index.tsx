@@ -94,7 +94,9 @@ export default class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>{title}</a>
         </h1>
-        <ol class='list'>
+        {/* Currently, reversed is not type-compatible even tho it is to spec.
+        // @ts-ignore */ }
+        <ol class='list' reversed>
           {results.map((result) => (
             <Result
               key={result.guid}
@@ -106,7 +108,9 @@ export default class App extends Component<{}, IAppState> {
             />
           ))}
         </ol>
-        <audio ref={this.ref} controls preload='auto' />
+        {/* Currently, autoplay is not type-compatible even tho it is to spec.
+        // @ts-ignore */ }
+        <audio ref={this.ref} autoplay controls preload='auto' />
         <br />
         <footer>
           Version: {VERSION}
