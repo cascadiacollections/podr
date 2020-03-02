@@ -1,40 +1,27 @@
 {
   "private": true,
-  "name": "smodr",
+  "name": "podr",
   "version": "1.0.0",
   "license": "MIT",
-  "main": "lib/index.js",
+  "keywords": [],
+  "description": "",
+  "typings": "lib/src/index.d.ts",
+  "main": "lib/src/index.js",
   "scripts": {
     "build": "gulp build --clean && webpack",
-    "start": "pnpm run build && webpack-dev-server --open",
-    "serve": "preact build && preact serve"
+    "start": "pnpm run build && webpack-dev-server --open"
   },
-  "eslintConfig": {
-    "extends": "eslint-config-synacor"
-  },
-  "eslintIgnore": [
-    "build/*"
-  ],
   "devDependencies": {
+    "@microsoft/gulp-core-build-sass": "^4.10.4",
     "@microsoft/node-library-build": "6.4.4",
     "@microsoft/rush-stack-compiler-3.7": "0.2.3",
     "@types/node": "12.12.6",
     "@types/react": "16.9.23",
     "@types/react-dom": "16.9.5",
     "clean-webpack-plugin": "3.0.0",
-    "eslint": "6.8.0",
-    "eslint-config-synacor": "3.0.5",
     "gulp": "~4.0.2",
-    "gulp-core-build-sass": "^0.3.8",
     "html-webpack-plugin": "^4.0.0-beta.11",
-    "if-env": "1.0.4",
-    "less": "3.11.1",
-    "less-loader": "5.0.0",
     "node-sass": "4.13.1",
-    "preact-cli": "2.2.1",
-    "sass-loader": "8.0.2",
-    "stylus": "^0.54.7",
-    "stylus-loader": "^3.0.2",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"
@@ -42,31 +29,5 @@
   "dependencies": {
     "load-themed-styles": "^1.2.0",
     "preact": "10.3.3"
-  },
-  "jest": {
-    "verbose": true,
-    "setupFiles": [
-      "<rootDir>/src/tests/__mocks__/browserMocks.js"
-    ],
-    "testURL": "http://localhost:8080",
-    "moduleFileExtensions": [
-      "js",
-      "jsx"
-    ],
-    "moduleDirectories": [
-      "node_modules"
-    ],
-    "moduleNameMapper": {
-      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/tests/__mocks__/fileMock.js",
-      "\\.(css|less|scss)$": "identity-obj-proxy",
-      "^./style$": "identity-obj-proxy",
-      "^preact$": "<rootDir>/node_modules/preact/dist/preact.min.js",
-      "^react$": "preact-compat",
-      "^react-dom$": "preact-compat",
-      "^create-react-class$": "preact-compat/lib/create-react-class",
-      "^react-addons-css-transition-group$": "preact-css-transition-group"
-    }
-  },
-  "keywords": [],
-  "description": ""
+  }
 }
