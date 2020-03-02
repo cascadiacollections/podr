@@ -1,5 +1,5 @@
 dependencies:
-  load-themed-styles: 1.2.0
+  '@microsoft/load-themed-styles': 1.10.37
   preact: 10.3.3
 devDependencies:
   '@microsoft/gulp-core-build-sass': 4.10.4
@@ -136,7 +136,6 @@ packages:
     resolution:
       integrity: sha1-EvfdZBI3DLIK0LWF6sWwwZgRMUA=
   /@microsoft/load-themed-styles/1.10.37:
-    dev: true
     resolution:
       integrity: sha512-3/9rNkHO+f72RztnAQIgtZwUMVqxSz3JL+NIMMIlPHrDVQW7fJ69Im27WippydDzUZpUL1YiGSDIfqKa1amOdA==
   /@microsoft/node-core-library/3.19.3:
@@ -5841,10 +5840,6 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-L19Fq5HjMhYjT9U62rZo607AmTs=
-  /load-themed-styles/1.2.0:
-    dev: false
-    resolution:
-      integrity: sha1-R6uq2LC7kxBtXX8Bq4DcIL85IDw=
   /loader-runner/2.4.0:
     dev: true
     engines:
@@ -9950,6 +9945,7 @@ packages:
       integrity: sha1-6oEysnlTPuYL4khaAvfj5CVBqaI=
 specifiers:
   '@microsoft/gulp-core-build-sass': ^4.10.4
+  '@microsoft/load-themed-styles': ^1.2.0
   '@microsoft/node-library-build': 6.4.4
   '@microsoft/rush-stack-compiler-3.7': 0.2.3
   '@types/node': 12.12.6
@@ -9958,7 +9954,6 @@ specifiers:
   clean-webpack-plugin: 3.0.0
   gulp: ~4.0.2
   html-webpack-plugin: ^4.0.0-beta.11
-  load-themed-styles: ^1.2.0
   node-sass: 4.13.1
   preact: 10.3.3
   webpack: ^4.41.6
