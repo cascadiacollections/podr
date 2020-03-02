@@ -1,7 +1,7 @@
 'use strict';
 
 const build = require('@microsoft/node-library-build');
-const sass = require('gulp-core-build-sass').default;
+const sass = require('@microsoft/gulp-core-build-sass').default;
 
 build.task('build', build.serial(sass, build.buildTasks));
 
