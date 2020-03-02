@@ -12,6 +12,9 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
+  externals: {
+    preact: 'preact'
+  },
   module: {
     rules: [
     ]
@@ -20,6 +23,7 @@ module.exports = {
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       title: 'Development | SModr',
+      template: 'index.html'
     }),
   ],
   devServer: {
