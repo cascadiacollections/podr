@@ -1,3 +1,4 @@
+// @ts-check
 'use strict';
 
 const path = require('path');
@@ -9,7 +10,7 @@ module.exports = {
   devtool: 'inline-source-map',
   entry: './lib/src/index.js',
   output: {
-    filename: '[name].bundle.js',
+    filename: '[name].[contenthash].js',
     path: path.resolve(__dirname, 'dist')
   },
   externals: {
