@@ -23,8 +23,7 @@ interface IAppState {
   title: string;
   BUILD_DEBUG: boolean;
   feeds: string[];
-  // tslint:disable-next-line
-  results: any[];
+  results: ReadonlyArray<{}>;
   version: string;
 }
 
@@ -38,7 +37,7 @@ export default class App extends Component<{}, IAppState> {
   public componentDidMount(): void {
     this.setState({
       feeds: this.getPinnedFeeds(),
-      results: [],
+      results: this._getResults(),
       version,
       BUILD_DEBUG: false
     });
@@ -99,11 +98,11 @@ export default class App extends Component<{}, IAppState> {
         <ol class='list' reversed>
           {results.map((result) => (
             <Result
-              key={result.guid}
+              key={(result as { guid: string }).guid}
               result={result}
               onClick={this.onClick}
               played={this.completedPlayback.has(
-                this.getSecureUrl(result.enclosure.link || '')
+                this.getSecureUrl((result as { enclosure: { link: string }}).enclosure.link || '')
               )}
             />
           ))}
@@ -130,11 +129,21 @@ export default class App extends Component<{}, IAppState> {
     return [...this.pinnedFeeds];
   }
 
+  private _getResults = (): ReadonlyArray<{}> => {
+    return JSON.parse(localStorage.getItem('podr_results')!) || [];
+  }
+
+  private _setResults = (results: ReadonlyArray<{}> = []) => {
+    localStorage.setItem('podr_results', JSON.stringify(results));
+  }
+
   private tryFetchFeed(feedUrl: string = FEED_URL): void {
     void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
       .then((response) => response.json())
       .then(({ items: results = [], feed = {} }) => {
         const { title } = feed;
+
+        this._setResults(results);
 
         this.setState({
           results,
