@@ -8,37 +8,21 @@
   "typings": "lib/src/index.d.ts",
   "main": "lib/src/index.js",
   "scripts": {
-    "build": "gulp build --clean && webpack",
-    "start": "pnpm run build && webpack-dev-server --open",
-    "lint": "eslint ./src/**/*.tsx"
+    "build": "heft build --clean",
+    "start": "npm run build && http-server ./lib -o -p 8080"
   },
   "devDependencies": {
-    "@microsoft/gulp-core-build-sass": "^4.12.2",
-    "@microsoft/node-library-build": "^6.4.32",
-    "@microsoft/rush-stack-compiler-3.7": "^0.6.1",
-    "@types/node": "14.0.14",
-    "@types/react": "16.9.41",
-    "@types/react-dom": "16.9.8",
-    "clean-webpack-plugin": "3.0.0",
-    "eslint": "^6.8.0",
-    "eslint-config-developit": "^1.1.1",
-    "eslint-plugin-compat": "^3.5.1",
-    "eslint-plugin-jest": "^23.8.2",
-    "eslint-plugin-mocha": "^6.3.0",
-    "eslint-plugin-react": "^7.19.0",
-    "favicons-webpack-plugin": "^3.0.1",
-    "gulp": "~4.0.2",
-    "html-webpack-plugin": "4.3.0",
-    "node-sass": "4.14.1",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.0"
+    "@types/node": "14.14.7",
+    "@types/react": "16.9.56",
+    "@types/react-dom": "16.9.9",
+    "eslint": "^7.13.0",
+    "http-server": "0.12.3",
+    "typescript": "3.9.7",
+    "@rushstack/heft": "^0.21.2",
+    "@rushstack/eslint-config": "^2.3.1",
+    "@microsoft/rush-stack-compiler-3.9": "^0.4.33"
   },
   "dependencies": {
-    "@microsoft/load-themed-styles": "^1.10.65",
-    "preact": "10.4.5"
-  },
-  "eslintConfig": {
-    "extends": "eslint-config-developit"
+    "preact": "10.5.5"
   }
 }
