@@ -1,8 +1,7 @@
 import './style/index.scss';
 
-import { Component, render, h, createRef, JSX } from 'preact';
+import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { Result } from './Result';
-import { version } from '../package.json';
 
 const FEED_URL: string  = 'https://feeds.feedburner.com/TellEmSteveDave';
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
@@ -28,7 +27,7 @@ interface IAppState {
 }
 
 export default class App extends Component<{}, IAppState> {
-  private ref: preact.RefObject<HTMLAudioElement> = createRef();
+  private ref: RefObject<HTMLAudioElement> = createRef();
   private pinnedFeeds: Set<string> = new Set<string>(
     JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
@@ -38,7 +37,6 @@ export default class App extends Component<{}, IAppState> {
     this.setState({
       feeds: this.getPinnedFeeds(),
       results: this._getResults(),
-      version,
       BUILD_DEBUG: false
     });
 
@@ -112,8 +110,6 @@ export default class App extends Component<{}, IAppState> {
         <audio ref={this.ref} autoplay controls preload='auto' />
         <br />
         <footer>
-          Version: {VERSION}
-          <br />
           <a
             href='https://twitter.com/cascadiaco'
             target='_blank'
@@ -126,7 +122,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private getPinnedFeeds = (): string[] => {
-    return [...this.pinnedFeeds];
+    return [];
   }
 
   private _getResults = (): ReadonlyArray<{}> => {

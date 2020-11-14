@@ -1,8 +1,6 @@
 {
     "extends": "./node_modules/@microsoft/rush-stack-compiler-3.9/includes/tsconfig-web.json",
     "compilerOptions": {
-        "target": "es2015",
-        "resolveJsonModule": true,
         "jsx": "react",
         "jsxFactory": "h"
     }
