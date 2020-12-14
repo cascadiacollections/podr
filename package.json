@@ -5,8 +5,8 @@
   "license": "MIT",
   "keywords": [],
   "description": "",
-  "typings": "lib/src/index.d.ts",
-  "main": "lib/src/index.js",
+  "typings": "lib/index.d.ts",
+  "main": "lib/index.js",
   "scripts": {
     "build": "heft test --clean",
     "start": "heft start",
@@ -21,7 +21,16 @@
     "typescript": "3.9.7",
     "@rushstack/heft": "^0.21.2",
     "@rushstack/eslint-config": "^2.3.1",
-    "@microsoft/rush-stack-compiler-3.9": "^0.4.33"
+    "@microsoft/rush-stack-compiler-3.9": "^0.4.33",
+    "@types/heft-jest": "1.0.1",
+    "@types/webpack-env": "1.13.0",
+    "css-loader": "~4.2.1",
+    "html-webpack-plugin": "~4.5.0",
+    "react": "~16.13.1",
+    "react-dom": "~16.13.1",
+    "style-loader": "~1.2.1",
+    "webpack": "~4.44.2",
+    "source-map-loader": "~1.1.2"
   },
   "dependencies": {
     "preact": "10.5.5",
