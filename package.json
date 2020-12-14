@@ -8,8 +8,9 @@
   "typings": "lib/src/index.d.ts",
   "main": "lib/src/index.js",
   "scripts": {
-    "build": "heft build --watch",
-    "start": "http-server ./lib -o -p 8080"
+    "build": "heft test --clean",
+    "start": "heft start",
+    "serve": "http-server ./lib -o -p 8080"
   },
   "devDependencies": {
     "@types/node": "14.14.7",
@@ -23,6 +24,7 @@
     "@microsoft/rush-stack-compiler-3.9": "^0.4.33"
   },
   "dependencies": {
-    "preact": "10.5.5"
+    "preact": "10.5.5",
+    "@microsoft/load-themed-styles": "1.10.140"
   }
 }
