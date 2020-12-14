@@ -9,7 +9,7 @@
   "main": "lib/src/index.js",
   "scripts": {
     "build": "gulp build --clean && webpack",
-    "start": "pnpm run build && webpack-dev-server --open",
+    "start": "npm run build && webpack-dev-server --open",
     "lint": "eslint ./src/**/*.tsx"
   },
   "devDependencies": {
