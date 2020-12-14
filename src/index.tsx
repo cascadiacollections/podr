@@ -2,7 +2,6 @@ import './style/index.scss';
 
 import { Component, render, h, createRef, JSX } from 'preact';
 import { Result } from './Result';
-import { version } from '../package.json';
 
 const FEED_URL: string  = 'https://feeds.feedburner.com/TellEmSteveDave';
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
@@ -38,7 +37,6 @@ export default class App extends Component<{}, IAppState> {
     this.setState({
       feeds: this.getPinnedFeeds(),
       results: this._getResults(),
-      version,
       BUILD_DEBUG: false
     });
 
@@ -112,8 +110,6 @@ export default class App extends Component<{}, IAppState> {
         <audio ref={this.ref} autoplay controls preload='auto' />
         <br />
         <footer>
-          Version: {VERSION}
-          <br />
           <a
             href='https://twitter.com/cascadiaco'
             target='_blank'
