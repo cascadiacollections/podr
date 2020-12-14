@@ -9,7 +9,7 @@ const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
 module.exports = {
   mode: 'development',
   devtool: 'inline-source-map',
-  entry: './lib/src/index.js',
+  entry: './lib/index.js',
   output: {
     filename: '[name].[contenthash].js',
     path: path.resolve(__dirname, 'dist')
