@@ -9,7 +9,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "heft build --clean",
-    "build:prod": "heft build --clean --production",
+    "build:ci": "npm install && heft build --clean --production",
     "start": "heft start",
     "serve": "http-server ./dist -o -p 9000"
   },
