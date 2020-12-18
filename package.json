@@ -8,9 +8,10 @@
   "typings": "lib/index.d.ts",
   "main": "lib/index.js",
   "scripts": {
-    "build": "heft test --clean",
+    "build": "heft build --clean",
+    "build:prod": "heft build --clean --production",
     "start": "heft start",
-    "serve": "http-server ./lib -o -p 8080"
+    "serve": "http-server ./dist -o -p 9000"
   },
   "devDependencies": {
     "@types/node": "14.14.7",

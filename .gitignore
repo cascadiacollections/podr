@@ -4,3 +4,6 @@ dist
 
 *.log
 *.scss.ts
+
+.heft
+.DS_Store
