@@ -1,6 +1,6 @@
 import './style/index.scss';
 
-import { Component, render, h, createRef, JSX } from 'preact';
+import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { Result } from './Result';
 
 const FEED_URL: string  = 'https://feeds.feedburner.com/TellEmSteveDave';
@@ -27,7 +27,7 @@ interface IAppState {
 }
 
 export default class App extends Component<{}, IAppState> {
-  private ref: preact.RefObject<HTMLAudioElement> = createRef();
+  private ref: RefObject<HTMLAudioElement> = createRef();
   private pinnedFeeds: Set<string> = new Set<string>(
     JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
@@ -122,7 +122,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private getPinnedFeeds = (): string[] => {
-    return [...this.pinnedFeeds];
+    return [];
   }
 
   private _getResults = (): ReadonlyArray<{}> => {
