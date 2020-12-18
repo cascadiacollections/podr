@@ -57,3 +57,5 @@ function createWebpackConfig({ production }) {
 
   return webpackConfig;
 }
+
+module.exports = createWebpackConfig;
