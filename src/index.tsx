@@ -1,4 +1,4 @@
-import './style/index.scss';
+import './app.scss';
 
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { Result } from './Result';
