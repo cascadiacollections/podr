@@ -17,8 +17,12 @@ function createWebpackConfig({ production }) {
     module: {
       rules: [
         {
-          test: /\.css$/,
-          use: [require.resolve('style-loader'), require.resolve('css-loader')]
+          test: /\.s[ac]ss$/i,
+          use: [
+            "style-loader",
+            "css-loader",
+            "sass-loader",
+          ],
         },
         {
           test: /\.js$/,
