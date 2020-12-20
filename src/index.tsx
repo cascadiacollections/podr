@@ -27,11 +27,11 @@ interface IAppState {
 }
 
 export default class App extends Component<{}, IAppState> {
-  private ref: RefObject<HTMLAudioElement> = createRef();
-  private pinnedFeeds: Set<string> = new Set<string>(
+  private readonly ref: RefObject<HTMLAudioElement> = createRef();
+  private readonly completedPlayback: Set<string> = new Set<string>();
+  private readonly pinnedFeeds: Set<string> = new Set<string>(
     JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
-  private completedPlayback: Set<string> = new Set<string>();
 
   public componentDidMount(): void {
     this.setState({
@@ -52,7 +52,7 @@ export default class App extends Component<{}, IAppState> {
     }
 
     window.addEventListener('keydown', (event) => {
-      if (event.keyCode === 192) {
+      if (event.code === 'Backquote') {
         this.setState({ BUILD_DEBUG: !this.state.BUILD_DEBUG });
       }
     });
