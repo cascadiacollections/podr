@@ -42,16 +42,13 @@ export default class App extends Component<{}, IAppState> {
 
     this.tryFetchFeed();
 
-    if (this.ref.current) {
-      this.ref.current.addEventListener('ended', (event: Event) => {
-        const url: string = (event.target as HTMLAudioElement).src;
-        this.completedPlayback.add(url);
-        // @todo: hack
-        this.forceUpdate();
-      });
-    }
+    this.ref.current?.addEventListener('ended', (event: Event) => {
+      const url: string = (event.target as HTMLAudioElement).src;
+      this.completedPlayback.add(url);
+      this.forceUpdate();
+    });
 
-    window.addEventListener('keydown', (event) => {
+    window.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.code === 'Backquote') {
         this.setState({ BUILD_DEBUG: !this.state.BUILD_DEBUG });
       }
@@ -122,7 +119,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private getPinnedFeeds = (): string[] => {
-    return [];
+    return [...this.pinnedFeeds.values()];
   }
 
   private _getResults = (): ReadonlyArray<{}> => {
@@ -152,16 +149,13 @@ export default class App extends Component<{}, IAppState> {
     return url.replace('http', 'https');
   }
 
-  // tslint:disable-next-line
   private onClick = (item: any) => {
     const url: string = item.enclosure.link || '';
     (this.ref.current as HTMLAudioElement).src = this.getSecureUrl(url);
   }
 
-  // tslint:disable-next-line
-  private pinFeedUrl = (event: any) => {
+  private pinFeedUrl = (event: Event) => {
     const feedUrl: string = (event.target as HTMLInputElement).value;
-    (event.target as HTMLInputElement).value = '';
 
     this.pinnedFeeds.add(feedUrl);
 
@@ -170,6 +164,8 @@ export default class App extends Component<{}, IAppState> {
     });
 
     this.serializePinnedFeeds();
+
+    (event.target as HTMLInputElement).value = '';
   }
 
   private unpinFeedUrl = (feedUrl: string) => {
