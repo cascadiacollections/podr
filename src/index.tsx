@@ -3,7 +3,7 @@ import './app.scss';
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { Result } from './Result';
 
-const FEED_URL: string  = 'https://feeds.feedburner.com/TellEmSteveDave';
+const FEED_URL: string = 'https://feeds.feedburner.com/TellEmSteveDave';
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
 const PINNED_FEEDS: string[] = [
@@ -19,11 +19,8 @@ function getFeedUrl(feedUrl: string = FEED_URL): string {
 }
 
 interface IAppState {
-  title: string;
-  BUILD_DEBUG: boolean;
   feeds: string[];
   results: ReadonlyArray<{}>;
-  version: string;
 }
 
 export default class App extends Component<{}, IAppState> {
@@ -33,13 +30,16 @@ export default class App extends Component<{}, IAppState> {
     JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
   );
 
-  public componentDidMount(): void {
-    this.setState({
-      feeds: this.getPinnedFeeds(),
-      results: this._getResults(),
-      BUILD_DEBUG: false
-    });
+  public constructor() {
+    super();
 
+    this.state = {
+      feeds: this.getPinnedFeeds(),
+      results: this._getResults()
+    };
+  }
+
+  public componentDidMount(): void {
     this.tryFetchFeed();
 
     this.ref.current?.addEventListener('ended', (event: Event) => {
@@ -47,46 +47,35 @@ export default class App extends Component<{}, IAppState> {
       this.completedPlayback.add(url);
       this.forceUpdate();
     });
-
-    window.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.code === 'Backquote') {
-        this.setState({ BUILD_DEBUG: !this.state.BUILD_DEBUG });
-      }
-    });
   }
 
-  public render(props: {}, { feeds = [], results = [], version: VERSION, title, BUILD_DEBUG }: IAppState): JSX.Element {
+  public render(props: {}, state: IAppState): JSX.Element {
+    const { feeds = [], results = [] } = state;
+
     return (
-      <div>
-        {BUILD_DEBUG && (
-          <div>
-            <h2>Favorites</h2>
-            <ul>
-              <li>
-                <input
-                  type='url'
-                  placeholder='Feed URL'
-                  onInput={this.pinFeedUrl}
-                />
-              </li>
-              {feeds.map((result) => (
-                <li key={result}>
-                  <span
-                    onClick={() => this.unpinFeedUrl(result)}
-                    role='img'
-                    aria-label={`Unfavorite ${result}`}>
-                    🗑️
-                  </span>
-                  <span onClick={() => this.tryFetchFeed(result)}>
-                    {result}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+      <main>
+        <h2>Favorites</h2>
+        <input
+          type='url'
+          placeholder='Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave'
+          onInput={this.pinFeedUrl} />
+        <ul>
+          {feeds.map((result) => (
+            <li key={result}>
+              <span
+                onClick={() => this.unpinFeedUrl(result)}
+                role='img'
+                aria-label={`Unfavorite ${result}`}>
+                🗑️
+              </span>
+              <span onClick={() => this.tryFetchFeed(result)}>
+                {result}
+              </span>
+            </li>
+          ))}
+        </ul>
         <h1>
-          <a href='/'>{title}</a>
+          <a href='/'>Podr</a>
         </h1>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
@@ -114,7 +103,7 @@ export default class App extends Component<{}, IAppState> {
             @cascadiaco
           </a>
         </footer>
-      </div>
+      </main>
     );
   }
 
@@ -134,13 +123,10 @@ export default class App extends Component<{}, IAppState> {
     void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
       .then((response) => response.json())
       .then(({ items: results = [], feed = {} }) => {
-        const { title } = feed;
-
         this._setResults(results);
 
         this.setState({
-          results,
-          title
+          results
         });
       });
   }
