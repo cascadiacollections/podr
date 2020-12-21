@@ -19,7 +19,7 @@ function getFeedUrl(feedUrl: string = FEED_URL): string {
 }
 
 interface IAppState {
-  feeds: string[];
+  feeds: ReadonlyArray<string>;
   results: ReadonlyArray<{}>;
 }
 
@@ -107,7 +107,7 @@ export default class App extends Component<{}, IAppState> {
     );
   }
 
-  private getPinnedFeeds = (): string[] => {
+  private getPinnedFeeds = (): ReadonlyArray<string> => {
     return [...this.pinnedFeeds.values()];
   }
 
