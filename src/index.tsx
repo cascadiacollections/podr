@@ -68,9 +68,9 @@ export default class App extends Component<{}, IAppState> {
                 aria-label={`Unfavorite ${result}`}>
                 🗑️
               </span>
-              <span onClick={() => this.tryFetchFeed(result)}>
+              <a href="#" onClick={() => this.tryFetchFeed(result)}>
                 {result}
-              </span>
+              </a>
             </li>
           ))}
         </ul>
