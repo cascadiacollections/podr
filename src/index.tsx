@@ -3,16 +3,10 @@ import './app.scss';
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { Result } from './Result';
 
-const FEED_URL: string = 'https://feeds.feedburner.com/TellEmSteveDave';
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
-const PINNED_FEEDS: string[] = [
-  'https://feeds.feedburner.com/SModcasts',
-  'https://feeds.feedburner.com/TellEmSteveDave',
-  'https://rss.art19.com/id10t'
-];
 
-function getFeedUrl(feedUrl: string = FEED_URL): string {
+function getFeedUrl(feedUrl: string): string {
   return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
     feedUrl
   )}&api_key=${TOKEN}&count=${MAX_COUNT}`;
@@ -27,7 +21,7 @@ export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly completedPlayback: Set<string> = new Set<string>();
   private readonly pinnedFeeds: Set<string> = new Set<string>(
-    JSON.parse(localStorage.getItem('podr_feeds')!) || PINNED_FEEDS
+    JSON.parse(localStorage.getItem('podr_feeds')!) || []
   );
 
   public constructor() {
@@ -119,10 +113,14 @@ export default class App extends Component<{}, IAppState> {
     localStorage.setItem('podr_results', JSON.stringify(results));
   }
 
-  private tryFetchFeed(feedUrl: string = FEED_URL): void {
+  private tryFetchFeed(feedUrl?: string): void {
+    if (!feedUrl) {
+      return;
+    }
+
     void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
       .then((response) => response.json())
-      .then(({ items: results = [], feed = {} }) => {
+      .then(({ items: results = [] }) => {
         this._setResults(results);
 
         this.setState({
