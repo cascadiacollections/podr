@@ -17,6 +17,7 @@ interface IAppState {
   results: ReadonlyArray<{}>;
 }
 
+/* tslint:disable:export-name*/
 export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly completedPlayback: Set<string> = new Set<string>();
@@ -62,7 +63,7 @@ export default class App extends Component<{}, IAppState> {
                 aria-label={`Unfavorite ${result}`}>
                 🗑️
               </span>
-              <a href="#" onClick={() => this.tryFetchFeed(result)}>
+              <a href='#' onClick={() => this.tryFetchFeed(result)}>
                 {result}
               </a>
             </li>
@@ -133,7 +134,7 @@ export default class App extends Component<{}, IAppState> {
     return url.replace('http', 'https');
   }
 
-  private onClick = (item: any) => {
+  private onClick = (item: { enclosure: { link?: string }}) => {
     const url: string = item.enclosure.link || '';
     (this.ref.current as HTMLAudioElement).src = this.getSecureUrl(url);
   }
