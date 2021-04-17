@@ -134,9 +134,12 @@ export default class App extends Component<{}, IAppState> {
     return url.replace('http', 'https');
   }
 
-  private onClick = (item: { enclosure: { link?: string }}) => {
-    const url: string = item.enclosure.link || '';
-    (this.ref.current as HTMLAudioElement).src = this.getSecureUrl(url);
+  private onClick = (item: { enclosure: { link: string }}) => {
+    const url: string = item.enclosure.link;
+
+    if (this.ref.current) {
+      this.ref.current.src = this.getSecureUrl(url);
+    }
   }
 
   private pinFeedUrl = (event: Event) => {
