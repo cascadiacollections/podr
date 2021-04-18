@@ -49,11 +49,11 @@ export default class App extends Component<{}, IAppState> {
 
     return (
       <main>
+        <h1>
+          <a href='/'>Podr</a>
+        </h1>
         <h2>Favorites</h2>
-        <input
-          type='url'
-          placeholder='Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave'
-          onInput={this.pinFeedUrl} />
+        <button onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) } >Add favorite</button>
         <ul>
           {feeds.map((result) => (
             <li key={result}>
@@ -69,9 +69,6 @@ export default class App extends Component<{}, IAppState> {
             </li>
           ))}
         </ul>
-        <h1>
-          <a href='/'>Podr</a>
-        </h1>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list' reversed>
@@ -142,18 +139,18 @@ export default class App extends Component<{}, IAppState> {
     }
   }
 
-  private pinFeedUrl = (event: Event) => {
-    const feedUrl: string = (event.target as HTMLInputElement).value;
+  private pinFeedUrl = (url: string | null) => {
+    if (!url) {
+      return;
+    }
 
-    this.pinnedFeeds.add(feedUrl);
+    this.pinnedFeeds.add(url);
 
     this.setState({
       feeds: this.getPinnedFeeds()
     });
 
     this.serializePinnedFeeds();
-
-    (event.target as HTMLInputElement).value = '';
   }
 
   private unpinFeedUrl = (feedUrl: string) => {
