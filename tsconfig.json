@@ -1,8 +1,12 @@
 {
-    "extends": "./node_modules/@microsoft/rush-stack-compiler-3.9/includes/tsconfig-web.json",
+    "extends": "./node_modules/@rushstack/heft-web-rig/profiles/library/tsconfig-base.json",
     "compilerOptions": {
+        "types": [
+            "webpack-env"
+        ],
         "target": "es2015",
         "jsx": "react",
-        "jsxFactory": "h"
+        "jsxFactory": "h",
+        "noImplicitAny": false
     }
 }
