@@ -53,7 +53,10 @@ export default class App extends Component<{}, IAppState> {
           <a href='/'>Podr</a>
         </h1>
         <h2>Favorites</h2>
-        <button onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) } >Add favorite</button>
+        <button
+          onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
+            Add favorite
+        </button>
         <ul>
           {feeds.map((result) => (
             <li key={result}>
