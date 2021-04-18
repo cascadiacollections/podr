@@ -1,0 +1,6 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/heft/heft.schema.json",
+  "heftPlugins": [
+    { "plugin": "@rushstack/heft-webpack4-plugin" }
+  ]
+}
