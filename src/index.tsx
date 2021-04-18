@@ -131,7 +131,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private getSecureUrl = (url: string) => {
-    return url.replace('http', 'https');
+    return url.replace('http://', 'https://');
   }
 
   private onClick = (item: { enclosure: { link: string }}) => {
