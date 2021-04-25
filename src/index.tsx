@@ -52,6 +52,20 @@ export default class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
+        <input type='search' placeholder='Search for a podcast' onKeyDown={(e: any) => {
+          const limit: number = 10;
+
+          if (e.key === 'Enter') {
+            const term: string = e.target.value;
+            const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
+
+            fetch(SEARCH_URL).then(async (response: Response) => {
+              const json = await response.json();
+
+              console.log(json);
+            });
+          }
+        }} />
         <h2>Favorites</h2>
         <button
           onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
