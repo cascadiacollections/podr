@@ -1,7 +1,7 @@
 import './app.scss';
 
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
-import { Result } from './Result';
+import { IFeedItem, Result } from './Result';
 
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
@@ -14,7 +14,7 @@ function getFeedUrl(feedUrl: string): string {
 
 interface IAppState {
   feeds: ReadonlyArray<string>;
-  results: ReadonlyArray<{}>;
+  results: ReadonlyArray<IFeedItem>;
 }
 
 /* tslint:disable:export-name*/
@@ -45,24 +45,27 @@ export default class App extends Component<{}, IAppState> {
   }
 
   public render(props: {}, state: IAppState): JSX.Element {
-    const { feeds = [], results = [] } = state;
+    const { feeds = [] } = state;
+    const results: ReadonlyArray<IFeedItem> = state.results;
 
     return (
       <main>
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input type='search' placeholder='Search for a podcast' onKeyDown={(e: any) => {
+        <input type='search' placeholder='Search for a podcast' onKeyDown={(e: KeyboardEvent) => {
           const limit: number = 10;
 
           if (e.key === 'Enter') {
-            const term: string = e.target.value;
+            const term: string = (e.target as HTMLInputElement).value;
             const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
 
             fetch(SEARCH_URL).then(async (response: Response) => {
-              const json = await response.json();
+              const json: unknown = await response.json();
 
               console.log(json);
+            }).catch((err) => {
+              console.error(err);
             });
           }
         }} />
@@ -89,13 +92,13 @@ export default class App extends Component<{}, IAppState> {
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list' reversed>
-          {results.map((result) => (
+          {results.map((result: IFeedItem) => (
             <Result
-              key={(result as { guid: string }).guid}
+              key={result.guid}
               result={result}
               onClick={this.onClick}
               played={this.completedPlayback.has(
-                this.getSecureUrl((result as { enclosure: { link: string }}).enclosure.link || '')
+                this.getSecureUrl(result.enclosure.link || '')
               )}
             />
           ))}
@@ -120,7 +123,7 @@ export default class App extends Component<{}, IAppState> {
     return [...this.pinnedFeeds.values()];
   }
 
-  private _getResults = (): ReadonlyArray<{}> => {
+  private _getResults = (): ReadonlyArray<IFeedItem> => {
     return JSON.parse(localStorage.getItem('podr_results')!) || [];
   }
 
