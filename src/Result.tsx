@@ -32,6 +32,7 @@ interface IResultProps {
   played?: boolean;
 }
 
+/* tslint:disable:variable-name*/
 export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => {
   const { played, onClick, result } = props;
 

@@ -15,6 +15,7 @@ function getFeedUrl(feedUrl: string): string {
 interface IAppState {
   feeds: ReadonlyArray<string>;
   results: ReadonlyArray<IFeedItem>;
+  searchResults?: Array<string>;
 }
 
 /* tslint:disable:export-name*/
@@ -45,7 +46,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   public render(props: {}, state: IAppState): JSX.Element {
-    const { feeds = [] } = state;
+    const { feeds = [], searchResults = [] } = state;
     const results: ReadonlyArray<IFeedItem> = state.results;
 
     return (
@@ -64,11 +65,35 @@ export default class App extends Component<{}, IAppState> {
               const json: unknown = await response.json();
 
               console.log(json);
+
+              const searchResults: string[] = (json as any).results.map((result: { feedUrl: string }) => {
+                return result.feedUrl;
+              });
+
+              this.setState({
+                searchResults
+              });
             }).catch((err) => {
               console.error(err);
             });
           }
         }} />
+        <h2>Search</h2>
+        <ul>
+          {searchResults.map((result: string) => (
+            <li key={result}>
+              <span
+                onClick={() => this.pinFeedUrl(result)}
+                role='img'
+                aria-label={`Unfavorite ${result}`}>
+                ➕
+              </span>
+              <a href='#' onClick={() => this.tryFetchFeed(result)}>
+                {result}
+              </a>
+            </li>
+          ))}
+        </ul>
         <h2>Favorites</h2>
         <button
           onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
