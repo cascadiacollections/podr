@@ -1,7 +1,7 @@
 import './app.scss';
 
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
-import { Result } from './Result';
+import { IFeedItem, Result } from './Result';
 
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
@@ -14,7 +14,12 @@ function getFeedUrl(feedUrl: string): string {
 
 interface IAppState {
   feeds: ReadonlyArray<string>;
-  results: ReadonlyArray<{}>;
+  results: ReadonlyArray<IFeedItem>;
+  searchResults?: Array<string>;
+}
+
+interface IFeed {
+  feedUrl: string;
 }
 
 /* tslint:disable:export-name*/
@@ -45,13 +50,31 @@ export default class App extends Component<{}, IAppState> {
   }
 
   public render(props: {}, state: IAppState): JSX.Element {
-    const { feeds = [], results = [] } = state;
+    const { feeds = [], searchResults = [] } = state;
+    const results: ReadonlyArray<IFeedItem> = state.results;
 
     return (
       <main>
         <h1>
           <a href='/'>Podr</a>
         </h1>
+        <input type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
+        <h2>Search</h2>
+        <ul>
+          {searchResults.map((result: string) => (
+            <li key={result}>
+              <span
+                onClick={() => this.pinFeedUrl(result)}
+                role='img'
+                aria-label={`Unfavorite ${result}`}>
+                ➕
+              </span>
+              <a href='#' onClick={() => this.tryFetchFeed(result)}>
+                {result}
+              </a>
+            </li>
+          ))}
+        </ul>
         <h2>Favorites</h2>
         <button
           onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
@@ -75,13 +98,13 @@ export default class App extends Component<{}, IAppState> {
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list' reversed>
-          {results.map((result) => (
+          {results.map((result: IFeedItem) => (
             <Result
-              key={(result as { guid: string }).guid}
+              key={result.guid}
               result={result}
               onClick={this.onClick}
               played={this.completedPlayback.has(
-                this.getSecureUrl((result as { enclosure: { link: string }}).enclosure.link || '')
+                this.getSecureUrl(result.enclosure.link || '')
               )}
             />
           ))}
@@ -102,11 +125,36 @@ export default class App extends Component<{}, IAppState> {
     );
   }
 
+  private onSearch = (e: KeyboardEvent) => {
+    const limit: number = 10;
+
+    if (e.key === 'Enter') {
+      const term: string = (e.target as HTMLInputElement).value;
+      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
+
+      fetch(SEARCH_URL).then(async (response: Response) => {
+        const json: unknown = await response.json();
+
+        console.log(json);
+
+        const searchResults: string[] = (json as { results: Array<IFeed>}).results.map((result: IFeed) => {
+          return result.feedUrl;
+        });
+
+        this.setState({
+          searchResults
+        });
+      }).catch((err) => {
+        console.error(err);
+      });
+    }
+  }
+
   private getPinnedFeeds = (): ReadonlyArray<string> => {
     return [...this.pinnedFeeds.values()];
   }
 
-  private _getResults = (): ReadonlyArray<{}> => {
+  private _getResults = (): ReadonlyArray<IFeedItem> => {
     return JSON.parse(localStorage.getItem('podr_results')!) || [];
   }
 
