@@ -1,5 +1,6 @@
 import './app.scss';
 
+import fetchJsonp from 'fetch-jsonp';
 import { Component, render, h, createRef, JSX, RefObject } from 'preact';
 import { IFeedItem, Result } from './Result';
 
@@ -130,12 +131,10 @@ export default class App extends Component<{}, IAppState> {
 
     if (e.key === 'Enter') {
       const term: string = (e.target as HTMLInputElement).value;
-      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
+      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=custom_callback`;
 
-      fetch(SEARCH_URL).then(async (response: Response) => {
+      fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'custom_callback' }).then(async (response: fetchJsonp.Response) => {
         const json: unknown = await response.json();
-
-        console.log(json);
 
         const searchResults: string[] = (json as { results: Array<IFeed>}).results.map((result: IFeed) => {
           return result.feedUrl;
