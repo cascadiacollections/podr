@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, FunctionComponent } from 'preact';
 
 function formatDuration(duration: number): string {
   return new Date(1000 * duration).toISOString().substr(11, 8);
@@ -13,14 +13,29 @@ function stripHtml(html: string): string {
   return doc.body.textContent || '';
 }
 
-// @todo: memoize
-// tslint:disable-next-line
-const Divider = () => {
-  return <strong>&nbsp;&bull;&nbsp;</strong>;
-};
+interface IEnclosure {
+  duration: number;
+  link: string;
+}
 
-// tslint:disable-next-line
-export const Result = ({ result, onClick, played = false }) => {
+export interface IFeedItem {
+  guid: string;
+  title: string;
+  description: string;
+  pubDate: string;
+  enclosure: IEnclosure;
+}
+
+interface IResultProps {
+  result: IFeedItem;
+  onClick: (feedItem: IFeedItem) => void;
+  played?: boolean;
+}
+
+/* tslint:disable:variable-name*/
+export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => {
+  const { played, onClick, result } = props;
+
   return (
     <li
       class={`result ${played ? 'played' : ''}`}
@@ -28,12 +43,11 @@ export const Result = ({ result, onClick, played = false }) => {
       tabIndex={0}>
       <h2 class='title'>{result.title}</h2>
       <strong class='pubDate'>{formatPubDate(result.pubDate)}</strong>
-      <Divider />
+      <strong>&nbsp;&bull;&nbsp;</strong>
       <strong class='duration'>
         {formatDuration(result.enclosure.duration)}
       </strong>
       <p class='description'>{stripHtml(result.description)}</p>
-      {false /* DEBUG */ && <pre>{JSON.stringify(result)}</pre>}
     </li>
   );
 };
