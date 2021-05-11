@@ -8,6 +8,6 @@ A podcast player for the web.
 ## Local development
 
 1. Git clone the repository to your workspace.
-1. Install `pnpm` via `npm i -g pnpm`.
-1. Run install for your package manager of choice e.g. `pnpm install`.
-1. Run `pnpm start` to launch the local development server.
+1. Install `yarn` via `npm i -g yarn`.
+1. Run install for your package manager of choice e.g. `yarn install`.
+1. Run `yarn start` to launch the local development server.
