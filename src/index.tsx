@@ -18,6 +18,10 @@ interface IAppState {
   searchResults?: Array<string>;
 }
 
+interface IFeed {
+  feedUrl: string;
+}
+
 /* tslint:disable:export-name*/
 export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
@@ -54,30 +58,7 @@ export default class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input type='search' placeholder='Search for a podcast' onKeyDown={(e: KeyboardEvent) => {
-          const limit: number = 10;
-
-          if (e.key === 'Enter') {
-            const term: string = (e.target as HTMLInputElement).value;
-            const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
-
-            fetch(SEARCH_URL).then(async (response: Response) => {
-              const json: unknown = await response.json();
-
-              console.log(json);
-
-              const searchResults: string[] = (json as any).results.map((result: { feedUrl: string }) => {
-                return result.feedUrl;
-              });
-
-              this.setState({
-                searchResults
-              });
-            }).catch((err) => {
-              console.error(err);
-            });
-          }
-        }} />
+        <input type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
         <h2>Search</h2>
         <ul>
           {searchResults.map((result: string) => (
@@ -142,6 +123,31 @@ export default class App extends Component<{}, IAppState> {
         </footer>
       </main>
     );
+  }
+
+  private onSearch = (e: KeyboardEvent) => {
+    const limit: number = 10;
+
+    if (e.key === 'Enter') {
+      const term: string = (e.target as HTMLInputElement).value;
+      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}`;
+
+      fetch(SEARCH_URL).then(async (response: Response) => {
+        const json: unknown = await response.json();
+
+        console.log(json);
+
+        const searchResults: string[] = (json as { results: Array<IFeed>}).results.map((result: IFeed) => {
+          return result.feedUrl;
+        });
+
+        this.setState({
+          searchResults
+        });
+      }).catch((err) => {
+        console.error(err);
+      });
+    }
   }
 
   private getPinnedFeeds = (): ReadonlyArray<string> => {
