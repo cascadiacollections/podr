@@ -1,6 +1,9 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.168.0/containers/javascript-node/.devcontainer/base.Dockerfile
-ARG VARIANT="14-buster"
-FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-14
 
-RUN su node -c "npm install -g yarn"
-RUN su node -c "yarn install"
+# ** [Optional] Uncomment this section to install additional packages. **
+# USER root
+#
+# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+#     && apt-get -y install --no-install-recommends <your-package-list-here>
+#
+# USER codespace
