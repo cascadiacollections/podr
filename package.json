@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "keywords": [],
-  "description": "",
+  "description": "Open source podcast web player",
   "typings": "lib/index.d.ts",
   "main": "lib/index.js",
   "scripts": {
