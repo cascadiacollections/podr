@@ -38,7 +38,7 @@ export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => 
 
   return (
     <li
-      class={`result ${played ? 'played' : ''}`}
+      class={`result list-group-item list-group-item-action ${played ? 'played' : ''}`}
       onClick={() => onClick(result)}
       tabIndex={0}>
       <h2 class='title'>{result.title}</h2>
