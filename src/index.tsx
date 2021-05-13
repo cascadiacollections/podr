@@ -77,10 +77,6 @@ export default class App extends Component<{}, IAppState> {
           ))}
         </ul>
         <h2>Favorites</h2>
-        <button
-          onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
-            Add favorite
-        </button>
         <ul class="list-group">
           {feeds.map((result) => (
             <li key={result} class="list-group-item list-group-item-action">
