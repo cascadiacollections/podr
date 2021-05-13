@@ -61,15 +61,14 @@ export default class App extends Component<{}, IAppState> {
         </h1>
         <input class="form-control" type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
         <h2>Search</h2>
-        <ul class="list-group">
+        <ul class="list-group" style={ {'min-height': 100 }}>
           {searchResults.map((result: string) => (
             <li key={result} class="list-group-item list-group-item-action">
-              <span
+              <button
+                type="button"
+                class="btn btn-outline-primary"
                 onClick={() => this.pinFeedUrl(result)}
-                role='img'
-                aria-label={`Unfavorite ${result}`}>
-                ➕
-              </span>
+                aria-label={`Favorite ${result}`}>Favorite</button>
               <a href='#' onClick={() => this.tryFetchFeed(result)}>
                 {result}
               </a>
@@ -77,18 +76,15 @@ export default class App extends Component<{}, IAppState> {
           ))}
         </ul>
         <h2>Favorites</h2>
-        <ul class="list-group">
+        <ul class="list-group" style={ {'min-height': 100 }}>
           {feeds.map((result) => (
             <li key={result} class="list-group-item list-group-item-action">
-              <span
+              <button
+                type="button"
+                class="btn btn-outline-warning"
                 onClick={() => this.unpinFeedUrl(result)}
-                role='img'
-                aria-label={`Unfavorite ${result}`}>
-                🗑️
-              </span>
-              <a href='#' onClick={() => this.tryFetchFeed(result)}>
-                {result}
-              </a>
+                aria-label={`Unfavorite ${result}`}>Unfavorite</button>
+              <a href='#' onClick={() => this.tryFetchFeed(result)}>{result}</a>
             </li>
           ))}
         </ul>
