@@ -57,11 +57,11 @@ export default class App extends Component<{}, IAppState> {
 
     return (
       <main>
-        <h1>
+        <h1 class="display-1">
           <a href='/'>Podr</a>
         </h1>
         <input class="form-control" type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
-        <h2>Search</h2>
+        <h2 class="display-6">Search</h2>
         <ul class="list-group" style={ {'min-height': 100 }}>
           {searchResults.map((result: IFeed) => (
             <li key={result} class="list-group-item list-group-item-action">
@@ -74,7 +74,7 @@ export default class App extends Component<{}, IAppState> {
             </li>
           ))}
         </ul>
-        <h2>Favorites</h2>
+        <h2 class="display-6">Favorites</h2>
         <ul class="list-group" style={ {'min-height': 100 }}>
           {feeds.map((result) => (
             <li key={result} class="list-group-item list-group-item-action">
