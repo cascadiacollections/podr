@@ -61,21 +61,25 @@ export default class App extends Component<{}, IAppState> {
           <a href='/'>Podr</a>
         </h1>
         <input class='form-control' type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
-        <h2 class='display-6'>Search</h2>
-        <ul class='list-group' style={ {'min-height': 100 }}>
-          {searchResults.map((result: IFeed) => (
-            <li key={result} class='list-group-item list-group-item-action'>
-              <button
-                type='button'
-                class='btn btn-outline-primary'
-                onClick={() => this.pinFeedUrl(result)}
-                aria-label={`Favorite ${result}`}>Favorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
-                {result.collectionName}
-              </a>
-            </li>
-          ))}
-        </ul>
+        { this.state.searchResults?.length ?
+          <div>
+            <h2 class='display-6'>Search</h2>
+            <ul class='list-group' style={ {'min-height': 100 }}>
+              {searchResults.map((result: IFeed) => (
+                <li key={result} class='list-group-item list-group-item-action'>
+                  <button
+                    type='button'
+                    class='btn btn-outline-primary'
+                    onClick={() => this.pinFeedUrl(result)}
+                    aria-label={`Favorite ${result}`}>Favorite</button>
+                  <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
+                    {result.collectionName}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div> : null
+        }
         <h2 class='display-6'>Favorites</h2>
         <ul class='list-group' style={ {'min-height': 100 }}>
           {feeds.map((result) => (
@@ -91,6 +95,7 @@ export default class App extends Component<{}, IAppState> {
             </li>
           ))}
         </ul>
+        <h2 class='display-6'>Episodes</h2>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list list-group' reversed>
@@ -126,6 +131,9 @@ export default class App extends Component<{}, IAppState> {
 
     if (e.key === 'Enter') {
       const term: string = (e.target as HTMLInputElement).value;
+
+      if (!term || !term.length) return;
+
       // tslint:disable-next-line:max-line-length
       const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=searchcb`;
 
