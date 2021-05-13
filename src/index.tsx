@@ -59,11 +59,11 @@ export default class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
+        <input class="form-control" type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
         <h2>Search</h2>
-        <ul>
+        <ul class="list-group">
           {searchResults.map((result: string) => (
-            <li key={result}>
+            <li key={result} class="list-group-item list-group-item-action">
               <span
                 onClick={() => this.pinFeedUrl(result)}
                 role='img'
@@ -81,9 +81,9 @@ export default class App extends Component<{}, IAppState> {
           onClick={() => this.pinFeedUrl(prompt('Paste feed e.g. https://feeds.feedburner.com/TellEmSteveDave')) }>
             Add favorite
         </button>
-        <ul>
+        <ul class="list-group">
           {feeds.map((result) => (
-            <li key={result}>
+            <li key={result} class="list-group-item list-group-item-action">
               <span
                 onClick={() => this.unpinFeedUrl(result)}
                 role='img'
@@ -98,7 +98,7 @@ export default class App extends Component<{}, IAppState> {
         </ul>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
-        <ol class='list' reversed>
+        <ol class='list list-group' reversed>
           {results.map((result: IFeedItem) => (
             <Result
               key={result.guid}

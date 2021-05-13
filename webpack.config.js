@@ -57,7 +57,6 @@ function createWebpackConfig({ production }) {
     },
     devtool: production ? undefined : 'source-map',
     plugins: [
-      // See here for documentation: https://github.com/jantimon/html-webpack-plugin
       new HtmlWebpackPlugin({
         template: 'assets/index.html'
       })
