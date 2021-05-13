@@ -16,7 +16,7 @@ function getFeedUrl(feedUrl: string): string {
 interface IAppState {
   feeds: ReadonlyArray<IFeed>;
   results: ReadonlyArray<IFeedItem>;
-  searchResults?: Array<IFeed>;
+  searchResults?: ReadonlyArray<IFeed>;
 }
 
 interface IFeed {
@@ -57,33 +57,37 @@ export default class App extends Component<{}, IAppState> {
 
     return (
       <main>
-        <h1 class="display-1">
+        <h1 class='display-1'>
           <a href='/'>Podr</a>
         </h1>
-        <input class="form-control" type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
-        <h2 class="display-6">Search</h2>
-        <ul class="list-group" style={ {'min-height': 100 }}>
+        <input class='form-control' type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
+        <h2 class='display-6'>Search</h2>
+        <ul class='list-group' style={ {'min-height': 100 }}>
           {searchResults.map((result: IFeed) => (
-            <li key={result} class="list-group-item list-group-item-action">
+            <li key={result} class='list-group-item list-group-item-action'>
               <button
-                type="button"
-                class="btn btn-outline-primary"
+                type='button'
+                class='btn btn-outline-primary'
                 onClick={() => this.pinFeedUrl(result)}
                 aria-label={`Favorite ${result}`}>Favorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>{result.collectionName}</a>
+              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
+                {result.collectionName}
+              </a>
             </li>
           ))}
         </ul>
-        <h2 class="display-6">Favorites</h2>
-        <ul class="list-group" style={ {'min-height': 100 }}>
+        <h2 class='display-6'>Favorites</h2>
+        <ul class='list-group' style={ {'min-height': 100 }}>
           {feeds.map((result) => (
-            <li key={result} class="list-group-item list-group-item-action">
+            <li key={result} class='list-group-item list-group-item-action'>
               <button
-                type="button"
-                class="btn btn-outline-warning"
+                type='button'
+                class='btn btn-outline-warning'
                 onClick={() => this.unpinFeedUrl(result)}
                 aria-label={`Unfavorite ${result}`}>Unfavorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>{result.collectionName}</a>
+              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
+                {result.collectionName}
+              </a>
             </li>
           ))}
         </ul>
@@ -126,7 +130,7 @@ export default class App extends Component<{}, IAppState> {
       const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=searchcb`;
 
       fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'searchcb' }).then(async (response: fetchJsonp.Response) => {
-        const json = await response.json<{ results: Array<IFeed> }>();
+        const json: { results: ReadonlyArray<IFeed> } = await response.json<{ results: ReadonlyArray<IFeed> }>();
 
         this.setState({
           searchResults: json.results
