@@ -123,16 +123,13 @@ export default class App extends Component<{}, IAppState> {
     if (e.key === 'Enter') {
       const term: string = (e.target as HTMLInputElement).value;
       // tslint:disable-next-line:max-line-length
-      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=custom_callback`;
-      // tslint:disable-next-line:max-line-length
-      fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'custom_callback' }).then(async (response: fetchJsonp.Response) => {
-        const json: unknown = await response.json();
+      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=searchcb`;
 
-              // tslint:disable-next-line:max-line-length
-        const searchResults: IFeed[] = (json as { results: Array<IFeed>}).results;
+      fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'searchcb' }).then(async (response: fetchJsonp.Response) => {
+        const json = await response.json<{ results: Array<IFeed> }>();
 
         this.setState({
-          searchResults
+          searchResults: json.results
         });
       }).catch((err) => {
         console.error(err);
