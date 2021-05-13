@@ -2,5 +2,19 @@
   "$schema": "https://developer.microsoft.com/json-schemas/heft/heft.schema.json",
   "heftPlugins": [
     { "plugin": "@rushstack/heft-webpack4-plugin" }
+  ],
+  "eventActions": [
+    {
+      "actionKind": "copyFiles",
+      "heftEvent": "pre-compile",
+      "actionId": "copySrc",
+      "copyOperations": [
+        {
+          "sourceFolder": "./assets",
+          "destinationFolders": ["./dist"],
+          "includeGlobs": ["*.png", "*.ico"]
+        }
+      ]
+    }
   ]
 }
