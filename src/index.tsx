@@ -14,12 +14,13 @@ function getFeedUrl(feedUrl: string): string {
 }
 
 interface IAppState {
-  feeds: ReadonlyArray<string>;
+  feeds: ReadonlyArray<IFeed>;
   results: ReadonlyArray<IFeedItem>;
-  searchResults?: Array<string>;
+  searchResults?: Array<IFeed>;
 }
 
 interface IFeed {
+  collectionName: string;
   feedUrl: string;
 }
 
@@ -27,7 +28,7 @@ interface IFeed {
 export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly completedPlayback: Set<string> = new Set<string>();
-  private readonly pinnedFeeds: Set<string> = new Set<string>(
+  private readonly pinnedFeeds: Set<IFeed> = new Set<IFeed>(
     JSON.parse(localStorage.getItem('podr_feeds')!) || []
   );
 
@@ -50,7 +51,7 @@ export default class App extends Component<{}, IAppState> {
     });
   }
 
-  public render(props: {}, state: IAppState): JSX.Element {
+  public render(_: {}, state: IAppState): JSX.Element {
     const { feeds = [], searchResults = [] } = state;
     const results: ReadonlyArray<IFeedItem> = state.results;
 
@@ -62,16 +63,14 @@ export default class App extends Component<{}, IAppState> {
         <input class="form-control" type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
         <h2>Search</h2>
         <ul class="list-group" style={ {'min-height': 100 }}>
-          {searchResults.map((result: string) => (
+          {searchResults.map((result: IFeed) => (
             <li key={result} class="list-group-item list-group-item-action">
               <button
                 type="button"
                 class="btn btn-outline-primary"
                 onClick={() => this.pinFeedUrl(result)}
                 aria-label={`Favorite ${result}`}>Favorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result)}>
-                {result}
-              </a>
+              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>{result.collectionName}</a>
             </li>
           ))}
         </ul>
@@ -84,7 +83,7 @@ export default class App extends Component<{}, IAppState> {
                 class="btn btn-outline-warning"
                 onClick={() => this.unpinFeedUrl(result)}
                 aria-label={`Unfavorite ${result}`}>Unfavorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result)}>{result}</a>
+              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>{result.collectionName}</a>
             </li>
           ))}
         </ul>
@@ -129,9 +128,8 @@ export default class App extends Component<{}, IAppState> {
       fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'custom_callback' }).then(async (response: fetchJsonp.Response) => {
         const json: unknown = await response.json();
 
-        const searchResults: string[] = (json as { results: Array<IFeed>}).results.map((result: IFeed) => {
-          return result.feedUrl;
-        });
+              // tslint:disable-next-line:max-line-length
+        const searchResults: IFeed[] = (json as { results: Array<IFeed>}).results;
 
         this.setState({
           searchResults
@@ -142,7 +140,7 @@ export default class App extends Component<{}, IAppState> {
     }
   }
 
-  private getPinnedFeeds = (): ReadonlyArray<string> => {
+  private getPinnedFeeds = (): ReadonlyArray<IFeed> => {
     return [...this.pinnedFeeds.values()];
   }
 
@@ -182,12 +180,8 @@ export default class App extends Component<{}, IAppState> {
     }
   }
 
-  private pinFeedUrl = (url: string | null) => {
-    if (!url) {
-      return;
-    }
-
-    this.pinnedFeeds.add(url);
+  private pinFeedUrl = (feed: IFeed) => {
+    this.pinnedFeeds.add(feed);
 
     this.setState({
       feeds: this.getPinnedFeeds()
@@ -196,8 +190,8 @@ export default class App extends Component<{}, IAppState> {
     this.serializePinnedFeeds();
   }
 
-  private unpinFeedUrl = (feedUrl: string) => {
-    this.pinnedFeeds.delete(feedUrl);
+  private unpinFeedUrl = (feed: IFeed) => {
+    this.pinnedFeeds.delete(feed);
 
     this.setState({
       feeds: this.getPinnedFeeds()
