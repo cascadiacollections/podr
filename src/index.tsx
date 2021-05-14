@@ -78,7 +78,7 @@ export default class App extends Component<{}, IAppState> {
                 </li>
               ))}
             </ul>
-          </div> : null
+          </div> : undefined
         }
         <h2 class='display-6'>Favorites</h2>
         <ul class='list-group' style={ {'min-height': 100 }}>
@@ -132,7 +132,9 @@ export default class App extends Component<{}, IAppState> {
     if (e.key === 'Enter') {
       const term: string = (e.target as HTMLInputElement).value;
 
-      if (!term || !term.length) return;
+      if (!term || !term.length) {
+        return;
+      }
 
       // tslint:disable-next-line:max-line-length
       const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=searchcb`;
