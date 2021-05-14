@@ -41,13 +41,13 @@ export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => 
       class={`result list-group-item list-group-item-action ${played ? 'played' : ''}`}
       onClick={() => onClick(result)}
       tabIndex={0}>
-      <h2 class='title'>{result.title}</h2>
+      <h2 class='title' dangerouslySetInnerHTML={{ __html: result.title }} />
       <strong class='pubDate'>{formatPubDate(result.pubDate)}</strong>
       <strong>&nbsp;&bull;&nbsp;</strong>
       <strong class='duration'>
         {formatDuration(result.enclosure.duration)}
       </strong>
-      <p class='description'>{stripHtml(result.description)}</p>
+      <p class='description' dangerouslySetInnerHTML={{ __html: result.description }} />
     </li>
   );
 };
