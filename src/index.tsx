@@ -29,12 +29,16 @@ interface IFeed {
 export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly completedPlayback: Set<string> = new Set<string>();
-  private readonly pinnedFeeds: Set<IFeed> = new Set<IFeed>(
-    JSON.parse(localStorage.getItem('podr_feeds')!) || []
-  );
+  private readonly pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
 
   public constructor() {
     super();
+
+    const feeds: ReadonlyArray<IFeed> = JSON.parse(localStorage.getItem('podr_feeds')!) || [];
+
+    feeds.forEach((feed: IFeed) => {
+      this.pinnedFeeds.set(feed.feedUrl, feed);
+    });
 
     this.state = {
       feeds: this.getPinnedFeeds(),
@@ -71,7 +75,7 @@ export default class App extends Component<{}, IAppState> {
                 src={result.artworkUrl600}
                 height={200}
                 width={200}
-                class="img-thumbnail"
+                class='img-thumbnail'
                 alt={result.collectionName}
                 onClick={() => this.tryFetchFeed(result.feedUrl)}
                 onDblClick={() => this.pinFeedUrl(result)}
@@ -87,7 +91,7 @@ export default class App extends Component<{}, IAppState> {
             src={result.artworkUrl600}
             height={200}
             width={200}
-            class="img-thumbnail"
+            class='img-thumbnail'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
             onDblClick={() => this.unpinFeedUrl(result)}
@@ -187,7 +191,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private pinFeedUrl = (feed: IFeed) => {
-    this.pinnedFeeds.add(feed);
+    this.pinnedFeeds.set(feed.feedUrl, feed);
 
     this.setState({
       feeds: this.getPinnedFeeds()
@@ -197,7 +201,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private unpinFeedUrl = (feed: IFeed) => {
-    this.pinnedFeeds.delete(feed);
+    this.pinnedFeeds.delete(feed.feedUrl);
 
     this.setState({
       feeds: this.getPinnedFeeds()
