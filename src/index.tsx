@@ -22,6 +22,7 @@ interface IAppState {
 interface IFeed {
   collectionName: string;
   feedUrl: string;
+  artworkUrl600: string;
 }
 
 /* tslint:disable:export-name*/
@@ -64,37 +65,34 @@ export default class App extends Component<{}, IAppState> {
         { this.state.searchResults?.length ?
           <div>
             <h2 class='display-6'>Search</h2>
-            <ul class='list-group' style={ {'min-height': 100 }}>
-              {searchResults.map((result: IFeed) => (
-                <li key={result} class='list-group-item list-group-item-action'>
-                  <button
-                    type='button'
-                    class='btn btn-outline-primary'
-                    onClick={() => this.pinFeedUrl(result)}
-                    aria-label={`Favorite ${result}`}>Favorite</button>
-                  <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
-                    {result.collectionName}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {searchResults.map((result: IFeed) => (
+              <img
+                key={result.collectionName}
+                src={result.artworkUrl600}
+                height={200}
+                width={200}
+                class="img-thumbnail"
+                alt={result.collectionName}
+                onClick={() => this.tryFetchFeed(result.feedUrl)}
+                onDblClick={() => this.pinFeedUrl(result)}
+                aria-label={`Favorite ${result}`}
+                style={{ cursor: 'pointer' }} />
+            ))}
           </div> : undefined
         }
         <h2 class='display-6'>Favorites</h2>
-        <ul class='list-group' style={ {'min-height': 100 }}>
-          {feeds.map((result) => (
-            <li key={result} class='list-group-item list-group-item-action'>
-              <button
-                type='button'
-                class='btn btn-outline-warning'
-                onClick={() => this.unpinFeedUrl(result)}
-                aria-label={`Unfavorite ${result}`}>Unfavorite</button>
-              <a href='#' onClick={() => this.tryFetchFeed(result.feedUrl)} style={{ marginLeft: 12 }}>
-                {result.collectionName}
-              </a>
-            </li>
-          ))}
-        </ul>
+        {feeds.map((result) => (
+          <img
+            key={result.collectionName}
+            src={result.artworkUrl600}
+            height={200}
+            width={200}
+            class="img-thumbnail"
+            alt={result.collectionName}
+            onClick={() => this.tryFetchFeed(result.feedUrl)}
+            onDblClick={() => this.unpinFeedUrl(result)}
+            style={{ cursor: 'pointer' }} />
+        ))}
         <h2 class='display-6'>Episodes</h2>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
