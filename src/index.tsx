@@ -104,9 +104,6 @@ export default class App extends Component<{}, IAppState> {
               key={result.guid}
               result={result}
               onClick={this.onClick}
-              played={this.completedPlayback.has(
-                this.getSecureUrl(result.enclosure.link || '')
-              )}
             />
           ))}
         </ol>
