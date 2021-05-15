@@ -34,7 +34,7 @@ export default class App extends Component<{}, IAppState> {
   public constructor() {
     super();
 
-    const feeds: ReadonlyArray<IFeed> = JSON.parse(localStorage.getItem('podr_feeds') || '') || [];
+    const feeds: ReadonlyArray<IFeed> = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
 
     feeds.forEach((feed: IFeed) => {
       this.pinnedFeeds.set(feed.feedUrl, feed);
