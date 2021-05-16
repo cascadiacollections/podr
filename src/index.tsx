@@ -77,7 +77,7 @@ export default class App extends Component<{}, IAppState> {
                 width={128}
                 class='img-fluid'
                 alt={result.collectionName}
-                onTouchEnd={() => this.tryFetchFeed(result.feedUrl)}
+                onClick={() => this.tryFetchFeed(result.feedUrl)}
                 onDblClick={() => this.pinFeedUrl(result)}
                 aria-label={`Favorite ${result}`}
                 style={{ cursor: 'pointer' }} />
@@ -93,7 +93,7 @@ export default class App extends Component<{}, IAppState> {
             width={128}
             class='img-fluid'
             alt={result.collectionName}
-            onTouchEnd={() => this.tryFetchFeed(result.feedUrl)}
+            onClick={() => this.tryFetchFeed(result.feedUrl)}
             onDblClick={() => this.unpinFeedUrl(result)}
             style={{ cursor: 'pointer' }} />
         ))}
