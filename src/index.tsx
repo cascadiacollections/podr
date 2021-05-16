@@ -73,9 +73,9 @@ export default class App extends Component<{}, IAppState> {
               <img
                 key={result.collectionName}
                 src={result.artworkUrl600}
-                height={200}
-                width={200}
-                class='img-thumbnail'
+                height={128}
+                width={128}
+                class='img-fluid'
                 alt={result.collectionName}
                 onClick={() => this.tryFetchFeed(result.feedUrl)}
                 onDblClick={() => this.pinFeedUrl(result)}
@@ -89,9 +89,9 @@ export default class App extends Component<{}, IAppState> {
           <img
             key={result.collectionName}
             src={result.artworkUrl600}
-            height={200}
-            width={200}
-            class='img-thumbnail'
+            height={128}
+            width={128}
+            class='img-fluid'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
             onDblClick={() => this.unpinFeedUrl(result)}
