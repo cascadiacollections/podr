@@ -7,6 +7,8 @@ import { IFeedItem, Result } from './Result';
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
 
+declare var gtag: any;
+
 function getFeedUrl(feedUrl: string): string {
   return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
     feedUrl
@@ -126,6 +128,13 @@ export default class App extends Component<{}, IAppState> {
     if (e.key === 'Enter') {
       const term: string | undefined = this.searchRef.current?.value;
 
+      gtag('send', {
+        hitType: 'event',
+        eventCategory: 'Feed',
+        eventAction: 'search',
+        eventLabel: term
+      });
+
       if (!term || !term.length) {
         return this.setState( {
           searchResults: []
@@ -182,6 +191,13 @@ export default class App extends Component<{}, IAppState> {
   private onClick = (item: { enclosure: { link: string }}) => {
     const url: string = item.enclosure.link;
 
+    gtag('send', {
+      hitType: 'event',
+      eventCategory: 'Media',
+      eventAction: 'play',
+      eventLabel: url
+    });
+
     if (this.ref.current) {
       this.ref.current.src = this.getSecureUrl(url);
     }
@@ -189,6 +205,13 @@ export default class App extends Component<{}, IAppState> {
 
   private pinFeedUrl = (feed: IFeed) => {
     this.pinnedFeeds.set(feed.feedUrl, feed);
+
+    gtag('send', {
+      hitType: 'event',
+      eventCategory: 'Feed',
+      eventAction: 'favorite',
+      eventLabel: feed.feedUrl
+    });
 
     this.setState({
       feeds: this.getPinnedFeeds()
@@ -199,6 +222,13 @@ export default class App extends Component<{}, IAppState> {
 
   private unpinFeedUrl = (feed: IFeed) => {
     this.pinnedFeeds.delete(feed.feedUrl);
+
+    gtag('send', {
+      hitType: 'event',
+      eventCategory: 'Feed',
+      eventAction: 'unfavorite',
+      eventLabel: feed.feedUrl
+    });
 
     this.setState({
       feeds: this.getPinnedFeeds()
