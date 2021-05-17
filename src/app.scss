@@ -20,6 +20,20 @@ audio {
 	bottom: 0;
 }
 
+.results {
+	height: 128px;
+	max-height: 128px;
+	overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .result {
 	cursor: pointer;
+}
+
+.feed-items {
+	height: 340px;
+	max-height: 340px;
+	overflow-y: auto;
+  overflow-x: hidden;
 }

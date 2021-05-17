@@ -68,7 +68,8 @@ export default class App extends Component<{}, IAppState> {
         <input class='form-control' type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
         { this.state.searchResults?.length ?
           <div>
-            <h2 class='display-6'>Search</h2>
+          <h2 class='display-6'>Search</h2>
+          <div class="results">
             {searchResults.map((result: IFeed) => (
               <img
                 key={result.collectionName}
@@ -82,9 +83,10 @@ export default class App extends Component<{}, IAppState> {
                 aria-label={`Favorite ${result}`}
                 style={{ cursor: 'pointer' }} />
             ))}
-          </div> : undefined
+          </div></div> : undefined
         }
         <h2 class='display-6'>Favorites</h2>
+        <div class="results">
         {feeds.map((result) => (
           <img
             key={result.collectionName}
@@ -97,10 +99,11 @@ export default class App extends Component<{}, IAppState> {
             onDblClick={() => this.unpinFeedUrl(result)}
             style={{ cursor: 'pointer' }} />
         ))}
+        </div>
         <h2 class='display-6'>Episodes</h2>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
-        <ol class='list list-group' reversed>
+        <ol class='list list-group feed-items' reversed>
           {results.map((result: IFeedItem) => (
             <Result
               key={result.guid}
@@ -112,15 +115,6 @@ export default class App extends Component<{}, IAppState> {
         {/* Currently, autoplay is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <audio ref={this.ref} autoplay controls preload='auto' />
-        <br />
-        <footer>
-          <a
-            href='https://twitter.com/cascadiaco'
-            target='_blank'
-            rel='noopener noreferrer'>
-            @cascadiaco
-          </a>
-        </footer>
       </main>
     );
   }
