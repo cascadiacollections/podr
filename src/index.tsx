@@ -1,7 +1,7 @@
 import './app.scss';
 
 import fetchJsonp from 'fetch-jsonp';
-import { Component, render, h, createRef, JSX, RefObject } from 'preact';
+import { Component, render, h, createRef, JSX, RefObject, Fragment } from 'preact';
 import { IFeedItem, Result } from './Result';
 
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
@@ -61,8 +61,8 @@ export default class App extends Component<{}, IAppState> {
     const results: ReadonlyArray<IFeedItem> = state.results;
 
     return (
-      <main>
-        <h1 class='display-1'>
+      <Fragment>
+        <h1>
           <a href='/'>Podr</a>
         </h1>
         <input class='form-control' type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
@@ -85,7 +85,7 @@ export default class App extends Component<{}, IAppState> {
             ))}
           </div></div> : undefined
         }
-        <h2 class='display-6'>Favorites</h2>
+        <h2>Favorites</h2>
         <div class="results">
         {feeds.map((result) => (
           <img
@@ -100,7 +100,7 @@ export default class App extends Component<{}, IAppState> {
             style={{ cursor: 'pointer' }} />
         ))}
         </div>
-        <h2 class='display-6'>Episodes</h2>
+        <h2>Episodes</h2>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list list-group feed-items' reversed>
@@ -115,7 +115,7 @@ export default class App extends Component<{}, IAppState> {
         {/* Currently, autoplay is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <audio ref={this.ref} autoplay controls preload='auto' />
-      </main>
+      </Fragment>
     );
   }
 
