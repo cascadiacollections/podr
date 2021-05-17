@@ -28,6 +28,7 @@ interface IFeed {
 /* tslint:disable:export-name*/
 export default class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
+  private readonly searchRef: RefObject<HTMLInputElement> = createRef();
   private readonly completedPlayback: Set<string> = new Set<string>();
   private readonly pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
 
@@ -65,10 +66,10 @@ export default class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input class='form-control' type='search' placeholder='Search for a podcast' onKeyDown={this.onSearch} />
+        <input ref={this.searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
         { this.state.searchResults?.length ?
           <div>
-          <h2 class='display-6'>Search</h2>
+          <h2>Results for "{this.searchRef.current?.value}"</h2>
           <div class="results">
             {searchResults.map((result: IFeed) => (
               <img
@@ -123,7 +124,7 @@ export default class App extends Component<{}, IAppState> {
     const limit: number = 10;
 
     if (e.key === 'Enter') {
-      const term: string = (e.target as HTMLInputElement).value;
+      const term: string | undefined = this.searchRef.current?.value;
 
       if (!term || !term.length) {
         return;
