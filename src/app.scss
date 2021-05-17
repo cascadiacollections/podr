@@ -25,6 +25,10 @@ audio {
 	max-height: 128px;
 	overflow-y: auto;
   overflow-x: hidden;
+
+	img {
+		margin: 0px 4px;
+	}
 }
 
 .result {
