@@ -127,7 +127,9 @@ export default class App extends Component<{}, IAppState> {
       const term: string | undefined = this.searchRef.current?.value;
 
       if (!term || !term.length) {
-        return;
+        return this.setState( {
+          searchResults: []
+        });
       }
 
       // tslint:disable-next-line:max-line-length
