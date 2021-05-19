@@ -5,7 +5,7 @@ function formatDuration(duration: number): string {
 }
 
 function formatPubDate(isoString: string): string {
-  return new Date(isoString).toDateString();
+  return new Date(isoString.replace(/-/g, "/")).toDateString();
 }
 
 function stripHtml(html: string): string {
