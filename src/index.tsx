@@ -72,14 +72,13 @@ export default class App extends Component<{}, IAppState> {
         { this.state.searchResults?.length ?
           <div>
           <h2>Results for "{this.searchRef.current?.value}"</h2>
-          <div class="results">
+          <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
             {searchResults.map((result: IFeed) => (
               <img
                 key={result.collectionName}
                 src={result.artworkUrl600}
-                height={128}
                 width={128}
-                class='img-fluid'
+                class='img-fluid rounded-3'
                 alt={result.collectionName}
                 onClick={() => this.tryFetchFeed(result.feedUrl)}
                 onDblClick={() => this.pinFeedUrl(result)}
@@ -89,14 +88,13 @@ export default class App extends Component<{}, IAppState> {
           </div></div> : undefined
         }
         <h2>Favorites</h2>
-        <div class="results">
+        <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
         {feeds.map((result) => (
           <img
             key={result.collectionName}
             src={result.artworkUrl600}
-            height={128}
             width={128}
-            class='img-fluid'
+            class='img-fluid rounded-3'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
             onDblClick={() => this.unpinFeedUrl(result)}
@@ -123,7 +121,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   private onSearch = (e: KeyboardEvent) => {
-    const limit: number = 10;
+    const limit: number = 14; // iTunes API defaults to 10
 
     if (e.key === 'Enter') {
       const term: string | undefined = this.searchRef.current?.value;
