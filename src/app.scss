@@ -42,6 +42,11 @@ audio {
 	}
 }
 
+.feeds {
+	max-height: 136px;
+	overflow-y: scroll;
+}
+
 .feed-items {
 	height: 340px;
 	max-height: 340px;
