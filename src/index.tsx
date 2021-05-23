@@ -24,6 +24,7 @@ interface IAppState {
 interface IFeed {
   collectionName: string;
   feedUrl: string;
+  artworkUrl100: string;
   artworkUrl600: string;
 }
 
@@ -76,8 +77,9 @@ export default class App extends Component<{}, IAppState> {
             {searchResults.map((result: IFeed) => (
               <img
                 key={result.collectionName}
-                src={result.artworkUrl600}
-                width={128}
+                src={result.artworkUrl100}
+                height={100}
+                width={100}
                 class='img-fluid rounded-3'
                 alt={result.collectionName}
                 onClick={() => this.tryFetchFeed(result.feedUrl)}
@@ -92,8 +94,9 @@ export default class App extends Component<{}, IAppState> {
         {feeds.map((result) => (
           <img
             key={result.collectionName}
-            src={result.artworkUrl600}
-            width={128}
+            src={result.artworkUrl100}
+            height={100}
+            width={100}
             class='img-fluid rounded-3'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
