@@ -8,6 +8,25 @@ html, body {
 
 h1 {
 	text-align: center;
+	margin: 16px;
+}
+
+h1 a {
+	color: #ffa500
+}
+
+input[type="search"] {
+	border: solid;
+    border-radius: 6px;
+    border-color: #ffa500;
+    border-width: 1px;
+}
+
+.section-header {
+	color: #ffa500;
+	text-transform: uppercase;
+    font-size: 14px;
+    margin: 8px 0;
 }
 
 a {
