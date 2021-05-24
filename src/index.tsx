@@ -72,7 +72,7 @@ export default class App extends Component<{}, IAppState> {
         <input ref={this.searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
         { this.state.searchResults?.length ?
           <div>
-          <h2>Results for "{this.searchRef.current?.value}"</h2>
+          <h2 class="section-header">Results for "{this.searchRef.current?.value}"</h2>
           <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
             {searchResults.map((result: IFeed) => (
               <img
@@ -89,7 +89,7 @@ export default class App extends Component<{}, IAppState> {
             ))}
           </div></div> : undefined
         }
-        <h2>Favorites</h2>
+        <h2 class="section-header">Favorites</h2>
         <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
         {feeds.map((result) => (
           <img
@@ -104,7 +104,7 @@ export default class App extends Component<{}, IAppState> {
             style={{ cursor: 'pointer' }} />
         ))}
         </div>
-        <h2>Episodes</h2>
+        <h2 class="section-header">Episodes</h2>
         {/* Currently, reversed is not type-compatible even tho it is to spec.
         // @ts-ignore */ }
         <ol class='list list-group feed-items' reversed>
