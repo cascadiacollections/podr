@@ -1,3 +1,8 @@
+if (process.env.NODE_ENV==='development') {
+  require("preact/debug");
+}
+
+
 import './app.scss';
 
 import fetchJsonp from 'fetch-jsonp';
