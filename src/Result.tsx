@@ -8,11 +8,6 @@ function formatPubDate(isoString: string): string {
   return new Date(isoString.replace(/-/g, "/")).toDateString();
 }
 
-function stripHtml(html: string): string {
-  const doc: Document = new DOMParser().parseFromString(html, 'text/html');
-  return doc.body.textContent || '';
-}
-
 interface IEnclosure {
   duration: number;
   link: string;
