@@ -650,12 +650,12 @@
     source-map "~0.6.1"
     typescript "~4.3.5"
 
-"@microsoft/load-themed-styles@^1.10.203":
+"@microsoft/load-themed-styles@^1.10.209":
   version "1.10.209"
   resolved "https://registry.yarnpkg.com/@microsoft/load-themed-styles/-/load-themed-styles-1.10.209.tgz#d4a48946bc7f1d2f1961869c06ac9eb2e686c49d"
   integrity sha512-QMiuP2FOxALdkS5cl22XZXYm7nOiEz4z7B/4mXbWu05EyzdmCgdcv4m12CUlDn7o8CUsYg7aI6lAKGmsuhNF0g==
 
-"@microsoft/rush-stack-compiler-4.2@^0.1.0":
+"@microsoft/rush-stack-compiler-4.2@0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@microsoft/rush-stack-compiler-4.2/-/rush-stack-compiler-4.2-0.1.1.tgz#79055a268bc98bd012663741191cd39752cccc50"
   integrity sha512-fNsJBP6b2Qb4LObeNaKOeL4X/LU+CuGaaL74fLhhEOpzwGWCoOY7qlEmZNGhtJIWD3/FfSTZkn44+U1imVFNkg==
@@ -721,7 +721,7 @@
     eslint-plugin-react "~7.20.0"
     eslint-plugin-tsdoc "~0.2.10"
 
-"@rushstack/eslint-config@^2.3.4":
+"@rushstack/eslint-config@2.4.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-config/-/eslint-config-2.4.0.tgz#c0277be711b7c5372c1ab25f73dcfa856e0c6926"
   integrity sha512-qH3Q++hoELDgmOV8Hh0h804TBeRSOFv/I2kI6V3qOJEy+reKneyIHAraZrBwFDvMHdBUbXWkWsR/gEpG2sq6QQ==
@@ -791,15 +791,6 @@
     "@rushstack/tree-pattern" "0.2.1"
     "@typescript-eslint/experimental-utils" "~4.28.2"
 
-"@rushstack/heft-config-file@0.6.3":
-  version "0.6.3"
-  resolved "https://registry.yarnpkg.com/@rushstack/heft-config-file/-/heft-config-file-0.6.3.tgz#8f53f9f8e08868514da39edd2a4ea26c20070be6"
-  integrity sha512-t4VQnA8Q+TswiGqZjpFz70Ek1NeouBZJnHzaRtUq76bCdZh+frlM2V6QYnsJ/3YJaslZnc9gS+4Blv8c3lsL3w==
-  dependencies:
-    "@rushstack/node-core-library" "3.40.0"
-    "@rushstack/rig-package" "0.3.0"
-    jsonpath-plus "~4.0.0"
-
 "@rushstack/heft-config-file@0.6.4":
   version "0.6.4"
   resolved "https://registry.yarnpkg.com/@rushstack/heft-config-file/-/heft-config-file-0.6.4.tgz#9bff58b9971d423bf40ae89f9896479f3f1901d5"
@@ -835,7 +826,7 @@
     postcss "7.0.32"
     postcss-modules "~1.5.0"
 
-"@rushstack/heft-web-rig@^0.4.4":
+"@rushstack/heft-web-rig@0.4.10":
   version "0.4.10"
   resolved "https://registry.yarnpkg.com/@rushstack/heft-web-rig/-/heft-web-rig-0.4.10.tgz#0fe16335a983652966b44adaef40e13e574e43b6"
   integrity sha512-5n9oB14w06NS+PwlCgP/+eJZohU+Qy7kSrm2KCHjMNliuT2HPiXUxomALrbxHMujELWMrNWiE3e74rNDRDHSKA==
@@ -847,7 +838,7 @@
     eslint "~7.30.0"
     typescript "~3.9.7"
 
-"@rushstack/heft-webpack4-plugin@0.2.13", "@rushstack/heft-webpack4-plugin@^0.2.7":
+"@rushstack/heft-webpack4-plugin@0.2.13":
   version "0.2.13"
   resolved "https://registry.yarnpkg.com/@rushstack/heft-webpack4-plugin/-/heft-webpack4-plugin-0.2.13.tgz#6903ec0cac3ddc729bfbb26ef4dd41406794542a"
   integrity sha512-F9fPyWFPKmyGcLUT8iargnb1fXjPSYTlxwMihYkbnX+bWH1QkGJDVz0668jHVFuaK7ZWaXI0VwpQa9ELaajPlw==
@@ -856,12 +847,12 @@
     webpack "~4.44.2"
     webpack-dev-server "~3.11.0"
 
-"@rushstack/heft@^0.36.3":
-  version "0.36.4"
-  resolved "https://registry.yarnpkg.com/@rushstack/heft/-/heft-0.36.4.tgz#c6df195252eb8da71e8fc49f5e582d0a66ee79bf"
-  integrity sha512-QIKv5wSJP9pOfwGMeIoZuVOLP6Qa4uIw8ESyo8A9ajOpa5PSyBcq/x5l055PjIL2/isCePmKyfmcvfg9+7CtHQ==
+"@rushstack/heft@0.37.3":
+  version "0.37.3"
+  resolved "https://registry.yarnpkg.com/@rushstack/heft/-/heft-0.37.3.tgz#2d6b6e9744798c400ec0dca23da8af8f51c73823"
+  integrity sha512-BUbr4WbL3maxODyWhbNMqR9bDOipsY65Z9KyjCLMrLKjDiWVG7hw28V54wa1W22wvDXrEsafka1j0661zALWoA==
   dependencies:
-    "@rushstack/heft-config-file" "0.6.3"
+    "@rushstack/heft-config-file" "0.6.4"
     "@rushstack/node-core-library" "3.40.0"
     "@rushstack/rig-package" "0.3.0"
     "@rushstack/ts-command-line" "4.9.0"
@@ -1110,26 +1101,17 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.4.tgz#fcf7205c25dff795ee79af1e30da2c9790808f11"
   integrity sha512-rZ5drC/jWjrArrS8BR6SIr4cWpW09RNTYt9AMZo3Jwwif+iacXAqgVjm0B0Bv/S1jhDXKHqRVNCbACkJ89RAnQ==
 
-"@types/react-dom@17.0.4":
-  version "17.0.4"
-  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-17.0.4.tgz#d65159a847aca2a0fc87a7544a2f8fece8754d04"
-  integrity sha512-Wb6rlnPJfqbhpkvYN39y1NM/pOGGPzzIRquu0RdUMvTwgXNvASFO7pdtrtvyxGTQNb9wzBaQxXAWDdEqegZw2A==
+"@types/react-dom@17.0.9":
+  version "17.0.9"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-17.0.9.tgz#441a981da9d7be117042e1a6fd3dac4b30f55add"
+  integrity sha512-wIvGxLfgpVDSAMH5utdL9Ngm5Owu0VsGmldro3ORLXV8CShrL8awVj06NuEXFQ5xyaYfdca7Sgbk/50Ri1GdPg==
   dependencies:
     "@types/react" "*"
 
-"@types/react@*":
+"@types/react@*", "@types/react@17.0.20":
   version "17.0.20"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.20.tgz#a4284b184d47975c71658cd69e759b6bd37c3b8c"
   integrity sha512-wWZrPlihslrPpcKyCSlmIlruakxr57/buQN1RjlIeaaTWDLtJkTtRW429MoQJergvVKc4IWBpRhWw7YNh/7GVA==
-  dependencies:
-    "@types/prop-types" "*"
-    "@types/scheduler" "*"
-    csstype "^3.0.2"
-
-"@types/react@17.0.5":
-  version "17.0.5"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.5.tgz#3d887570c4489011f75a3fc8f965bf87d09a1bea"
-  integrity sha512-bj4biDB9ZJmGAYTWSKJly6bMr4BLUiBrx9ujiJEoP9XIDY9CTaPGxE5QWN/1WjpPLzYF7/jRNnV2nNxNe970sw==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -8415,15 +8397,20 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@4.2.4, typescript@~4.2.4:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.4.tgz#8610b59747de028fda898a8aef0e103f156d0961"
-  integrity sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==
+typescript@4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.3.tgz#bdc5407caa2b109efd4f82fe130656f977a29324"
+  integrity sha512-4xfscpisVgqqDfPaJo5vkd+Qd/ItkoagnHpufr+i2QCHBsNYp+G7UAoyFl8aPtx879u38wPV65rZ8qbGZijalA==
 
 typescript@~3.9.7:
   version "3.9.10"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.10.tgz#70f3910ac7a51ed6bef79da7800690b19bf778b8"
   integrity sha512-w6fIxVE/H1PkLKcCPsFqKE7Kv7QUwhU8qQY2MueZXWx5cPZdwFupLgKK3vntcK98BtNHZtAF4LA/yl2a7k8R6Q==
+
+typescript@~4.2.4:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.4.tgz#8610b59747de028fda898a8aef0e103f156d0961"
+  integrity sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==
 
 typescript@~4.3.5:
   version "4.3.5"
