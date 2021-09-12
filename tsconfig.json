@@ -6,7 +6,6 @@
         ],
         "target": "es2015",
         "jsx": "react",
-        "jsxFactory": "h",
-        "noImplicitAny": false
+        "jsxFactory": "h"
     }
 }
