@@ -67,8 +67,7 @@ export default class App extends Component<{}, IAppState> {
   }
 
   public render(_: {}, state: IAppState): JSX.Element {
-    const { feeds = [], searchResults = [] } = state;
-    const results: ReadonlyArray<IFeedItem> = state.results;
+    const { feeds = [], searchResults = [], results } = state;
 
     return (
       <Fragment>
@@ -90,8 +89,7 @@ export default class App extends Component<{}, IAppState> {
                 alt={result.collectionName}
                 onClick={() => this.tryFetchFeed(result.feedUrl)}
                 onDblClick={() => this.pinFeedUrl(result)}
-                aria-label={`Favorite ${result}`}
-                style={{ cursor: 'pointer' }} />
+                aria-label={`Favorite ${result}`} />
             ))}
           </div></div> : undefined
         }
@@ -106,8 +104,7 @@ export default class App extends Component<{}, IAppState> {
             class='img-fluid rounded-3'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
-            onDblClick={() => this.unpinFeedUrl(result)}
-            style={{ cursor: 'pointer' }} />
+            onDblClick={() => this.unpinFeedUrl(result)} />
         ))}
         </div>
         <h2 class="section-header">Episodes</h2>
