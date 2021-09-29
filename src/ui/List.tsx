@@ -1,4 +1,4 @@
-import { h } from "preact";
+import { FunctionComponent, h } from "preact";
 import { IFeedItem } from "./Result";
 import { Result } from "./Result";
 
@@ -7,7 +7,7 @@ interface IListProps {
   onClick: (item: IFeedItem) => void;
 };
 
-export const List = (props: IListProps) => {
+export const List: FunctionComponent<IListProps> = (props: IListProps) => {
   const { results, onClick } = props;
 
   return (
