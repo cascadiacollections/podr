@@ -21,7 +21,7 @@ export interface IFeedItem {
   enclosure: IEnclosure;
 }
 
-interface IResultProps {
+export interface IResultProps {
   result: IFeedItem;
   onClick: (feedItem: IFeedItem) => void;
 }
