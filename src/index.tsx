@@ -7,7 +7,8 @@ import './app.scss';
 
 import fetchJsonp from 'fetch-jsonp';
 import { Component, render, h, createRef, JSX, RefObject, Fragment } from 'preact';
-import { IFeedItem, Result } from './Result';
+import { IFeedItem } from './ui/Result';
+import { List } from './ui/List';
 
 const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
 const MAX_COUNT: number = 300;
@@ -110,19 +111,8 @@ export default class App extends Component<{}, IAppState> {
         ))}
         </div>
         <h2 class="section-header">Episodes</h2>
-        {/* Currently, reversed is not type-compatible even tho it is to spec.
-        // @ts-ignore */ }
-        <ol class='list list-group feed-items' reversed>
-          {results.map((result: IFeedItem) => (
-            <Result
-              key={result.guid}
-              result={result}
-              onClick={this.onClick}
-            />
-          ))}
-        </ol>
-        {/* Currently, autoplay is not type-compatible even tho it is to spec.
-        // @ts-ignore */ }
+        <List results={results} onClick={this.onClick} />
+        { /* @ts-ignore autoplay */ }
         <audio ref={this.ref} autoplay controls preload='auto' />
       </Fragment>
     );
