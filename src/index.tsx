@@ -76,22 +76,23 @@ export default class App extends Component<{}, IAppState> {
         </h1>
         <input ref={this.searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
         { this.state.searchResults?.length ?
-          <div>
-          <h2 class="section-header">Results for "{this.searchRef.current?.value}"</h2>
-          <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
-            {searchResults.map((result: IFeed) => (
-              <img
-                key={result.collectionName}
-                src={result.artworkUrl100}
-                height={100}
-                width={100}
-                class='img-fluid rounded-3'
-                alt={result.collectionName}
-                onClick={() => this.tryFetchFeed(result.feedUrl)}
-                onDblClick={() => this.pinFeedUrl(result)}
-                aria-label={`Favorite ${result}`} />
-            ))}
-          </div></div> : undefined
+          <Fragment>
+            <h2 class="section-header">Results for "{this.searchRef.current?.value}"</h2>
+            <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
+              {searchResults.map((result: IFeed) => (
+                <img
+                  key={result.collectionName}
+                  src={result.artworkUrl100}
+                  height={100}
+                  width={100}
+                  class='img-fluid rounded-3'
+                  alt={result.collectionName}
+                  onClick={() => this.tryFetchFeed(result.feedUrl)}
+                  onDblClick={() => this.pinFeedUrl(result)}
+                  aria-label={`Favorite ${result}`} />
+              ))}
+            </div>
+          </Fragment> : undefined
         }
         <h2 class="section-header">Favorites</h2>
         <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
