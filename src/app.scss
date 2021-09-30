@@ -1,3 +1,23 @@
+@media (prefers-color-scheme: dark) {
+	html, #root {
+		background: black;
+	}
+
+	input[type="search"] {
+		background-color: #75757538;
+		border-color: #292929 !important;
+	}
+
+	li {
+		background: black !important;
+    color: white !important;
+
+		&:hover {
+			color: orange !important;
+		}
+	}
+}
+
 html, body {
 	font: 14px/1.21 'Helvetica Neue', arial, sans-serif;
 	font-weight: 400;
