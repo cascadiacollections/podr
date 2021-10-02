@@ -23,7 +23,11 @@ declare var gtag: any;
 export class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly searchRef: RefObject<HTMLInputElement> = createRef();
-  private readonly pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
+  private readonly _pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
+
+  private get pinnedFeeds(): IFeed[] {
+    return ToArray(this._pinnedFeeds.values())
+  }
 
   public constructor() {
     super();
@@ -31,11 +35,11 @@ export class App extends Component<{}, IAppState> {
     const feeds: ReadonlyArray<IFeed> = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
 
     feeds.forEach((feed: IFeed) => {
-      this.pinnedFeeds.set(feed.feedUrl, feed);
+      this._pinnedFeeds.set(feed.feedUrl, feed);
     });
 
     this.state = {
-      feeds: ToArray(this.pinnedFeeds.values()),
+      feeds: this.pinnedFeeds,
       results: JSON.parse(localStorage.getItem('podr_results') || '[]')
     };
   }
@@ -160,7 +164,7 @@ export class App extends Component<{}, IAppState> {
   }
 
   private pinFeedUrl = (feed: IFeed) => {
-    this.pinnedFeeds.set(feed.feedUrl, feed);
+    this._pinnedFeeds.set(feed.feedUrl, feed);
 
     gtag('send', {
       hitType: 'event',
@@ -170,14 +174,14 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.setState({
-      feeds: ToArray(this.pinnedFeeds.values())
+      feeds: this.pinnedFeeds
     });
 
     this.serializePinnedFeeds();
   }
 
   private unpinFeedUrl = (feed: IFeed) => {
-    this.pinnedFeeds.delete(feed.feedUrl);
+    this._pinnedFeeds.delete(feed.feedUrl);
 
     gtag('send', {
       hitType: 'event',
