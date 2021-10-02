@@ -128,12 +128,12 @@ export class App extends Component<{}, IAppState> {
     }
   }
 
-  private tryFetchFeed(feedUrl?: string): void {
+  private async tryFetchFeed(feedUrl?: string): Promise<void> {
     if (!feedUrl) {
       return;
     }
 
-    void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
+    return fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
       .then((response) => response.json())
       .then(({ items: results = [] }) => {
         localStorage.setItem('podr_results', JSON.stringify(results));
