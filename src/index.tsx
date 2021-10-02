@@ -236,6 +236,8 @@ export default class App extends Component<{}, IAppState> {
   }
 }
 
-if (typeof window !== 'undefined') {
-  render(<App />, document.getElementById('root')!);
+const rootEl: HTMLElement | null = document.getElementById('root');
+
+if (typeof window !== 'undefined' && rootEl) {
+  render(<App />, rootEl);
 }
