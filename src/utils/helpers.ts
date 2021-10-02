@@ -7,3 +7,7 @@ export function getFeedUrl(feedUrl: string, maxCount: number = 300): string {
     feedUrl
   )}&api_key=xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6&count=${maxCount}`;
 }
+
+export function ToArray<T>(iterator: IterableIterator<T>): Array<T> {
+  return [...iterator];
+}

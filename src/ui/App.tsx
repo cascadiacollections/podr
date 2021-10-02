@@ -3,7 +3,7 @@ import { Component, h, createRef, JSX, RefObject, Fragment } from 'preact';
 
 import { IFeedItem } from './Result';
 import { List } from './List';
-import { getFeedUrl, getSecureUrl } from '../utils/helpers';
+import { getFeedUrl, getSecureUrl, ToArray } from '../utils/helpers';
 
 interface IAppState {
   feeds: ReadonlyArray<IFeed>;
@@ -23,7 +23,6 @@ declare var gtag: any;
 export class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
   private readonly searchRef: RefObject<HTMLInputElement> = createRef();
-  private readonly completedPlayback: Set<string> = new Set<string>();
   private readonly pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
 
   public constructor() {
@@ -36,19 +35,13 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.state = {
-      feeds: this.getPinnedFeeds(),
-      results: this._getResults()
+      feeds: ToArray(this.pinnedFeeds.values()),
+      results: JSON.parse(localStorage.getItem('podr_results') || '[]')
     };
   }
 
   public componentDidMount(): void {
     this.tryFetchFeed();
-
-    this.ref.current?.addEventListener('ended', (event: Event) => {
-      const url: string = (event.target as HTMLAudioElement).src;
-      this.completedPlayback.add(url);
-      this.forceUpdate();
-    });
   }
 
   public render(_: {}, state: IAppState): JSX.Element {
@@ -135,18 +128,6 @@ export class App extends Component<{}, IAppState> {
     }
   }
 
-  private getPinnedFeeds = (): ReadonlyArray<IFeed> => {
-    return [...this.pinnedFeeds.values()];
-  }
-
-  private _getResults = (): ReadonlyArray<IFeedItem> => {
-    return JSON.parse(localStorage.getItem('podr_results')!) || [];
-  }
-
-  private _setResults = (results: ReadonlyArray<{}> = []) => {
-    localStorage.setItem('podr_results', JSON.stringify(results));
-  }
-
   private tryFetchFeed(feedUrl?: string): void {
     if (!feedUrl) {
       return;
@@ -155,7 +136,7 @@ export class App extends Component<{}, IAppState> {
     void fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
       .then((response) => response.json())
       .then(({ items: results = [] }) => {
-        this._setResults(results);
+        localStorage.setItem('podr_results', JSON.stringify(results));
 
         this.setState({
           results
@@ -189,7 +170,7 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.setState({
-      feeds: this.getPinnedFeeds()
+      feeds: ToArray(this.pinnedFeeds.values())
     });
 
     this.serializePinnedFeeds();
@@ -206,13 +187,13 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.setState({
-      feeds: this.getPinnedFeeds()
+      feeds: ToArray(this.pinnedFeeds.values())
     });
 
     this.serializePinnedFeeds();
   }
 
   private serializePinnedFeeds = () => {
-    localStorage.setItem('podr_feeds', JSON.stringify(this.getPinnedFeeds()));
+    localStorage.setItem('podr_feeds', JSON.stringify(ToArray(this.pinnedFeeds.values())));
   }
 }
