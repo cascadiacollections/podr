@@ -1,12 +1,11 @@
-if (process.env.NODE_ENV==='development') {
+if (process.env.NODE_ENV === 'development') {
   require("preact/debug");
 }
 
-
-import './app.scss';
-
 import fetchJsonp from 'fetch-jsonp';
 import { Component, render, h, createRef, JSX, RefObject, Fragment } from 'preact';
+
+import './app.scss';
 import { IFeedItem } from './ui/Result';
 import { List } from './ui/List';
 
@@ -28,10 +27,10 @@ interface IAppState {
 }
 
 interface IFeed {
-  collectionName: string;
-  feedUrl: string;
-  artworkUrl100: string;
-  artworkUrl600: string;
+  readonly collectionName: string;
+  readonly feedUrl: string;
+  readonly artworkUrl100: string;
+  readonly artworkUrl600: string;
 }
 
 /* tslint:disable:export-name*/
