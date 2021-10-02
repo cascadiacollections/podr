@@ -21,30 +21,26 @@ interface IFeed {
 declare var gtag: any;
 
 export class App extends Component<{}, IAppState> {
-  private readonly ref: RefObject<HTMLAudioElement> = createRef();
-  private readonly searchRef: RefObject<HTMLInputElement> = createRef();
+  private readonly _audioRef: RefObject<HTMLAudioElement> = createRef();
+  private readonly _searchRef: RefObject<HTMLInputElement> = createRef();
   private readonly _pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
 
-  private get pinnedFeeds(): IFeed[] {
+  private get feeds(): IFeed[] {
     return ToArray(this._pinnedFeeds.values())
   }
 
   public constructor() {
     super();
 
-    const feeds: ReadonlyArray<IFeed> = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
-
-    feeds.forEach((feed: IFeed) => {
+    JSON.parse(localStorage.getItem('podr_feeds') || '[]').forEach((feed: IFeed) => {
       this._pinnedFeeds.set(feed.feedUrl, feed);
     });
 
     this.state = {
-      feeds: this.pinnedFeeds,
+      feeds: this.feeds,
       results: JSON.parse(localStorage.getItem('podr_results') || '[]')
     };
-  }
 
-  public componentDidMount(): void {
     this.tryFetchFeed();
   }
 
@@ -56,10 +52,10 @@ export class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input ref={this.searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
+        <input ref={this._searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
         { this.state.searchResults?.length ?
           <Fragment>
-            <h2 class="section-header">Results for "{this.searchRef.current?.value}"</h2>
+            <h2 class="section-header">Results for "{this._searchRef.current?.value}"</h2>
             <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
               {searchResults.map((result: IFeed) => (
                 <img
@@ -93,7 +89,7 @@ export class App extends Component<{}, IAppState> {
         <h2 class="section-header">Episodes</h2>
         <List results={results} onClick={this.onClick} />
         { /* @ts-ignore autoplay */ }
-        <audio ref={this.ref} autoplay controls preload='auto' />
+        <audio ref={this._audioRef} autoplay controls preload='auto' />
       </Fragment>
     );
   }
@@ -102,7 +98,7 @@ export class App extends Component<{}, IAppState> {
     const limit: number = 14; // iTunes API defaults to 10
 
     if (e.key === 'Enter') {
-      const term: string | undefined = this.searchRef.current?.value;
+      const term: string | undefined = this._searchRef.current?.value;
 
       gtag('send', {
         hitType: 'event',
@@ -158,8 +154,8 @@ export class App extends Component<{}, IAppState> {
       eventLabel: url
     });
 
-    if (this.ref.current) {
-      this.ref.current.src = getSecureUrl(url);
+    if (this._audioRef.current) {
+      this._audioRef.current.src = getSecureUrl(url);
     }
   }
 
@@ -174,7 +170,7 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.setState({
-      feeds: this.pinnedFeeds
+      feeds: this.feeds
     });
 
     this.serializePinnedFeeds();
@@ -191,13 +187,13 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.setState({
-      feeds: ToArray(this.pinnedFeeds.values())
+      feeds: this.feeds
     });
 
     this.serializePinnedFeeds();
   }
 
   private serializePinnedFeeds = () => {
-    localStorage.setItem('podr_feeds', JSON.stringify(ToArray(this.pinnedFeeds.values())));
+    localStorage.setItem('podr_feeds', JSON.stringify(this.feeds));
   }
 }
