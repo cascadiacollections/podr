@@ -3,6 +3,7 @@ import { Component, h, createRef, JSX, RefObject, Fragment } from 'preact';
 
 import { IFeedItem } from './Result';
 import { List } from './List';
+import { getFeedUrl, getSecureUrl } from '../utils/helpers';
 
 interface IAppState {
   feeds: ReadonlyArray<IFeed>;
@@ -18,15 +19,6 @@ interface IFeed {
 }
 
 declare var gtag: any;
-
-const TOKEN: string = `xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6`;
-const MAX_COUNT: number = 300;
-
-function getFeedUrl(feedUrl: string): string {
-  return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-    feedUrl
-  )}&api_key=${TOKEN}&count=${MAX_COUNT}`;
-}
 
 export class App extends Component<{}, IAppState> {
   private readonly ref: RefObject<HTMLAudioElement> = createRef();
@@ -171,10 +163,6 @@ export class App extends Component<{}, IAppState> {
       });
   }
 
-  private getSecureUrl = (url: string) => {
-    return url.replace('http://', 'https://');
-  }
-
   private onClick = (item: { enclosure: { link: string }}) => {
     const url: string = item.enclosure.link;
 
@@ -186,7 +174,7 @@ export class App extends Component<{}, IAppState> {
     });
 
     if (this.ref.current) {
-      this.ref.current.src = this.getSecureUrl(url);
+      this.ref.current.src = getSecureUrl(url);
     }
   }
 
