@@ -38,8 +38,6 @@ function createWebpackConfig({ production }) {
     },
     entry: {
       app: path.join(__dirname, 'lib', 'index.js'),
-
-      // Put these libraries in a separate vendor bundle
       vendor: ['react', 'react-dom']
     },
     output: {
@@ -47,8 +45,6 @@ function createWebpackConfig({ production }) {
       filename: '[name]_[contenthash].js'
     },
     performance: {
-      // This specifies the bundle size limit that will trigger Webpack's warning saying:
-      // "The following entrypoint(s) combined asset size exceeds the recommended limit."
       maxEntrypointSize: 250000,
       maxAssetSize: 250000
     },
@@ -58,7 +54,8 @@ function createWebpackConfig({ production }) {
     devtool: production ? undefined : 'source-map',
     plugins: [
       new HtmlWebpackPlugin({
-        template: 'assets/index.html'
+        template: 'assets/index.html',
+        favicon: 'assets/favicon.ico'
       })
     ]
   };
