@@ -4,8 +4,10 @@ import { Component, h, createRef, JSX, RefObject, Fragment } from 'preact';
 import { IFeedItem } from './Result';
 import { List } from './List';
 import { getFeedUrl, getSecureUrl, ToArray } from '../utils/helpers';
+import { Search } from './Search';
 
 interface IAppState {
+  query: string;
   feeds: ReadonlyArray<IFeed>;
   results: ReadonlyArray<IFeedItem>;
   searchResults?: ReadonlyArray<IFeed>;
@@ -22,7 +24,6 @@ declare var gtag: any;
 
 export class App extends Component<{}, IAppState> {
   private readonly _audioRef: RefObject<HTMLAudioElement> = createRef();
-  private readonly _searchRef: RefObject<HTMLInputElement> = createRef();
   private readonly _pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
 
   private get feeds(): IFeed[] {
@@ -37,11 +38,43 @@ export class App extends Component<{}, IAppState> {
     });
 
     this.state = {
+      query: '',
       feeds: this.feeds,
       results: JSON.parse(localStorage.getItem('podr_results') || '[]')
     };
 
     this.tryFetchFeed();
+  }
+
+  private onSearch = (query: string) => {
+    const limit: number = 14; // iTunes API defaults to 10
+
+    gtag('send', {
+      hitType: 'event',
+      eventCategory: 'Feed',
+      eventAction: 'search',
+      eventLabel: query
+    });
+
+    if (!query || !query.length) {
+      return this.setState( {
+        searchResults: []
+      });
+    }
+
+    // tslint:disable-next-line:max-line-length
+    const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${query}&limit=${limit}&callback=searchcb`;
+
+    fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'searchcb' }).then(async (response: fetchJsonp.Response) => {
+      const json: { results: ReadonlyArray<IFeed> } = await response.json<{ results: ReadonlyArray<IFeed> }>();
+
+      this.setState({
+        query,
+        searchResults: json.results
+      });
+    }).catch((err) => {
+      console.error(err);
+    });
   }
 
   public render(_: {}, state: IAppState): JSX.Element {
@@ -52,10 +85,10 @@ export class App extends Component<{}, IAppState> {
         <h1>
           <a href='/'>Podr</a>
         </h1>
-        <input ref={this._searchRef} class='form-control' type='search' placeholder='Search podcasts e.g. "Kevin Smith"' onKeyDown={this.onSearch} />
+        <Search onSearch={this.onSearch} />
         { this.state.searchResults?.length ?
           <Fragment>
-            <h2 class="section-header">Results for "{this._searchRef.current?.value}"</h2>
+            <h2 class="section-header">Results for "{this.state.query}"</h2>
             <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
               {searchResults.map((result: IFeed) => (
                 <img
@@ -92,40 +125,6 @@ export class App extends Component<{}, IAppState> {
         <audio ref={this._audioRef} autoplay controls preload='auto' />
       </Fragment>
     );
-  }
-
-  private onSearch = (e: KeyboardEvent) => {
-    const limit: number = 14; // iTunes API defaults to 10
-
-    if (e.key === 'Enter') {
-      const term: string | undefined = this._searchRef.current?.value;
-
-      gtag('send', {
-        hitType: 'event',
-        eventCategory: 'Feed',
-        eventAction: 'search',
-        eventLabel: term
-      });
-
-      if (!term || !term.length) {
-        return this.setState( {
-          searchResults: []
-        });
-      }
-
-      // tslint:disable-next-line:max-line-length
-      const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${term}&limit=${limit}&callback=searchcb`;
-
-      fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'searchcb' }).then(async (response: fetchJsonp.Response) => {
-        const json: { results: ReadonlyArray<IFeed> } = await response.json<{ results: ReadonlyArray<IFeed> }>();
-
-        this.setState({
-          searchResults: json.results
-        });
-      }).catch((err) => {
-        console.error(err);
-      });
-    }
   }
 
   private async tryFetchFeed(feedUrl?: string): Promise<void> {

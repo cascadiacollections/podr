@@ -26,7 +26,6 @@ export interface IResultProps {
   onClick: (feedItem: IFeedItem) => void;
 }
 
-/* tslint:disable:variable-name*/
 export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => {
   const { onClick, result } = props;
 
