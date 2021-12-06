@@ -20,8 +20,6 @@ interface IFeed {
   readonly artworkUrl600: string;
 }
 
-declare var gtag: any;
-
 export class App extends Component<{}, IAppState> {
   private readonly _audioRef: RefObject<HTMLAudioElement> = createRef();
   private readonly _pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
@@ -50,7 +48,8 @@ export class App extends Component<{}, IAppState> {
     const limit: number = 14; // iTunes API defaults to 10
 
     gtag('event', 'search', {
-      'search_term': query
+      'search_term': query,
+      transport: 'beacon'
     });
 
     if (!query || !query.length) {
@@ -143,11 +142,11 @@ export class App extends Component<{}, IAppState> {
   private onClick = (item: { enclosure: { link: string }}) => {
     const url: string = item.enclosure.link;
 
-    gtag('send', {
-      hitType: 'event',
-      eventCategory: 'Media',
+
+    gtag('event', 'Audio', {
       eventAction: 'play',
-      eventLabel: url
+      eventLabel: url,
+      transport: 'beacon'
     });
 
     if (this._audioRef.current) {
@@ -158,11 +157,10 @@ export class App extends Component<{}, IAppState> {
   private pinFeedUrl = (feed: IFeed) => {
     this._pinnedFeeds.set(feed.feedUrl, feed);
 
-    gtag('send', {
-      hitType: 'event',
-      eventCategory: 'Feed',
+    gtag('event', 'Feed', {
       eventAction: 'favorite',
-      eventLabel: feed.feedUrl
+      eventLabel: feed.feedUrl,
+      transport: 'beacon'
     });
 
     this.setState({
@@ -175,11 +173,10 @@ export class App extends Component<{}, IAppState> {
   private unpinFeedUrl = (feed: IFeed) => {
     this._pinnedFeeds.delete(feed.feedUrl);
 
-    gtag('send', {
-      hitType: 'event',
-      eventCategory: 'Feed',
+    gtag('event', 'Feed', {
       eventAction: 'unfavorite',
-      eventLabel: feed.feedUrl
+      eventLabel: feed.feedUrl,
+      transport: 'beacon'
     });
 
     this.setState({
