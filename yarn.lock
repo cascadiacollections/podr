@@ -1014,6 +1014,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/gtag.js@^0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@types/gtag.js/-/gtag.js-0.0.8.tgz#43035ab23a06b3bd0b23968c5c4ef000c597ad8a"
+  integrity sha512-xKDygydxruSUNkVbZWjiEbMijz9+xZCLb2yiTiQT88pm5EhIAUhaCo05IZF1HcQc90u4W7cp+7OZNpcJxpyL5g==
+
 "@types/heft-jest@1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/heft-jest/-/heft-jest-1.0.2.tgz#706c923b467bf5f4b315c1e0825dba97c485d9df"
