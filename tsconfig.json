@@ -1,6 +1,7 @@
 {
     "extends": "./node_modules/@rushstack/heft-web-rig/profiles/library/tsconfig-base.json",
     "compilerOptions": {
+        "target": "es6",
         "downlevelIteration": true,
         "types": [
             "webpack-env",
