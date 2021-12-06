@@ -49,11 +49,8 @@ export class App extends Component<{}, IAppState> {
   private onSearch = (query: string) => {
     const limit: number = 14; // iTunes API defaults to 10
 
-    gtag('send', {
-      hitType: 'event',
-      eventCategory: 'Feed',
-      eventAction: 'search',
-      eventLabel: query
+    gtag('event', 'search', {
+      'search_term': query
     });
 
     if (!query || !query.length) {
