@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@microsoft/load-themed-styles": "^1.10.234",
-    "fetch-jsonp": "^1.2.1",
     "preact": "^10.6.2"
   }
 }
