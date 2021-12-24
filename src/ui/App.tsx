@@ -1,4 +1,3 @@
-import fetchJsonp from 'fetch-jsonp';
 import { Component, h, createRef, JSX, RefObject, Fragment } from 'preact';
 
 import { IFeedItem } from './Result';
@@ -58,11 +57,8 @@ export class App extends Component<{}, IAppState> {
       });
     }
 
-    // tslint:disable-next-line:max-line-length
-    const SEARCH_URL: string = `https://itunes.apple.com/search?media=podcast&term=${query}&limit=${limit}&callback=searchcb`;
-
-    fetchJsonp(SEARCH_URL, { jsonpCallbackFunction: 'searchcb' }).then(async (response: fetchJsonp.Response) => {
-      const json: { results: ReadonlyArray<IFeed> } = await response.json<{ results: ReadonlyArray<IFeed> }>();
+    fetch(`https://podr-service.cascadiacollections.workers.dev?q=${query}&limit=${limit}`).then(async (response: Response) => {
+      const json: { results: ReadonlyArray<IFeed> } = await response.json();
 
       this.setState({
         query,
