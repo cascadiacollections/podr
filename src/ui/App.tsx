@@ -64,8 +64,11 @@ export class App extends Component<{}, IAppState> {
         query,
         searchResults: json.results
       });
-    }).catch((err) => {
-      console.error(err);
+    }).catch((err: Error) => {
+      gtag('event', 'exception', {
+        description: `search_fetch_${limit}_${query}_${err.message}`,
+        fatal: false
+      });
     });
   }
 
