@@ -1,4 +1,4 @@
-import { h, FunctionComponent } from 'preact';
+import { h, JSX, FunctionComponent } from 'preact';
 
 interface ISearchProps {
   onSearch: (query: string) => void;
@@ -6,9 +6,16 @@ interface ISearchProps {
 
 export const Search: FunctionComponent<ISearchProps> = (props: ISearchProps) => {
   const { onSearch } = props;
-  const onKeyDown = (e: any) => {
+
+  const onKeyDown = (e: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onSearch(e.target.value);
+      const target: HTMLInputElement = e?.target as HTMLInputElement;
+      const query: string = target.value || '';
+      const trimmedQuery: string = query.trim();
+
+      if (trimmedQuery) {
+        onSearch(trimmedQuery);
+      }
     }
   }
 
