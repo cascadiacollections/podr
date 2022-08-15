@@ -43,9 +43,7 @@ export class App extends Component<{}, IAppState> {
     this.tryFetchFeed();
   }
 
-  private onSearch = (query: string) => {
-    const limit: number = 14; // iTunes API defaults to 10
-
+  private onSearch = (query: string, limit: number = 14) => {
     gtag('event', 'search', {
       'search_term': query,
       transport: 'beacon'
