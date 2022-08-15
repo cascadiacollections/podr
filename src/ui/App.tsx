@@ -57,7 +57,9 @@ export class App extends Component<{}, IAppState> {
       });
     }
 
-    fetch(`https://podr-service.cascadiacollections.workers.dev?q=${query}&limit=${limit}`).then(async (response: Response) => {
+    const queryParams: URLSearchParams = new URLSearchParams([['q', query], ['limit', limit.toString()]]);
+
+    fetch(`https://podr-service.cascadiacollections.workers.dev?${queryParams.toString()}`).then(async (response: Response) => {
       const json: { results: ReadonlyArray<IFeed> } = await response.json();
 
       this.setState({
