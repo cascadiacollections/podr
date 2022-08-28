@@ -1,5 +1,7 @@
 if (process.env.NODE_ENV === 'development') {
   require("preact/debug");
+} else {
+  require("preact/devtools");
 }
 
 import './app.scss';
