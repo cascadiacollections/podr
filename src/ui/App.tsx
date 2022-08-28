@@ -21,7 +21,7 @@ interface IFeed {
 
 export class App extends Component<{}, IAppState> {
   private static readonly AudioRef: RefObject<HTMLAudioElement> = createRef();
-  private static readonly Favorited: Map<string, IFeed> = new Map<string, IFeed>();
+  private static readonly Favorited: Set<IFeed> = new Set<IFeed>();
 
   private get feeds(): IFeed[] {
     return ToArray(App.Favorited.values())
@@ -31,7 +31,7 @@ export class App extends Component<{}, IAppState> {
     super();
 
     JSON.parse(localStorage.getItem('podr_feeds') || '[]').forEach((feed: IFeed) => {
-      App.Favorited.set(feed.feedUrl, feed);
+      App.Favorited.add(feed);
     });
 
     this.state = {
@@ -154,7 +154,7 @@ export class App extends Component<{}, IAppState> {
   }
 
   private pinFeedUrl = (feed: IFeed) => {
-    App.Favorited.set(feed.feedUrl, feed);
+    App.Favorited.add(feed);
 
     gtag('event', 'Feed', {
       eventAction: 'favorite',
@@ -170,7 +170,7 @@ export class App extends Component<{}, IAppState> {
   }
 
   private unpinFeedUrl = (feed: IFeed) => {
-    App.Favorited.delete(feed.feedUrl);
+    App.Favorited.delete(feed);
 
     gtag('event', 'Feed', {
       eventAction: 'unfavorite',
