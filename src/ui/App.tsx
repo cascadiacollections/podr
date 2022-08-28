@@ -117,7 +117,7 @@ export class App extends Component<{}, IAppState> {
         <h2 class="section-header">Episodes</h2>
         <List results={results} onClick={this.onClick} />
         { /* @ts-ignore autoplay */ }
-        <audio ref={this._audioRef} autoplay controls preload='auto' />
+        <audio ref={App.AudioRef} autoplay controls preload='auto' />
       </Fragment>
     );
   }
