@@ -1,4 +1,5 @@
 import { h, FunctionComponent } from 'preact';
+import { useCallback } from 'preact/hooks';
 
 function formatDuration(duration: number): string {
   return new Date(1000 * duration).toISOString().substr(11, 8);
@@ -30,10 +31,14 @@ export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => 
   const { onClick, result } = props;
   const { description, title } = result;
 
+  const onClickCallback = useCallback(() => {
+    onClick(result);
+  }, [result]);
+
   return (
     <li
       class={'result list-group-item list-group-item-action'}
-      onClick={() => onClick(result)}
+      onClick={onClickCallback}
       tabIndex={0}>
       <a href={result.enclosure.link}>
         <h2 class='title' dangerouslySetInnerHTML={{ __html: title }} />
