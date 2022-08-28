@@ -20,18 +20,18 @@ interface IFeed {
 }
 
 export class App extends Component<{}, IAppState> {
-  private readonly _audioRef: RefObject<HTMLAudioElement> = createRef();
-  private readonly _pinnedFeeds: Map<string, IFeed> = new Map<string, IFeed>();
+  private static readonly AudioRef: RefObject<HTMLAudioElement> = createRef();
+  private static readonly Favorited: Map<string, IFeed> = new Map<string, IFeed>();
 
   private get feeds(): IFeed[] {
-    return ToArray(this._pinnedFeeds.values())
+    return ToArray(App.Favorited.values())
   }
 
   public constructor() {
     super();
 
     JSON.parse(localStorage.getItem('podr_feeds') || '[]').forEach((feed: IFeed) => {
-      this._pinnedFeeds.set(feed.feedUrl, feed);
+      App.Favorited.set(feed.feedUrl, feed);
     });
 
     this.state = {
@@ -148,13 +148,13 @@ export class App extends Component<{}, IAppState> {
       transport: 'beacon'
     });
 
-    if (this._audioRef.current) {
-      this._audioRef.current.src = getSecureUrl(url);
+    if (App.AudioRef.current) {
+      App.AudioRef.current.src = getSecureUrl(url);
     }
   }
 
   private pinFeedUrl = (feed: IFeed) => {
-    this._pinnedFeeds.set(feed.feedUrl, feed);
+    App.Favorited.set(feed.feedUrl, feed);
 
     gtag('event', 'Feed', {
       eventAction: 'favorite',
@@ -170,7 +170,7 @@ export class App extends Component<{}, IAppState> {
   }
 
   private unpinFeedUrl = (feed: IFeed) => {
-    this._pinnedFeeds.delete(feed.feedUrl);
+    App.Favorited.delete(feed.feedUrl);
 
     gtag('event', 'Feed', {
       eventAction: 'unfavorite',
