@@ -14,7 +14,7 @@ interface IEnclosure {
 }
 
 export interface IFeedItem {
-  guid: string;
+  readonly guid: string;
   title: string;
   description: string;
   pubDate: string;
@@ -22,8 +22,8 @@ export interface IFeedItem {
 }
 
 export interface IResultProps {
-  result: IFeedItem;
-  onClick: (feedItem: IFeedItem) => void;
+  result: Readonly<IFeedItem>;
+  onClick: (feedItem: Readonly<IFeedItem>) => void;
 }
 
 export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => {

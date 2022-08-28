@@ -3,8 +3,8 @@ import { IFeedItem } from "./Result";
 import { Result } from "./Result";
 
 interface IListProps {
-  results: readonly IFeedItem[];
-  onClick: (item: IFeedItem) => void;
+  results: ReadonlyArray<IFeedItem>;
+  onClick: (item: Readonly<IFeedItem>) => void;
 };
 
 export const List: FunctionComponent<IListProps> = (props: IListProps) => {
@@ -13,7 +13,7 @@ export const List: FunctionComponent<IListProps> = (props: IListProps) => {
   return (
     // @ts-ignore reversed
     <ol class='list list-group feed-items' reversed>
-      {results.map((result: IFeedItem) => (
+      {results.map((result: Readonly<IFeedItem>) => (
         <Result
           key={result.guid}
           result={result}
