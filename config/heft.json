@@ -1,20 +1,47 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/heft/heft.schema.json",
-  "heftPlugins": [
-    { "plugin": "@rushstack/heft-webpack4-plugin" }
-  ],
-  "eventActions": [
-    {
-      "actionKind": "copyFiles",
-      "heftEvent": "pre-compile",
-      "actionId": "copySrc",
-      "copyOperations": [
-        {
-          "sourceFolder": "./assets",
-          "destinationFolders": ["./dist"],
-          "includeGlobs": ["*.png", "*.ico"]
-        }
-      ]
+  "$schema": "https://developer.microsoft.com/json-schemas/heft/v0/heft.schema.json",
+  "aliasesByName": {
+    "start": {
+      "actionName": "build-watch",
+      "defaultParameters": ["--serve"]
     }
-  ]
+  },
+
+  "phasesByName": {
+    "build": {
+      "cleanFiles": [{ "includeGlobs": ["dist", "lib", "lib-amd", "lib-commonjs", "lib-es6"] }],
+
+      "tasksByName": {
+        "sass": {
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-sass-plugin"
+          }
+        },
+        "typescript": {
+          "taskDependencies": ["sass"],
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-typescript-plugin"
+          }
+        },
+        "lint": {
+          "taskDependencies": ["typescript"],
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-lint-plugin"
+          }
+        },
+        "api-extractor": {
+          "taskDependencies": ["typescript"],
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-api-extractor-plugin"
+          }
+        },
+        "webpack": {
+          "taskDependencies": ["typescript"],
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-webpack4-plugin"
+          }
+        }
+      }
+    }
+  }
 }
