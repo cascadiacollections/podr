@@ -42,7 +42,7 @@ function createWebpackConfig({ production }) {
     },
     output: {
       path: path.join(__dirname, 'dist'),
-      filename: '[name]_[hash].js'
+      filename: '[name]_[contenthash].js'
     },
     performance: {
       maxEntrypointSize: 250000,
