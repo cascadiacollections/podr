@@ -19,6 +19,10 @@ interface IFeed {
   readonly artworkUrl600: string;
 }
 
+declare global {
+  interface Window { gtag: any; }
+}
+
 export class App extends Component<{}, IAppState> {
   private static readonly AudioRef: RefObject<HTMLAudioElement> = createRef();
   private static readonly Favorited: Set<IFeed> = new Set<IFeed>();
@@ -44,7 +48,7 @@ export class App extends Component<{}, IAppState> {
   }
 
   private onSearch = (query: string, limit: number = 14) => {
-    gtag('event', 'search', {
+    window.gtag('event', 'search', {
       'search_term': query,
       transport: 'beacon'
     });
@@ -65,7 +69,7 @@ export class App extends Component<{}, IAppState> {
         searchResults: json.results
       });
     }).catch((err: Error) => {
-      gtag('event', 'exception', {
+      window.gtag('event', 'exception', {
         description: `search_fetch_${limit}_${query}_${err.message}`,
         fatal: false
       });
@@ -142,7 +146,7 @@ export class App extends Component<{}, IAppState> {
     const url: string = item.enclosure.link;
 
 
-    gtag('event', 'Audio', {
+    window.gtag('event', 'Audio', {
       eventAction: 'play',
       eventLabel: url,
       transport: 'beacon'
@@ -156,7 +160,7 @@ export class App extends Component<{}, IAppState> {
   private pinFeedUrl = (feed: IFeed) => {
     App.Favorited.add(feed);
 
-    gtag('event', 'Feed', {
+    window.gtag('event', 'Feed', {
       eventAction: 'favorite',
       eventLabel: feed.feedUrl,
       transport: 'beacon'
@@ -172,7 +176,7 @@ export class App extends Component<{}, IAppState> {
   private unpinFeedUrl = (feed: IFeed) => {
     App.Favorited.delete(feed);
 
-    gtag('event', 'Feed', {
+    window.gtag('event', 'Feed', {
       eventAction: 'unfavorite',
       eventLabel: feed.feedUrl,
       transport: 'beacon'

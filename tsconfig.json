@@ -3,8 +3,7 @@
     "compilerOptions": {
         "downlevelIteration": true,
         "types": [
-            "webpack-env",
-            "@types/gtag.js"
+            "webpack-env"
         ],
         "jsx": "react",
         "jsxFactory": "h"
