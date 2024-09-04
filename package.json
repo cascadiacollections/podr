@@ -38,7 +38,7 @@
     "source-map-loader": "4.0.2",
     "style-loader": "3.3.4",
     "typescript": "5.4.5",
-    "webpack": "5.91.0"
+    "webpack": "5.94.0"
   },
   "dependencies": {
     "@microsoft/load-themed-styles": "1.10.290",
