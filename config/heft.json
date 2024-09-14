@@ -9,8 +9,7 @@
 
   "phasesByName": {
     "build": {
-      "cleanFiles": [{ "includeGlobs": ["dist", "lib", "lib-amd", "lib-commonjs", "lib-es6"] }],
-
+      "cleanFiles": [{ "includeGlobs": ["dist", "temp", "lib", "lib-commonjs"] }],
       "tasksByName": {
         "sass": {
           "taskPlugin": {
