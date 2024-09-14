@@ -2,6 +2,7 @@
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 /**
  * If the "--production" command-line parameter is specified when invoking Heft, then the
@@ -19,12 +20,14 @@ function createWebpackConfig({ production }) {
         {
           test: /\.s[ac]ss$/i,
           use: [
-            "style-loader",
-            "css-loader",
+            production ? MiniCssExtractPlugin.loader : "style-loader",  // Use MiniCssExtractPlugin for production
+            "css-loader",  // Resolves CSS imports, URLs, and optimizes CSS
+            "postcss-loader", // Add vendor prefixes or use post-processing tools (optional)
             {
               loader: "sass-loader",
               options: {
-                implementation: require("sass"),
+                implementation: require("sass"),  // Use Dart Sass (modern SASS implementation)
+                sourceMap: !production,  // Enable source maps in development mode for easier debugging
               },
             },
           ],
@@ -56,7 +59,11 @@ function createWebpackConfig({ production }) {
       new HtmlWebpackPlugin({
         template: 'assets/index.html',
         favicon: 'assets/favicon.ico'
-      })
+      }),
+      ...(production ? [new MiniCssExtractPlugin({
+        filename: '[name]_[contenthash].css'
+      })] : []),
+      require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
     ]
   };
 
