@@ -61,7 +61,7 @@ export class App extends Component<{}, IAppState> {
 
     const queryParams: URLSearchParams = new URLSearchParams([['q', query], ['limit', limit.toString()]]);
 
-    fetch(`https://podr-service.cascadiacollections.workers.dev?${queryParams.toString()}`).then(async (response: Response) => {
+    fetch(`https://podr-svc-48579879001.us-west4.run.app/?${queryParams.toString()}`).then(async (response: Response) => {
       const json: { results: ReadonlyArray<IFeed> } = await response.json();
 
       this.setState({
