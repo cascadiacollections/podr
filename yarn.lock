@@ -848,10 +848,10 @@
     source-map "~0.6.1"
     typescript "~4.2.4"
 
-"@microsoft/load-themed-styles@1.10.290":
-  version "1.10.290"
-  resolved "https://registry.yarnpkg.com/@microsoft/load-themed-styles/-/load-themed-styles-1.10.290.tgz#dff00e093939ea86c3ac04b7f353b0be75e86a6d"
-  integrity sha512-ZK9hPo+2mMT/Hne1OXW0KVIon2j90zOGBERleAdMzDyPfsu6DJsiFEGGil/3H83SU4Vz81MiAHqlGlA5Xkvsdw==
+"@microsoft/load-themed-styles@2.0.142":
+  version "2.0.142"
+  resolved "https://registry.yarnpkg.com/@microsoft/load-themed-styles/-/load-themed-styles-2.0.142.tgz#b269798811a3c07b76e8ceb88249de123c3398b5"
+  integrity sha512-ee7XGfseTf91ZsLXckYwAsLmQpFVLCOr0GbVtdsKU4MmUe3eQ1FR2P7T2023dCgks131eWK4l2oVfazKIz2gVA==
 
 "@microsoft/rush-stack-compiler-5.3@0.1.0":
   version "0.1.0"
@@ -6299,10 +6299,10 @@ postcss@^8.4.31:
     picocolors "^1.0.0"
     source-map-js "^1.2.0"
 
-preact@10.10.6:
-  version "10.10.6"
-  resolved "https://registry.yarnpkg.com/preact/-/preact-10.10.6.tgz#1fe62aecf93974b64e6a42e09ba1f00f93207d14"
-  integrity sha512-w0mCL5vICUAZrh1DuHEdOWBjxdO62lvcO++jbzr8UhhYcTbFkpegLH9XX+7MadjTl/y0feoqwQ/zAnzkc/EGog==
+preact@10.24.0:
+  version "10.24.0"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-10.24.0.tgz#bd8139bee35aafede3c6de96d2453982610dfeef"
+  integrity sha512-aK8Cf+jkfyuZ0ZZRG9FbYqwmEiGQ4y/PUO4SuTWoyWL244nZZh7bd5h2APd4rSNDYTBNghg1L+5iJN3Skxtbsw==
 
 prelude-ls@^1.2.1:
   version "1.2.1"
