@@ -11,7 +11,6 @@ export const List: FunctionComponent<IListProps> = (props: IListProps) => {
   const { results, onClick } = props;
 
   return (
-    // @ts-ignore reversed
     <ol class='list list-group feed-items' reversed>
       {results.map((result: Readonly<IFeedItem>) => (
         <Result
