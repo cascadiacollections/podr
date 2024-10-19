@@ -1,2 +1,3 @@
 [build.environment]
+  node_version = "18.18.0"
   NPM_CONFIG_ARCH = "x64"
