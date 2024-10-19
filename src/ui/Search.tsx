@@ -8,9 +8,7 @@ interface ISearchProps {
 export const Search: FunctionComponent<ISearchProps> = ({ onSearch }) => {
   const onKeyDown = useCallback((event: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      const target: HTMLInputElement = event.target as HTMLInputElement;
-
-      onSearch(target.value.trim());
+      onSearch(event.currentTarget.value.trim());
     }
   }, [onSearch]);
 
