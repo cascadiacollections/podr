@@ -1,23 +1,18 @@
 import { h, JSX, FunctionComponent } from 'preact';
 
+import { useCallback } from 'preact/hooks';
 interface ISearchProps {
   onSearch: (query: string) => void;
 }
 
-export const Search: FunctionComponent<ISearchProps> = (props: ISearchProps) => {
-  const { onSearch } = props;
+export const Search: FunctionComponent<ISearchProps> = ({ onSearch }: ISearchProps) => {
+  const onKeyDown = useCallback((event: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const target: HTMLInputElement = event.target as HTMLInputElement;
 
-  const onKeyDown = (e: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const target: HTMLInputElement = e?.target as HTMLInputElement;
-      const query: string = target.value || '';
-      const trimmedQuery: string = query.trim();
-
-      if (trimmedQuery) {
-        onSearch(trimmedQuery);
-      }
+      onSearch(target.value.trim());
     }
-  }
+  }, [onSearch]);
 
   return <input class='form-control' type='search' placeholder='Search podcasts' onKeyDown={onKeyDown} />
 }
