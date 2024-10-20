@@ -10,6 +10,7 @@ interface IAppState {
   feeds: ReadonlyArray<IFeed>;
   results: ReadonlyArray<IFeedItem>;
   searchResults?: ReadonlyArray<IFeed>;
+  topResults?: ReadonlyArray<IFeed>;
 }
 
 interface IFeed {
@@ -43,6 +44,19 @@ export class App extends Component<{}, IAppState> {
       feeds: this.feeds,
       results: JSON.parse(localStorage.getItem('podr_results') || '[]')
     };
+
+    fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10`).then(async (response: Response) => {
+      const json: { feed: { entry: ReadonlyArray<IFeed> } } = await response.json();
+
+      this.setState({
+        topResults: json.feed.entry
+      });
+    }).catch((err: Error) => {
+      window.gtag('event', 'exception', {
+        description: `search_fetch_toppodcasts_${err.message}`,
+        fatal: false
+      });
+    });
 
     this.tryFetchFeed();
   }
@@ -104,6 +118,24 @@ export class App extends Component<{}, IAppState> {
             </div>
           </Fragment> : undefined
         }
+        <Fragment>
+          <h2 class="section-header">Top podcasts</h2>
+          <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
+            {this.state.topResults && this.state.topResults.map((result: IFeed) => (
+              /* todo - fix assertions */
+              <img
+                key={(result as any).title.label}
+                src={(result as any)['im:image'][2].label}
+                height={100}
+                width={100}
+                class='img-fluid rounded-3'
+                alt={(result as any).title.label}
+                onClick={() => this.tryFetchFeed((result as any).id.label)}
+                onDblClick={() => this.pinFeedUrl((result as any).id.label)}
+                aria-label={`Favorite ${(result as any).title.label}`} />
+            ))}
+          </div>
+        </Fragment>
         <h2 class="section-header">Favorites</h2>
         <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
         {feeds.map((result) => (
