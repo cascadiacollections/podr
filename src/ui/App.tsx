@@ -130,7 +130,16 @@ export class App extends Component<{}, IAppState> {
                 width={100}
                 class='img-fluid rounded-3'
                 alt={(result as any).title.label}
-                onClick={() => this.tryFetchFeed((result as any).id.label)}
+                onClick={async () => {
+                  const itunesId = (result as any).id.attributes['im:id'];
+                  const feedResults = await fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=${itunesId}`).then(async (response: Response) => {
+                    return await response.json();
+                  }).catch((err: Error) => {
+                    // @todo
+                  });
+                  const feedUrl = feedResults.results[0].feedUrl;
+                  this.tryFetchFeed(feedUrl)
+                }}
                 onDblClick={() => this.pinFeedUrl((result as any).id.label)}
                 aria-label={`Favorite ${(result as any).title.label}`} />
             ))}
