@@ -2,5 +2,9 @@
     "editor.rulers": [120],
     "editor.tabSize": 2,
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true
+    "files.insertFinalNewline": true,
+    "github-actions.workflows.pinned.workflows": [
+        "dynamic/github-code-scanning/codeql",
+        ".github/workflows/node.js.yml"
+    ]
 }
