@@ -4,6 +4,15 @@ on:
   release:
     types: [created]
 
+# Prevent overlapping release jobs if multiple releases are created in quick succession
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Explicitly define permissions
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
