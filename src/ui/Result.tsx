@@ -2,7 +2,15 @@ import { h, FunctionComponent } from 'preact';
 import { useCallback } from 'preact/hooks';
 
 function formatDuration(duration: number): string {
-  return new Date(1000 * duration).toISOString().substr(11, 8);
+  const hours = Math.floor(duration / 3600);
+  const minutes = Math.floor((duration % 3600) / 60);
+  const seconds = Math.floor(duration % 60);
+  
+  return [
+    hours < 10 ? `0${hours}` : hours,
+    minutes < 10 ? `0${minutes}` : minutes,
+    seconds < 10 ? `0${seconds}` : seconds
+  ].join(':');
 }
 
 function formatPubDate(isoString: string): string {
@@ -37,16 +45,16 @@ export const Result: FunctionComponent<IResultProps> = (props: IResultProps) => 
 
   return (
     <li
-      class={'result list-group-item list-group-item-action'}
+      className={'result list-group-item list-group-item-action'}
       onClick={onClickCallback}
       tabIndex={0}>
       <a href={result.enclosure.link}>
-        <h2 class='title' dangerouslySetInnerHTML={{ __html: title }} />
+        <h2 className='title' dangerouslySetInnerHTML={{ __html: title }} />
       </a>
-      <strong class='pubDate'>{formatPubDate(result.pubDate)}</strong>
+      <strong className='pubDate'>{formatPubDate(result.pubDate)}</strong>
       <strong>&nbsp;&bull;&nbsp;</strong>
-      <strong class='duration'>{formatDuration(result.enclosure.duration)}</strong>
-      <p class='description' dangerouslySetInnerHTML={{ __html: description }} />
+      <strong className='duration'>{formatDuration(result.enclosure.duration)}</strong>
+      <p className='description' dangerouslySetInnerHTML={{ __html: description }} />
     </li>
   );
 };

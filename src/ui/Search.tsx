@@ -32,7 +32,7 @@ export const Search: FunctionComponent<ISearchProps> = ({ onSearch }) => {
 
   return (
     <input
-      class="form-control"
+      className="form-control"
       type="search"
       placeholder="Search podcasts"
       onKeyDown={onKeyDown}
