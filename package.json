@@ -12,7 +12,9 @@
     "start": "heft start",
     "test": "heft test --clean",
     "_phase:build": "heft run --only build -- --clean",
-    "_phase:test": "heft run --only test -- --clean"
+    "_phase:test": "heft run --only test -- --clean",
+    "update-browserslist": "npx update-browserslist-db@latest",
+    "prebuild": "npm run update-browserslist"
   },
   "devDependencies": {
     "@microsoft/rush-stack-compiler-5.3": "0.1.0",
@@ -45,6 +47,7 @@
   },
   "dependencies": {
     "@microsoft/load-themed-styles": "2.0.142",
+    "@preact/signals": "^2.0.5",
     "preact": "10.24.0"
   }
 }

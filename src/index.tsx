@@ -7,10 +7,17 @@ if (process.env.NODE_ENV === 'development') {
 import './app.scss';
 import { h, render } from 'preact';
 
-import { App } from './ui/App';
+// Import modern functional component instead of class component
+import { App } from './ui/AppFunctional';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 const rootEl: HTMLElement | null = document.getElementById('root');
 
 if (typeof window !== 'undefined' && rootEl) {
-  render(<App />, rootEl);
+  render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>,
+    rootEl
+  );
 }
