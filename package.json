@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@microsoft/load-themed-styles": "2.0.142",
+    "@preact/signals": "^2.0.5",
     "preact": "10.24.0"
   }
 }

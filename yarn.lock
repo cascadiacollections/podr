@@ -840,6 +840,18 @@
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.28.tgz#d45e01c4a56f143ee69c54dd6b12eade9e270a73"
   integrity sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw==
 
+"@preact/signals-core@^1.7.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@preact/signals-core/-/signals-core-1.8.0.tgz#45ffadb81b48a298a4accd26b3f6c0140cd6dacc"
+  integrity sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA==
+
+"@preact/signals@^2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@preact/signals/-/signals-2.0.5.tgz#2a75cd934b443174a8034bffeb4e206855783f21"
+  integrity sha512-isC3ktsX2UW48ZivmBIheWiYq5jW6TBaw9FtKEPgNHuMQ8d7IpDPq+VfxmQPbyslg7yoBhXPDsXXd8ixKSaz7Q==
+  dependencies:
+    "@preact/signals-core" "^1.7.0"
+
 "@rushstack/debug-certificate-manager@1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@rushstack/debug-certificate-manager/-/debug-certificate-manager-1.4.0.tgz#a695228f42ae4d68ebe175e8bba3036c370b4198"
