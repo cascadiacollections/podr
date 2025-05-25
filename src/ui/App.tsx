@@ -10,7 +10,7 @@ interface IAppState {
   feeds: ReadonlyArray<IFeed>;
   results: ReadonlyArray<IFeedItem>;
   searchResults?: ReadonlyArray<IFeed>;
-  topResults?: ReadonlyArray<IFeed>;
+  topResults?: ReadonlyArray<ITopPodcast>;
 }
 
 interface IFeed {
@@ -18,6 +18,21 @@ interface IFeed {
   readonly feedUrl: string;
   readonly artworkUrl100: string;
   readonly artworkUrl600: string;
+}
+
+interface ITopPodcast {
+  readonly title: {
+    readonly label: string;
+  };
+  readonly id: {
+    readonly label: string;
+    readonly attributes: {
+      readonly 'im:id': string;
+    };
+  };
+  readonly 'im:image': ReadonlyArray<{
+    readonly label: string;
+  }>;
 }
 
 declare global {
@@ -46,7 +61,7 @@ export class App extends Component<{}, IAppState> {
     };
 
     fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10`).then(async (response: Response) => {
-      const json: { feed: { entry: ReadonlyArray<IFeed> } } = await response.json();
+      const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
 
       this.setState({
         topResults: json.feed.entry
@@ -101,67 +116,79 @@ export class App extends Component<{}, IAppState> {
         <Search onSearch={this.onSearch} />
         { this.state.searchResults?.length ?
           <Fragment>
-            <h2 class="section-header">Results for "{this.state.query}"</h2>
-            <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
+            <h2 className="section-header">Results for "{this.state.query}"</h2>
+            <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
               {searchResults.map((result: IFeed) => (
                 <img
                   key={result.collectionName}
                   src={result.artworkUrl100}
                   height={100}
                   width={100}
-                  class='img-fluid rounded-3'
+                  className='img-fluid rounded-3'
                   alt={result.collectionName}
                   onClick={() => this.tryFetchFeed(result.feedUrl)}
                   onDblClick={() => this.pinFeedUrl(result)}
-                  aria-label={`Favorite ${result}`} />
+                  aria-label={`Favorite ${result.collectionName}`} />
               ))}
             </div>
           </Fragment> : undefined
         }
         <Fragment>
-          <h2 class="section-header">Top podcasts</h2>
-          <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
-            {this.state.topResults && this.state.topResults.map((result: IFeed) => (
-              /* todo - fix assertions */
+          <h2 className="section-header">Top podcasts</h2>
+          <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
+            {this.state.topResults && this.state.topResults.map((result: ITopPodcast) => (
               <img
-                key={(result as any).title.label}
-                src={(result as any)['im:image'][2].label}
+                key={result.title.label}
+                src={result['im:image'][2].label}
                 height={100}
                 width={100}
-                class='img-fluid rounded-3'
-                alt={(result as any).title.label}
+                className='img-fluid rounded-3'
+                alt={result.title.label}
                 onClick={async () => {
-                  const itunesId = (result as any).id.attributes['im:id'];
+                  const itunesId = result.id.attributes['im:id'];
                   const feedResults = await fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=${itunesId}`).then(async (response: Response) => {
                     return await response.json();
                   }).catch((err: Error) => {
-                    // @todo
+                    window.gtag('event', 'exception', {
+                      description: `fetch_podcast_${itunesId}_${err.message}`,
+                      fatal: false
+                    });
+                    return { results: [] };
                   });
-                  const feedUrl = feedResults.results[0].feedUrl;
-                  this.tryFetchFeed(feedUrl)
+                  
+                  if (feedResults?.results?.length > 0) {
+                    const feedUrl = feedResults.results[0].feedUrl;
+                    this.tryFetchFeed(feedUrl);
+                  }
                 }}
-                onDblClick={() => this.pinFeedUrl((result as any).id.label)}
-                aria-label={`Favorite ${(result as any).title.label}`} />
+                onDblClick={() => this.pinFeedUrl(result.id.label)}
+                aria-label={`Favorite ${result.title.label}`} />
             ))}
           </div>
         </Fragment>
-        <h2 class="section-header">Favorites</h2>
-        <div class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
+        <h2 className="section-header">Favorites</h2>
+        <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
         {feeds.map((result) => (
           <img
             key={result.collectionName}
             src={result.artworkUrl100}
             height={100}
             width={100}
-            class='img-fluid rounded-3'
+            className='img-fluid rounded-3'
             alt={result.collectionName}
             onClick={() => this.tryFetchFeed(result.feedUrl)}
             onDblClick={() => this.unpinFeedUrl(result)} />
         ))}
         </div>
-        <h2 class="section-header">Episodes</h2>
+        <h2 className="section-header">Episodes</h2>
         <List results={results} onClick={this.onClick} />
-        <audio ref={App.AudioRef} autoplay controls preload='auto' />
+        <audio 
+          ref={App.AudioRef} 
+          autoplay 
+          controls 
+          preload='auto'
+          aria-label="Podcast episode player" 
+        />
       </Fragment>
     );
   }
@@ -172,19 +199,29 @@ export class App extends Component<{}, IAppState> {
     }
 
     return fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(({ items: results = [] }) => {
         localStorage.setItem('podr_results', JSON.stringify(results));
 
         this.setState({
           results
         });
+      })
+      .catch((err: Error) => {
+        window.gtag('event', 'exception', {
+          description: `feed_fetch_${feedUrl}_${err.message}`,
+          fatal: false
+        });
       });
   }
 
-  private onClick = (item: { enclosure: { link: string }}) => {
+  private onClick = (item: IFeedItem) => {
     const url: string = item.enclosure.link;
-
 
     window.gtag('event', 'Audio', {
       eventAction: 'play',
@@ -197,14 +234,31 @@ export class App extends Component<{}, IAppState> {
     }
   }
 
-  private pinFeedUrl = (feed: IFeed) => {
-    App.Favorited.add(feed);
-
-    window.gtag('event', 'Feed', {
-      eventAction: 'favorite',
-      eventLabel: feed.feedUrl,
-      transport: 'beacon'
-    });
+  private pinFeedUrl = (feed: IFeed | string) => {
+    if (typeof feed === 'string') {
+      // Create a simple feed object for string URLs
+      const simpleFeed: IFeed = {
+        collectionName: feed,
+        feedUrl: feed,
+        artworkUrl100: '',
+        artworkUrl600: ''
+      };
+      App.Favorited.add(simpleFeed);
+      
+      window.gtag('event', 'Feed', {
+        eventAction: 'favorite',
+        eventLabel: feed,
+        transport: 'beacon'
+      });
+    } else {
+      App.Favorited.add(feed);
+      
+      window.gtag('event', 'Feed', {
+        eventAction: 'favorite',
+        eventLabel: feed.feedUrl,
+        transport: 'beacon'
+      });
+    }
 
     this.setState({
       feeds: this.feeds
