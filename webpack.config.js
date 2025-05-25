@@ -3,6 +3,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin');
 
 /**
  * If the "--production" command-line parameter is specified when invoking Heft, then the
@@ -64,6 +65,8 @@ function createWebpackConfig({ production }) {
         filename: '[name]_[contenthash].css'
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
+      // Only fetch top podcasts when building for production
+      ...(production ? [new TopPodcastsPlugin()] : [])
     ]
   };
 
