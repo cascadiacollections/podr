@@ -36,12 +36,20 @@ interface ITopPodcast {
 }
 
 declare global {
-  interface Window { gtag: any; }
+  interface Window { 
+    gtag: (command: string, action: string, params?: Record<string, unknown>) => void;
+  }
 }
 
 export class App extends Component<{}, IAppState> {
   private static readonly AudioRef: RefObject<HTMLAudioElement> = createRef();
   private static readonly Favorited: Set<IFeed> = new Set<IFeed>();
+  
+  // Constants
+  private static readonly API_BASE_URL = 'https://podr-svc-48579879001.us-west4.run.app';
+  private static readonly LOCAL_STORAGE_FEEDS_KEY = 'podr_feeds';
+  private static readonly LOCAL_STORAGE_RESULTS_KEY = 'podr_results';
+  private static readonly DEFAULT_SEARCH_LIMIT = 14;
 
   private get feeds(): IFeed[] {
     return ToArray(App.Favorited.values())
@@ -50,17 +58,17 @@ export class App extends Component<{}, IAppState> {
   public constructor() {
     super();
 
-    JSON.parse(localStorage.getItem('podr_feeds') || '[]').forEach((feed: IFeed) => {
+    JSON.parse(localStorage.getItem(App.LOCAL_STORAGE_FEEDS_KEY) || '[]').forEach((feed: IFeed) => {
       App.Favorited.add(feed);
     });
 
     this.state = {
       query: '',
       feeds: this.feeds,
-      results: JSON.parse(localStorage.getItem('podr_results') || '[]')
+      results: JSON.parse(localStorage.getItem(App.LOCAL_STORAGE_RESULTS_KEY) || '[]')
     };
 
-    fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10`).then(async (response: Response) => {
+    fetch(`${App.API_BASE_URL}/?q=toppodcasts&limit=10`).then(async (response: Response) => {
       const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
 
       this.setState({
@@ -76,7 +84,7 @@ export class App extends Component<{}, IAppState> {
     this.tryFetchFeed();
   }
 
-  private onSearch = (query: string, limit: number = 14) => {
+  private onSearch = (query: string, limit: number = App.DEFAULT_SEARCH_LIMIT) => {
     window.gtag('event', 'search', {
       'search_term': query,
       transport: 'beacon'
@@ -90,7 +98,7 @@ export class App extends Component<{}, IAppState> {
 
     const queryParams: URLSearchParams = new URLSearchParams([['q', query], ['limit', limit.toString()]]);
 
-    fetch(`https://podr-svc-48579879001.us-west4.run.app/?${queryParams.toString()}`).then(async (response: Response) => {
+    fetch(`${App.API_BASE_URL}/?${queryParams.toString()}`).then(async (response: Response) => {
       const json: { results: ReadonlyArray<IFeed> } = await response.json();
 
       this.setState({
@@ -146,7 +154,7 @@ export class App extends Component<{}, IAppState> {
                 alt={result.title.label}
                 onClick={async () => {
                   const itunesId = result.id.attributes['im:id'];
-                  const feedResults = await fetch(`https://podr-svc-48579879001.us-west4.run.app/?q=${itunesId}`).then(async (response: Response) => {
+                  const feedResults = await fetch(`${App.API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
                     return await response.json();
                   }).catch((err: Error) => {
                     window.gtag('event', 'exception', {
@@ -184,7 +192,7 @@ export class App extends Component<{}, IAppState> {
         <List results={results} onClick={this.onClick} />
         <audio 
           ref={App.AudioRef} 
-          autoplay 
+          autoPlay 
           controls 
           preload='auto'
           aria-label="Podcast episode player" 
@@ -206,7 +214,7 @@ export class App extends Component<{}, IAppState> {
         return response.json();
       })
       .then(({ items: results = [] }) => {
-        localStorage.setItem('podr_results', JSON.stringify(results));
+        localStorage.setItem(App.LOCAL_STORAGE_RESULTS_KEY, JSON.stringify(results));
 
         this.setState({
           results
@@ -284,6 +292,6 @@ export class App extends Component<{}, IAppState> {
   }
 
   private serializePinnedFeeds = () => {
-    localStorage.setItem('podr_feeds', JSON.stringify(this.feeds));
+    localStorage.setItem(App.LOCAL_STORAGE_FEEDS_KEY, JSON.stringify(this.feeds));
   }
 }
