@@ -7,17 +7,31 @@ on:
   pull_request:
     branches: [ main ]
 
+# Cancel in-progress runs on new commits to same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: 20
-    - run: yarn install
-    - run: yarn build:ci
+        cache: 'yarn'
+    
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+    
+    - name: Build
+      run: yarn build:ci
+    
     - name: Archive production artifacts
       uses: actions/upload-artifact@v4
       with:
