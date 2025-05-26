@@ -3,9 +3,19 @@
     "compilerOptions": {
         "downlevelIteration": true,
         "types": [
-            "webpack-env"
+            "webpack-env",
+            "jest",
+            "node",
+            "@testing-library/jest-dom"
         ],
         "jsx": "react",
-        "jsxFactory": "h"
-    }
+        "jsxFactory": "h",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/types"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ]
 }
