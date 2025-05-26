@@ -6,45 +6,99 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:  # Allow manual triggering
 
+# Ensure only one daily build runs at a time and cancel outdated runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Set maximum job runtime
     permissions:
       contents: read
       deployments: write
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1 # Shallow clone for faster checkout
     
-    - name: Setup Node
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 20
         cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+    
+    - name: Cache Yarn dependencies
+      uses: actions/cache@v3
+      id: yarn-cache
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
     
     - name: Install dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile --prefer-offline
+      timeout-minutes: 5
+    
+    - name: Security audit
+      run: yarn audit --groups dependencies || echo "Security vulnerabilities found, continuing build"
+      # Don't fail build on audit issues, just report them
     
     - name: Build with fresh API data
       run: yarn build:ci
+      timeout-minutes: 5
+      env:
+        # Explicitly set production mode
+        NODE_ENV: production
+    
+    - name: Cache build output
+      uses: actions/cache@v3
+      with:
+        path: ./dist
+        key: ${{ runner.os }}-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-
     
     - name: Archive production artifacts
       uses: actions/upload-artifact@v4
       with:
         name: www
-        path: |
-          dist
+        path: dist
+        retention-days: 7 # Only keep artifacts for 7 days to save storage
+        if-no-files-found: error
     
-    # Deploy to Netlify (Assuming Netlify is the hosting provider based on the badge in README.md)
     - name: Deploy to Netlify
-      uses: nwtgck/actions-netlify@v2
+      id: netlify-deploy
+      uses: nwtgck/actions-netlify@v2.0
       with:
         publish-dir: './dist'
         production-branch: main
         production-deploy: true
         github-token: ${{ secrets.GITHUB_TOKEN }}
         deploy-message: "Daily scheduled deployment with fresh API data"
+        enable-pull-request-comment: false
+        enable-commit-comment: false
       env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       timeout-minutes: 5
+        
+    - name: Create deployment summary
+      if: always()
+      run: |
+        echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ steps.netlify-deploy.outcome }}" == "success" ]]; then
+          echo "✅ Successfully deployed to Netlify" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [Preview URL](${{ steps.netlify-deploy.outputs.deploy-url }})" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Deployment failed" >> $GITHUB_STEP_SUMMARY
+        fi
