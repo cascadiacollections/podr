@@ -78,6 +78,27 @@ function useApiData(variableName, jsonPath) {
   return { data, loading, error };
 }
 
+// Using the official plugin hook (available in @cascadiacollections/webpack-api-inliner)
+// import { useApiInliner } from '@cascadiacollections/webpack-api-inliner';
+// 
+// function ProductListWithHook() {
+//   const { data, isLoading, error } = useApiInliner('EXAMPLE_PRODUCTS', 'products.json');
+//  
+//   if (isLoading) return <div>Loading products...</div>;
+//   if (error) return <div>Error loading products: {error.message}</div>;
+//   
+//   return (
+//     <div>
+//       <h2>Products</h2>
+//       <ul>
+//         {data.products.map(product => (
+//           <li key={product.id}>{product.name}</li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
+
 // Usage in React component
 function ProductList() {
   const { data, loading, error } = useApiData('EXAMPLE_PRODUCTS', 'products.json');
