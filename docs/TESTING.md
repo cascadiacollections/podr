@@ -30,6 +30,15 @@ Tests can be run with the following command:
 npm test
 ```
 
+## Continuous Integration
+
+Tests are automatically run as part of the CI/CD pipeline:
+
+1. In the Node.js CI workflow (runs on every PR and push to main)
+2. In the daily build workflow (runs daily and on manual dispatch)
+
+For more information about CI integration, see [CI_TESTING.md](./CI_TESTING.md).
+
 ## Testing Patterns
 
 ### Component Testing
