@@ -195,6 +195,53 @@ Add the declaration file to your `tsconfig.json`:
 }
 ```
 
+## Hooks for Accessing Inlined Data
+
+The plugin provides hooks for easily accessing the inlined data in your application. These hooks are compatible with both Preact and React.
+
+### `useApiInliner<T>`
+
+A custom hook for accessing data inlined by the API Inliner Plugin:
+
+```typescript
+import { useApiInliner } from '@cascadiacollections/webpack-api-inliner';
+
+function ProductList() {
+  // Generic type parameter provides type safety
+  const { data, isLoading, error } = useApiInliner<ProductsData>('EXAMPLE_PRODUCTS', 'products.json');
+
+  if (isLoading) return <div>Loading products...</div>;
+  if (error) return <div>Error loading products: {error.message}</div>;
+  
+  return (
+    <div>
+      <h2>Products ({data.products.length})</h2>
+      <ul>
+        {data.products.map(product => (
+          <li key={product.id}>{product.name} - ${product.price}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `variableName` | `string` | The name of the window variable to check |
+| `jsonPath` | `string` | Path to the fallback JSON file if the window variable isn't available |
+| `options` | `RequestInit` | Optional fetch options for the JSON request |
+
+#### Return Value
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `data` | `T \| null` | The fetched data, or null if not loaded yet |
+| `isLoading` | `boolean` | Whether the data is currently loading |
+| `error` | `Error \| null` | Error object if the fetch failed, or null if successful |
+
 ## Node.js Version Support
 
 This plugin requires Node.js v18 or later. It uses modern Node.js features such as:
