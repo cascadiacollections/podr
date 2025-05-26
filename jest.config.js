@@ -5,6 +5,9 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.(ts|tsx|js|jsx)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  collectCoverage: process.env.CI === 'true',
+  coverageDirectory: '<rootDir>/coverage',
+  coverageReporters: ['text', 'lcov', 'json-summary'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
