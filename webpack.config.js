@@ -67,8 +67,12 @@ function createWebpackConfig({ production }) {
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
       
-      // Use the new generalized ApiInlinerPlugin instead
+      // Use the RushStack compatible version of ApiInlinerPlugin
+      // This can also be configured through a separate api-inliner.json file 
+      // when using the Heft plugin integration
       new ApiInlinerPlugin({
+        // Note: In a real-world scenario with Heft integration, this config
+        // would be loaded from config/api-inliner.json instead
         production,
         inlineAsVariable: true,
         endpoints: [{
