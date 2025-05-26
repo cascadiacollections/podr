@@ -39,50 +39,23 @@ audio {
   width: 100%;
 }
 
-/* Description truncation */
-.description {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  opacity: 0.8;
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
+.episodes-container table {
+  width: 100%;
+  table-layout: fixed;
+  margin: 0;
 }
 
-/* Metadata styles */
-.meta {
-  font-size: 0.8rem;
-  opacity: 0.8;
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+.episodes-container tr {
+  line-height: 1.2;
 }
 
-.meta time {
-  display: inline-flex;
-  align-items: center;
-}
-
-.meta time::before {
-  content: "🗓️";
-  margin-right: 0.25rem;
-  font-size: 0.8rem;
-}
-
-.meta .duration::before {
-  content: "⏱️";
-  margin-right: 0.25rem;
-  font-size: 0.8rem;
+.episodes-container td {
+  padding: 0.5rem;
+  vertical-align: middle;
 }
 
 /* Mobile optimizations */
 @media (max-width: 576px) {
-  .meta {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
   .duration-column {
     display: none;
   }

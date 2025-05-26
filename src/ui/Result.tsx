@@ -84,16 +84,7 @@ export const Result: FunctionComponent<IResultProps> = memo(
         role="button"
         aria-label={`Play episode: ${title}`}>
         <td>
-          <article>
-            <h3>
-              <a href={enclosure.link} aria-label={`Stream or download: ${title}`} dangerouslySetInnerHTML={{ __html: title }} />
-            </h3>
-            <div className="meta">
-              <time dateTime={pubDate}>{formattedDate}</time>
-              <span className="duration">{formattedDuration}</span>
-            </div>
-            <p className="description" dangerouslySetInnerHTML={{ __html: description }} />
-          </article>
+          <a href={enclosure.link} aria-label={`Stream or download: ${title}`} dangerouslySetInnerHTML={{ __html: title }} />
         </td>
         <td className="date-column">
           <time dateTime={pubDate}>{formattedDate}</time>
