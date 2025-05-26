@@ -1,0 +1,46 @@
+{
+  "name": "@cascadiacollections/webpack-api-inliner",
+  "version": "0.1.0",
+  "description": "A webpack plugin to inline API responses at build time for faster initial rendering",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "keywords": [
+    "rushstack",
+    "heft",
+    "webpack",
+    "plugin",
+    "api",
+    "inline",
+    "performance"
+  ],
+  "author": "Cascadia Collections",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cascadiacollections/podr.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0"
+  },
+  "peerDependencies": {
+    "@rushstack/heft": ">=0.50.0",
+    "@rushstack/heft-webpack5-plugin": ">=0.8.0",
+    "webpack": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/webpack": "^5.28.0",
+    "typescript": "~5.0.4"
+  },
+  "files": [
+    "lib",
+    "schema.json"
+  ]
+}

@@ -32,6 +32,7 @@ interface ITopPodcast {
 declare global {
   interface Window { 
     gtag: (command: string, action: string, params?: Record<string, unknown>) => void;
+    PODR_TOP_PODCASTS?: { feed: { entry: ReadonlyArray<ITopPodcast> } };
   }
 }
 
@@ -131,8 +132,39 @@ export const App = (): JSX.Element => {
   useLocalStorage(LOCAL_STORAGE_FEEDS_KEY, feeds as any);
   useLocalStorage(LOCAL_STORAGE_RESULTS_KEY, results);
   
-  // Fetch top podcasts on mount
+  // Fetch top podcasts - uses inlined window variable or static file for initial render, then optionally updates from API
   useEffect(() => {
+    // First check for window variable (inlined at build time)
+    if (window.PODR_TOP_PODCASTS && window.PODR_TOP_PODCASTS.feed && window.PODR_TOP_PODCASTS.feed.entry) {
+      topResults.value = window.PODR_TOP_PODCASTS.feed.entry;
+    } else {
+      // Fall back to static JSON file
+      fetch('/top-podcasts.json')
+        .then(async (response: Response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
+          topResults.value = json.feed.entry;
+        })
+        .catch((err: Error) => {
+          console.error('Failed to load static top podcasts data:', err);
+          // On failure to load static data, fall back to API
+          fetchTopPodcastsFromAPI();
+        });
+    }
+
+    // Optionally refresh data from API after initial load
+    const ENABLE_BACKGROUND_REFRESH = true; // Could be an environment variable in the future
+    if (ENABLE_BACKGROUND_REFRESH) {
+      setTimeout(() => {
+        fetchTopPodcastsFromAPI();
+      }, 5000); // Wait 5 seconds before refreshing data
+    }
+  }, []);
+
+  // Function to fetch top podcasts from API
+  const fetchTopPodcastsFromAPI = () => {
     fetch(`${API_BASE_URL}/?q=toppodcasts&limit=10`)
       .then(async (response: Response) => {
         if (!response.ok) {
@@ -147,7 +179,7 @@ export const App = (): JSX.Element => {
           fatal: false
         });
       });
-  }, []);
+  };
 
   const tryFetchFeed = useCallback(async (feedUrl?: string): Promise<void> => {
     if (!feedUrl) {
