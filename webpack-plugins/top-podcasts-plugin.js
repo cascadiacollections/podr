@@ -3,8 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-// Plugin to fetch top podcasts during build time and create a static JSON file
+// Plugin to fetch top podcasts during build time and create a static JSON file or inline as window variable
 class TopPodcastsPlugin {
   constructor(options = {}) {
     // Default options
@@ -13,17 +14,37 @@ class TopPodcastsPlugin {
       outputFile: 'top-podcasts.json',
       fallbackData: { feed: { entry: [] } },
       production: true, // Whether to fetch data from API (production) or just use fallback (development)
+      inlineAsVariable: true, // Whether to inline data as window variable (true) or just use JSON file (false)
+      variableName: 'PODR_TOP_PODCASTS', // Name of the window variable to use when inlining
       ...options
     };
+    
+    // Store data for use in compilation
+    this.data = null;
   }
 
   apply(compiler) {
-    // Hook into the compilation process
+    // Hook into the compilation process to fetch data
     compiler.hooks.beforeRun.tapAsync('TopPodcastsPlugin', (compilation, callback) => {
       const outputPath = path.resolve(compiler.options.output.path, this.options.outputFile);
       
       // Ensure the directory exists
       fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      
+      // Function to process and save data
+      const processData = (data) => {
+        // Store data for use in HtmlWebpackPlugin hooks
+        this.data = data;
+        
+        // Always write the JSON file for backward compatibility
+        fs.writeFileSync(outputPath, JSON.stringify(data));
+        
+        console.log(`Top podcasts data written to ${outputPath}`);
+        if (this.options.inlineAsVariable) {
+          console.log(`Top podcasts data will be inlined as window.${this.options.variableName}`);
+        }
+        callback();
+      };
       
       // Only fetch from API in production mode
       if (this.options.production) {
@@ -32,26 +53,42 @@ class TopPodcastsPlugin {
         // Create a promise to fetch the data
         this.fetchTopPodcasts()
           .then(data => {
-            // Write the data to the output file
-            fs.writeFileSync(outputPath, JSON.stringify(data));
-            
-            console.log(`Top podcasts data written to ${outputPath}`);
-            callback();
+            processData(data);
           })
           .catch(error => {
             console.error('Error fetching top podcasts:', error.message);
             
-            // Write fallback data on error
-            fs.writeFileSync(outputPath, JSON.stringify(this.options.fallbackData));
+            // Use fallback data on error
+            processData(this.options.fallbackData);
             
             console.log('Using fallback data for top podcasts');
-            callback();
           });
       } else {
         // In development mode, just use fallback data
         console.log('Development mode: Using fallback data for top podcasts');
-        fs.writeFileSync(outputPath, JSON.stringify(this.options.fallbackData));
-        callback();
+        processData(this.options.fallbackData);
+      }
+    });
+    
+    // Hook into HtmlWebpackPlugin to inject the window variable if enabled
+    compiler.hooks.compilation.tap('TopPodcastsPlugin', (compilation) => {
+      if (this.options.inlineAsVariable) {
+        // Get HtmlWebpackPlugin hooks
+        const hooks = HtmlWebpackPlugin.getHooks(compilation);
+        
+        // Hook into the HTML generation process
+        hooks.beforeEmit.tapAsync('TopPodcastsPlugin', (data, callback) => {
+          const variableData = this.data || this.options.fallbackData;
+          const scriptContent = `window.${this.options.variableName} = ${JSON.stringify(variableData)};`;
+          
+          // Create a script tag with the data
+          const scriptTag = `<script>${scriptContent}</script>`;
+          
+          // Inject the script tag before the closing head tag
+          data.html = data.html.replace('</head>', `${scriptTag}\n</head>`);
+          
+          callback(null, data);
+        });
       }
     });
   }

@@ -65,8 +65,12 @@ function createWebpackConfig({ production }) {
         filename: '[name]_[contenthash].css'
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
-      // Add TopPodcastsPlugin with production flag
-      new TopPodcastsPlugin({ production })
+      // Add TopPodcastsPlugin with production flag and inlineAsVariable option
+      new TopPodcastsPlugin({
+        production,
+        inlineAsVariable: true, // Default to window variable for fastest initial render
+        variableName: 'PODR_TOP_PODCASTS'
+      })
     ]
   };
 
