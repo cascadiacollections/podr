@@ -42,13 +42,21 @@ export function useApiInliner<T>(variableName: string, jsonPath: string, options
     (window as any).React?.useEffect || 
     require('preact/hooks').useEffect;
 
-  // Initialize state
-  const [data, setData] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state - check for window variable first to avoid unnecessary re-renders
+  const initialData = typeof window !== 'undefined' && window[variableName as keyof Window] 
+    ? window[variableName as keyof Window] as T 
+    : null;
+  const [data, setData] = useState<T | null>(initialData);
+  const [isLoading, setIsLoading] = useState(initialData === null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Check for window variable first (fastest approach)
+    // Skip effect if data was already set from window variable during initialization
+    if (data !== null) {
+      return;
+    }
+    
+    // Check again for window variable (in case it was set after initialization)
     if (typeof window !== 'undefined' && window[variableName as keyof Window]) {
       try {
         const windowData = window[variableName as keyof Window] as T;
@@ -79,7 +87,7 @@ export function useApiInliner<T>(variableName: string, jsonPath: string, options
       .finally(() => {
         setIsLoading(false);
       });
-  }, [variableName, jsonPath, JSON.stringify(options)]);
+  }, [variableName, jsonPath, JSON.stringify(options), data]);
 
   return { data, isLoading, error };
 }
