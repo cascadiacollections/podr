@@ -10,20 +10,21 @@ interface IListProps {
 
 /**
  * List component that renders a table of podcast episodes
- * Memoized to prevent unnecessary re-renders
+ * Using Pico's classless table approach for responsive design
  */
 export const List: FunctionComponent<IListProps> = memo(
   (props: IListProps) => {
     const { results, onClick } = props;
 
     return (
-      <div className="episodes-container feed-items">
-        <table aria-label="Podcast episodes">
+      <section className="episodes-container">
+        <table>
+          <caption>Podcast Episodes</caption>
           <thead>
             <tr>
-              <th>Episode</th>
-              <th>Date</th>
-              <th>Duration</th>
+              <th scope="col">Episode</th>
+              <th scope="col" className="date-column">Date</th>
+              <th scope="col" className="duration-column">Duration</th>
             </tr>
           </thead>
           <tbody>
@@ -41,7 +42,7 @@ export const List: FunctionComponent<IListProps> = memo(
             )}
           </tbody>
         </table>
-      </div>
+      </section>
     );
   },
   // Custom comparison for memoization

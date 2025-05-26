@@ -1,143 +1,89 @@
-// Custom styles that work with Pico.css framework
+/* Minimal custom styles - letting Pico.css handle most styling */
 
-// Define variables to match Pico's defaults but with our orange accent
+/* Theme customization */
 :root {
   --primary: #ffa500;
   --primary-hover: #ff8c00;
 }
 
-// Basic styles
-body {
-  font: 14px/1.21 'Helvetica Neue', arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Essential utility styles */
+[role="button"] {
+  cursor: pointer;
 }
 
-h1 {
-  text-align: center;
-  margin: 16px;
-  
-  a {
-    color: var(--primary);
-    text-decoration: none;
-  }
-}
-
-input[type="search"] {
-  border-color: var(--primary);
-  border-width: 1px;
-}
-
-.section-header {
-  color: var(--primary);
-  text-transform: uppercase;
-  font-size: 14px;
-  margin: 8px 0;
-}
-
-// Media player styles
+/* Media player styles */
 audio {
   position: fixed;
   bottom: 0;
   width: 100%;
-  margin: 0;
   left: 0;
+  margin: 0;
 }
 
-// Results and feed styles
+/* Container styles */
 .results {
   height: 128px;
-  max-height: 128px;
+  overflow-y: auto;
+}
+
+.feeds {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* Episodes table container */
+.episodes-container {
+  height: 340px;
   overflow-y: auto;
   overflow-x: hidden;
-
-  img {
-    margin: 0px 4px;
-  }
+  width: 100%;
 }
 
-img, .result {
-  cursor: pointer;
-}
-
+/* Description truncation */
 .description {
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
-  font-size: 0.85em;
-  color: var(--muted-color);
-  margin: 0;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
 }
 
-.feeds {
-  max-height: 100px;
-  overflow-y: scroll;
+/* Metadata styles */
+.meta {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
-// Episodes table container
-.episodes-container {
-  height: 340px;
-  overflow-y: auto;
-  overflow-x: hidden;
+.meta time {
+  display: inline-flex;
+  align-items: center;
 }
 
-// Table styles optimized for mobile vertical scrolling
-table {
-  width: 100%;
-  table-layout: fixed;
-  margin: 0;
-  
-  th, td {
-    padding: 0.5rem;
-    vertical-align: top;
-  }
-  
-  th:first-child, td:first-child {
-    width: 60%;
-  }
-  
-  th:nth-child(2), td:nth-child(2),
-  th:nth-child(3), td:nth-child(3) {
-    width: 20%;
-    text-align: right;
-  }
+.meta time::before {
+  content: "🗓️";
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
 }
 
-// Result row styles
-.result {
-  &:hover {
-    background-color: var(--hover-background);
-  }
-  
-  td {
-    padding: 0.5rem;
-  }
-  
-  .title {
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-  }
-  
-  .pubDate, .duration {
-    font-size: 0.85em;
-    white-space: nowrap;
-  }
+.meta .duration::before {
+  content: "⏱️";
+  margin-right: 0.25rem;
+  font-size: 0.8rem;
 }
 
-// Mobile optimizations
+/* Mobile optimizations */
 @media (max-width: 576px) {
-  table {
-    th:nth-child(3), td:nth-child(3) {
-      display: none;
-    }
-    
-    th:first-child, td:first-child {
-      width: 70%;
-    }
-    
-    th:nth-child(2), td:nth-child(2) {
-      width: 30%;
-    }
+  .meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .duration-column {
+    display: none;
   }
 }
