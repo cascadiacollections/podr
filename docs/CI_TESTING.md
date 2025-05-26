@@ -5,14 +5,20 @@ This document provides information about how the unit tests are integrated into 
 ## Current Status
 
 The unit tests have been added to both the Node.js CI workflow and the daily build workflow.
-Currently, these tests are set to `continue-on-error: true` to allow the build to proceed even if tests fail.
+Tests are configured to run in a fail-fast mode, meaning that if any test fails, the build will fail.
+
+## Test Execution
+
+Tests are run using the standard `yarn test` command in the CI process, which executes Jest with the project's test configuration. The tests run:
+
+1. Before the build step in the regular CI workflow 
+2. After security audit but before build in the daily workflow
 
 ## Future Improvements
 
-1. Fix any test configuration issues to ensure tests run reliably in the CI environment
-2. Remove the `continue-on-error` flag once tests are stable
-3. Add test coverage reporting 
-4. Implement test results visualization in the CI dashboard
+1. Add test coverage reporting 
+2. Implement test results visualization in the CI dashboard
+3. Add performance testing for critical user flows
 
 ## Running Tests Locally
 

@@ -31,7 +31,6 @@ jobs:
     
     - name: Run tests
       run: yarn test
-      continue-on-error: true # Allow tests to fail for now while setting up CI integration
     
     - name: Build
       run: yarn build:ci

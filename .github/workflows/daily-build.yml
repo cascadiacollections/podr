@@ -55,7 +55,6 @@ jobs:
     
     - name: Run tests
       run: yarn test
-      continue-on-error: true # Allow tests to fail for now while setting up CI integration
       timeout-minutes: 5
     
     - name: Build with fresh API data
