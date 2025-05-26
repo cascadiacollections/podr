@@ -24,10 +24,12 @@ src/
 
 ## Running Tests
 
-Tests can be run with the following command:
+Tests can be run with one of the following commands, depending on your preferred package manager:
 
 ```bash
 npm test
+# or
+yarn test
 ```
 
 ## Continuous Integration
