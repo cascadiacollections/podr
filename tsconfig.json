@@ -3,7 +3,9 @@
     "compilerOptions": {
         "downlevelIteration": true,
         "types": [
-            "webpack-env"
+            "webpack-env",
+            "jest",
+            "node"
         ],
         "jsx": "react",
         "jsxFactory": "h"

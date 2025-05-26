@@ -5,9 +5,9 @@
       "actionName": "build-watch",
       "defaultParameters": ["--serve"]
     },
-    "test": {
-      "actionName": "test",
-      "defaultParameters": []
+    "run-tests": {
+      "actionName": "run",
+      "defaultParameters": ["--to", "test"]
     }
   },
 
@@ -51,10 +51,7 @@
       "tasksByName": {
         "jest": {
           "taskPlugin": {
-            "pluginPackage": "@rushstack/heft-jest-plugin",
-            "pluginConfiguration": {
-              "configurationPath": "./config/jest.config.json"
-            }
+            "pluginPackage": "@rushstack/heft-jest-plugin"
           }
         }
       }
