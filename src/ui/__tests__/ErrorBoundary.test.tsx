@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/preact';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // Create an error-throwing component for testing
-const ErrorThrowingComponent = ({ shouldThrow = true }) => {
+const ErrorThrowingComponent = ({ shouldThrow = true }: { shouldThrow?: boolean }) => {
   if (shouldThrow) {
     throw new Error('Test error');
   }
@@ -13,7 +13,7 @@ const ErrorThrowingComponent = ({ shouldThrow = true }) => {
 // Silence console errors during tests
 const originalConsoleError = console.error;
 beforeAll(() => {
-  console.error = jest.fn();
+  console.error = jest.fn() as jest.Mock;
 });
 afterAll(() => {
   console.error = originalConsoleError;

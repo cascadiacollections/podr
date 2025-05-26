@@ -15,9 +15,7 @@ module.exports = {
     '/lib/'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: '<rootDir>/tsconfig.json'
-    }],
+    '^.+\\.(ts|tsx)$': 'babel-jest',
     '^.+\\.(js|jsx)$': 'babel-jest'
   },
   moduleNameMapper: {
@@ -25,6 +23,7 @@ module.exports = {
     '\\.(gif|ttf|eot|svg|png)$': '<rootDir>/__mocks__/fileMock.js'
   },
   setupFilesAfterEnv: [
-    '<rootDir>/config/jest.setup.js'
+    '<rootDir>/config/jest.setup.js',
+    '<rootDir>/src/ui/__tests__/setup.ts'
   ]
 };

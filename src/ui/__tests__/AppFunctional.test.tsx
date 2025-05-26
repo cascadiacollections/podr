@@ -1,11 +1,10 @@
 import { h } from 'preact';
 import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
-import { signal } from '@preact/signals';
 
 import { App } from '../AppFunctional';
 
 // Mock fetch for testing
-global.fetch = jest.fn();
+global.fetch = jest.fn() as jest.Mock;
 
 // Helper to mock fetch responses
 const mockFetch = (data: any, status = 200) => {
