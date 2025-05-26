@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "RushStack API Inliner Plugin Configuration",
-  "description": "Schema for configuring the API Inliner Plugin for RushStack Heft",
+  "title": "API Inliner Plugin Configuration",
+  "description": "Schema for configuring the @cascadiacollections/webpack-api-inliner plugin",
   "type": "object",
   "properties": {
     "endpoints": {
@@ -31,13 +31,17 @@
             "type": "string"
           },
           "requestOptions": {
-            "description": "Options to pass to the http/https request (headers, method, etc)",
+            "description": "Options to pass to the fetch API (headers, method, etc)",
             "type": "object"
           },
           "typeReference": {
             "description": "TypeScript type reference for this endpoint's data",
             "type": "string",
             "examples": ["import('../../src/types').ITopPodcasts"]
+          },
+          "production": {
+            "description": "Override the production setting for this specific endpoint",
+            "type": "boolean"
           }
         },
         "required": ["url"]
@@ -46,7 +50,7 @@
     "production": {
       "description": "Whether to fetch data from API (production) or just use fallback (development)",
       "type": "boolean",
-      "default": true
+      "default": "Uses process.env.NODE_ENV === 'production'"
     },
     "inlineAsVariable": {
       "description": "Global setting for whether to inline data as window variables",

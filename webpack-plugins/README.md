@@ -1,4 +1,4 @@
-# Webpack API Inliner Plugin
+# @cascadiacollections/webpack-api-inliner
 
 A webpack plugin that fetches API data at build time and makes it available to your web app either as inlined window variables or static JSON files.
 
@@ -13,22 +13,22 @@ A webpack plugin that fetches API data at build time and makes it available to y
 ## Installation
 
 ```bash
-npm install --save-dev webpack-api-inliner-plugin
+npm install --save-dev @cascadiacollections/webpack-api-inliner
 # or
-yarn add --dev webpack-api-inliner-plugin
+yarn add --dev @cascadiacollections/webpack-api-inliner
 ```
 
 ## Usage
 
 ```javascript
 // webpack.config.js
-const ApiInlinerPlugin = require('webpack-api-inliner-plugin');
+const { ApiInlinerPlugin } = require('@cascadiacollections/webpack-api-inliner');
 
 module.exports = {
   // ... other webpack config
   plugins: [
     new ApiInlinerPlugin({
-      production: process.env.NODE_ENV === 'production',
+      // production is automatically set from process.env.NODE_ENV
       endpoints: [
         {
           url: 'https://api.example.com/products',
@@ -75,7 +75,7 @@ if (window.EXAMPLE_PRODUCTS) {
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `endpoints` | `EndpointConfig \| EndpointConfig[]` | `[]` | Single endpoint or array of endpoint configurations |
-| `production` | `boolean` | `true` | Whether to fetch data from API (production) or just use fallback (development) |
+| `production` | `boolean` | `process.env.NODE_ENV === 'production'` | Whether to fetch data from API (production) or just use fallback (development) |
 | `inlineAsVariable` | `boolean` | `true` | Global setting for whether to inline data as window variables |
 | `variablePrefix` | `string` | `'API_DATA'` | Prefix for all window variables when auto-generating names |
 | `saveAsFile` | `boolean` | `true` | Whether to save data as static JSON files |
@@ -93,13 +93,14 @@ if (window.EXAMPLE_PRODUCTS) {
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `url` | `string` | Yes | The API endpoint URL to fetch data from |
-| `outputFile` | `string` | Yes | The filename to save the fetched data to (if saveAsFile is true) |
-| `fallbackData` | `object` | Yes | The fallback data to use if the API request fails or in development mode |
+| `outputFile` | `string` | No | The filename to save the fetched data to (if saveAsFile is true) |
+| `fallbackData` | `object` | No | The fallback data to use if the API request fails or in development mode |
 | `inlineAsVariable` | `boolean` | No | Whether to inline data as window variable (overrides global setting) |
 | `variableName` | `string` | No | Name of the window variable to use when inlining |
-| `requestOptions` | `object` | No | Options to pass to the http/https request (headers, method, etc) |
+| `requestOptions` | `object` | No | Options to pass to the fetch API (headers, method, etc) |
 | `saveAsFile` | `boolean` | No | Whether to save data as static JSON file (overrides global setting) |
 | `typeReference` | `string` | No | TypeScript type reference for this endpoint's data |
+| `production` | `boolean` | No | Override the production setting for this specific endpoint |
 
 ## Advanced Configuration
 
@@ -193,6 +194,13 @@ Add the declaration file to your `tsconfig.json`:
   }
 }
 ```
+
+## Node.js Version Support
+
+This plugin requires Node.js v18 or later. It uses modern Node.js features such as:
+- Native fetch API
+- Modern file system promises API
+- AbortSignal.timeout()
 
 ## License
 

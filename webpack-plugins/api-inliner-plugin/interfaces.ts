@@ -1,5 +1,5 @@
 /**
- * Rush Stack API Inliner Plugin
+ * API Inliner Plugin
  * 
  * Type definitions for the API Inliner Plugin configuration
  */
@@ -38,9 +38,9 @@ export interface IEndpointConfig {
   variableName?: string;
   
   /**
-   * Options to pass to the http/https request (headers, method, etc)
+   * Options to pass to the fetch request (headers, method, etc)
    */
-  requestOptions?: Record<string, unknown>;
+  requestOptions?: RequestInit;
   
   /**
    * Whether to save data as static JSON file
@@ -53,6 +53,12 @@ export interface IEndpointConfig {
    * Example: "import('../../src/types').ITopPodcasts"
    */
   typeReference?: string;
+  
+  /**
+   * Override the production setting for this specific endpoint
+   * @default undefined - Inherits from global configuration
+   */
+  production?: boolean;
 }
 
 /**
@@ -68,7 +74,7 @@ export interface IApiInlinerConfiguration {
   
   /**
    * Whether to fetch data from API (production) or just use fallback (development)
-   * @default true
+   * @default process.env.NODE_ENV === 'production'
    */
   production?: boolean;
   
@@ -143,7 +149,6 @@ export interface IApiInlinerConfiguration {
 
 /**
  * API Inliner Plugin interface
- * Compatible with RushStack/Heft plugin architecture
  */
 export interface IApiInlinerPlugin {
   /**

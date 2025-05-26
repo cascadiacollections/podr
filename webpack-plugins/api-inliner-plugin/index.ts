@@ -5,11 +5,9 @@
  * Compatible with RushStack/Heft build system and follows Rush Stack design patterns.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
-import * as http from 'http';
-import { URL } from 'url';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Compiler, Compilation } from 'webpack';
 
 import {
@@ -35,7 +33,7 @@ try {
  * These match the defaults defined in schema.json
  */
 const DEFAULT_CONFIG: Partial<IApiInlinerConfiguration> = {
-  production: true,
+  production: process.env.NODE_ENV === 'production',
   inlineAsVariable: true,
   variablePrefix: 'API_DATA',
   saveAsFile: true,
@@ -168,9 +166,9 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
     }
 
     // After the emit phase, generate the TypeScript declaration file if enabled
-    compiler.hooks.afterEmit.tapAsync('ApiInlinerPlugin', (compilation: Compilation, callback: () => void) => {
+    compiler.hooks.afterEmit.tapAsync('ApiInlinerPlugin', async (compilation: Compilation, callback: () => void) => {
       if (this.options.emitDeclarationFile && this.dataStore.size > 0) {
-        this.generateDeclarationFile(webpackOutputPath);
+        await this.generateDeclarationFile(webpackOutputPath);
       }
       
       callback();
@@ -184,7 +182,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
    * @returns Promise that resolves when the endpoint is processed
    */
   private async processEndpoint(endpoint: IEndpointConfig, webpackOutputPath: string): Promise<void> {
-    const shouldFetchFromApi: boolean = this.options.production as boolean;
+    const shouldFetchFromApi: boolean = endpoint.production ?? this.options.production ?? DEFAULT_CONFIG.production as boolean;
     const shouldSaveAsFile: boolean = endpoint.saveAsFile ?? this.options.saveAsFile ?? DEFAULT_CONFIG.saveAsFile as boolean;
     
     // Generate output path for this endpoint
@@ -197,7 +195,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
       );
       
       // Ensure the output directory exists
-      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
     }
 
     // Generate variable name from endpoint URL if not specified
@@ -212,13 +210,13 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
     }
 
     // Function to process and save data
-    const processData = (data: any): void => {
+    const processData = async (data: any): Promise<void> => {
       // Store data for later use in HtmlWebpackPlugin hooks
       this.dataStore.set(endpoint.url, { data, endpoint });
       
       // Save to file if configured
       if (shouldSaveAsFile && outputPath) {
-        fs.writeFileSync(outputPath, JSON.stringify(data));
+        await fs.writeFile(outputPath, JSON.stringify(data));
         console.log(`ApiInlinerPlugin: Data written to ${outputPath}`);
       }
       
@@ -237,24 +235,24 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
     // Only fetch from API in production mode
     if (shouldFetchFromApi) {
       try {
-        // Fetch data from API with retry mechanism
+        // Fetch data from API using modern fetch API
         const data: any = await this.fetchFromApi(
           endpoint.url, 
           endpoint.requestOptions,
           this.options.requestTimeout,
           this.options.retryCount
         );
-        processData(data);
+        await processData(data);
       } catch (error) {
         console.error(`ApiInlinerPlugin: Error fetching from ${endpoint.url}:`, (error as Error).message);
         
         // Use fallback data on error
         if (endpoint.fallbackData) {
-          processData(endpoint.fallbackData);
+          await processData(endpoint.fallbackData);
           console.log(`ApiInlinerPlugin: Using fallback data for ${endpoint.url}`);
         } else {
           console.warn(`ApiInlinerPlugin: No fallback data provided for ${endpoint.url}`);
-          processData({});
+          await processData({});
         }
         
         // Call onError callback if provided
@@ -264,7 +262,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
       }
     } else {
       // In development mode, just use fallback data
-      processData(endpoint.fallbackData || {});
+      await processData(endpoint.fallbackData || {});
     }
   }
 
@@ -272,7 +270,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
    * Generate TypeScript declaration file for window variables
    * @param webpackOutputPath - Webpack output directory path
    */
-  private generateDeclarationFile(webpackOutputPath: string): void {
+  private async generateDeclarationFile(webpackOutputPath: string): Promise<void> {
     if (this.dataStore.size === 0) {
       console.log('ApiInlinerPlugin: No data to generate TypeScript declarations for');
       return;
@@ -285,7 +283,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
     );
 
     // Create directory if it doesn't exist
-    fs.mkdirSync(path.dirname(declarationFilePath), { recursive: true });
+    await fs.mkdir(path.dirname(declarationFilePath), { recursive: true });
     
     // Start building the declaration file content
     let declarationContent: string = `/**
@@ -321,98 +319,68 @@ export {}; // This file is a module
 `;
 
     // Write to file
-    fs.writeFileSync(declarationFilePath, declarationContent);
+    await fs.writeFile(declarationFilePath, declarationContent);
     console.log(`ApiInlinerPlugin: TypeScript declarations generated at ${declarationFilePath}`);
   }
 
   /**
-   * Fetch data from an API endpoint with retry mechanism
+   * Fetch data from an API endpoint with retry mechanism using native fetch API
    * @param apiUrl - The URL to fetch data from
-   * @param requestOptions - Options to pass to the request
+   * @param requestOptions - Options to pass to the fetch API
    * @param timeout - Request timeout in milliseconds
    * @param retries - Number of retries on failure
    * @returns Promise that resolves with the parsed JSON data
    */
-  private fetchFromApi(
+  private async fetchFromApi(
     apiUrl: string, 
     requestOptions: Record<string, unknown> = {}, 
     timeout: number = DEFAULT_CONFIG.requestTimeout as number, 
     retries: number = DEFAULT_CONFIG.retryCount as number
   ): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
-      const parsedUrl: URL = new URL(apiUrl);
-      const httpModule: typeof http | typeof https = parsedUrl.protocol === 'https:' ? https : http;
-      
-      // Setup request options
-      const options: http.RequestOptions = {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-        path: `${parsedUrl.pathname}${parsedUrl.search}`,
-        method: 'GET',
-        timeout,
-        ...requestOptions
-      };
-      
-      // Create request with error handling and retry logic
-      const makeRequest = (retriesLeft: number): void => {
-        const req: http.ClientRequest = httpModule.request(options, (res: http.IncomingMessage) => {
-          let data: string = '';
+    // Convert legacy http request options to fetch options
+    const fetchOptions: RequestInit = {
+      method: 'GET',
+      ...requestOptions,
+      headers: {
+        'Accept': 'application/json',
+        ...((requestOptions as any).headers || {})
+      },
+      signal: AbortSignal.timeout(timeout)
+    };
+    
+    // Function to attempt the fetch with retries
+    const fetchWithRetry = async (retriesLeft: number): Promise<any> => {
+      try {
+        const response = await fetch(apiUrl, fetchOptions);
+        
+        // Handle HTTP error responses
+        if (!response.ok) {
+          const error = new Error(`HTTP request failed with status code ${response.status}`);
           
-          // Handle HTTP status code errors
-          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            const error: Error = new Error(`HTTP request failed with status code ${res.statusCode}`);
-            
-            // Retry on 5xx errors if we have retries left
-            if (res.statusCode >= 500 && retriesLeft > 0) {
-              console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to ${res.statusCode} error (${retriesLeft} attempts left)`);
-              return makeRequest(retriesLeft - 1);
-            }
-            
-            return reject(error);
+          // Retry on 5xx errors if we have retries left
+          if (response.status >= 500 && retriesLeft > 0) {
+            console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to ${response.status} error (${retriesLeft} attempts left)`);
+            return fetchWithRetry(retriesLeft - 1);
           }
           
-          // Collect data chunks
-          res.on('data', (chunk: Buffer) => {
-            data += chunk.toString();
-          });
-          
-          // Process the data when complete
-          res.on('end', () => {
-            try {
-              const parsedData: any = JSON.parse(data);
-              resolve(parsedData);
-            } catch (e) {
-              reject(new Error(`Failed to parse response data: ${(e as Error).message}`));
-            }
-          });
-        });
+          throw error;
+        }
         
-        // Handle request errors
-        req.on('error', (e: Error) => {
-          if (retriesLeft > 0) {
-            console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to error: ${e.message} (${retriesLeft} attempts left)`);
-            return makeRequest(retriesLeft - 1);
-          }
-          reject(new Error(`HTTP request error: ${e.message}`));
-        });
+        // Parse JSON response
+        return await response.json();
         
-        // Handle timeout
-        req.on('timeout', () => {
-          req.destroy();
-          if (retriesLeft > 0) {
-            console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to timeout (${retriesLeft} attempts left)`);
-            return makeRequest(retriesLeft - 1);
-          }
-          reject(new Error(`HTTP request timeout after ${timeout}ms`));
-        });
-        
-        // End the request
-        req.end();
-      };
-      
-      // Start the initial request
-      makeRequest(retries);
-    });
+      } catch (error) {
+        // Handle network errors and retries
+        if (retriesLeft > 0 && !(error instanceof SyntaxError)) {
+          console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to error: ${(error as Error).message} (${retriesLeft} attempts left)`);
+          return fetchWithRetry(retriesLeft - 1);
+        }
+        throw error;
+      }
+    };
+    
+    // Start with full retry count
+    return fetchWithRetry(retries);
   }
 
   /**
@@ -421,21 +389,26 @@ export {}; // This file is a module
    * @returns A safe variable name
    */
   private getVariableNameFromUrl(apiUrl: string): string {
-    const parsedUrl: URL = new URL(apiUrl);
-    const pathSegments: string[] = parsedUrl.pathname.split('/').filter(Boolean);
-    
-    // Use the last segment of the path, or hostname if path is empty
-    const baseSegment: string = pathSegments.length > 0 
-      ? pathSegments[pathSegments.length - 1] 
-      : parsedUrl.hostname;
-    
-    // Replace non-alphanumeric characters with underscores and convert to uppercase
-    const safeName: string = baseSegment
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .replace(/^[0-9]/, '_$&')
-      .toUpperCase();
-    
-    return safeName;
+    try {
+      const url = new URL(apiUrl);
+      const pathSegments: string[] = url.pathname.split('/').filter(Boolean);
+      
+      // Use the last segment of the path, or hostname if path is empty
+      const baseSegment: string = pathSegments.length > 0 
+        ? pathSegments[pathSegments.length - 1] 
+        : url.hostname;
+      
+      // Replace non-alphanumeric characters with underscores and convert to uppercase
+      const safeName: string = baseSegment
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .replace(/^[0-9]/, '_$&')
+        .toUpperCase();
+      
+      return safeName;
+    } catch (e) {
+      // Fallback if URL is invalid
+      return apiUrl.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+    }
   }
 }
 

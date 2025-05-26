@@ -67,13 +67,12 @@ function createWebpackConfig({ production }) {
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
       
-      // Use the RushStack compatible version of ApiInlinerPlugin
-      // This can also be configured through a separate api-inliner.json file 
+      // Use the API Inliner plugin
+      // This would typically be configured through a separate config file
       // when using the Heft plugin integration
       new ApiInlinerPlugin({
-        // Note: In a real-world scenario with Heft integration, this config
-        // would be loaded from config/api-inliner.json instead
-        production,
+        // Note: production flag is now automatically determined from process.env.NODE_ENV
+        // but can still be overridden here if needed
         inlineAsVariable: true,
         emitDeclarationFile: true, // Generate TypeScript declaration file
         declarationFilePath: 'api-inliner.d.ts', // Path relative to output directory
