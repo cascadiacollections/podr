@@ -9,32 +9,40 @@ interface IListProps {
 };
 
 /**
- * List component that renders a list of podcast episodes
- * Memoized to prevent unnecessary re-renders
+ * List component that renders a table of podcast episodes
+ * Using Pico's classless table approach for responsive design
  */
 export const List: FunctionComponent<IListProps> = memo(
   (props: IListProps) => {
     const { results, onClick } = props;
 
     return (
-      <ol 
-        className='list list-group feed-items' 
-        reversed
-        aria-label="Podcast episodes"
-      >
-        {results.map((result: Readonly<IFeedItem>) => (
-          <Result
-            key={result.guid}
-            result={result}
-            onClick={onClick}
-          />
-        ))}
-        {results.length === 0 && (
-          <li className="list-group-item empty-state">
-            No episodes available. Search or select a podcast to see episodes.
-          </li>
-        )}
-      </ol>
+      <section className="episodes-container">
+        <table>
+          <caption>Podcast Episodes</caption>
+          <thead>
+            <tr>
+              <th scope="col">Episode</th>
+              <th scope="col" className="date-column">Date</th>
+              <th scope="col" className="duration-column">Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((result: Readonly<IFeedItem>) => (
+              <Result
+                key={result.guid}
+                result={result}
+                onClick={onClick}
+              />
+            ))}
+            {results.length === 0 && (
+              <tr>
+                <td colSpan={3}>No episodes available. Search or select a podcast to see episodes.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
     );
   },
   // Custom comparison for memoization
