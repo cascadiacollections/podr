@@ -1,0 +1,8 @@
+{
+  "presets": [
+    ["@babel/preset-env", { "targets": { "node": "current" } }],
+    ["@babel/preset-typescript", { "jsxPragma": "h" }],
+    ["@babel/preset-react", { "runtime": "automatic", "importSource": "preact" }]
+  ],
+  "plugins": []
+}

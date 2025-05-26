@@ -4,6 +4,10 @@
     "start": {
       "actionName": "build-watch",
       "defaultParameters": ["--serve"]
+    },
+    "run-tests": {
+      "actionName": "run",
+      "defaultParameters": ["--to", "test"]
     }
   },
 
@@ -38,6 +42,16 @@
           "taskDependencies": ["typescript"],
           "taskPlugin": {
             "pluginPackage": "@rushstack/heft-webpack5-plugin"
+          }
+        }
+      }
+    },
+    "test": {
+      "cleanFiles": [],
+      "tasksByName": {
+        "jest": {
+          "taskPlugin": {
+            "pluginPackage": "@rushstack/heft-jest-plugin"
           }
         }
       }
