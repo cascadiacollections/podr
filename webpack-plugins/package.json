@@ -1,0 +1,31 @@
+{
+  "name": "@cascadiacollections/webpack-api-inliner",
+  "version": "1.0.0",
+  "description": "Webpack plugin to fetch API data at build time and inline it as window variables or save as JSON files",
+  "main": "api-inliner-plugin.js",
+  "types": "api-inliner-plugin.d.ts",
+  "keywords": [
+    "webpack",
+    "plugin",
+    "api",
+    "inliner",
+    "build-time",
+    "inline",
+    "static",
+    "prerender",
+    "performance"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cascadiacollections/podr"
+  },
+  "author": "Cascadia Collections",
+  "license": "MIT",
+  "peerDependencies": {
+    "html-webpack-plugin": ">=5.0.0",
+    "webpack": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
