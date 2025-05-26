@@ -3,7 +3,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const ApiInlinerPlugin = require('./webpack-plugins/api-inliner-plugin');
+const { ApiInlinerPlugin } = require('./webpack-plugins/api-inliner-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
 /**
@@ -75,11 +75,15 @@ function createWebpackConfig({ production }) {
         // would be loaded from config/api-inliner.json instead
         production,
         inlineAsVariable: true,
+        emitDeclarationFile: true, // Generate TypeScript declaration file
+        declarationFilePath: 'api-inliner.d.ts', // Path relative to output directory
         endpoints: [{
           url: 'https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10',
           outputFile: 'top-podcasts.json',
           fallbackData: { feed: { entry: [] } },
-          variableName: 'PODR_TOP_PODCASTS' // Keep the same variable name for backward compatibility
+          variableName: 'PODR_TOP_PODCASTS', // Keep the same variable name for backward compatibility
+          // Specify the TypeScript type for this data
+          typeReference: '{ feed: { entry: ReadonlyArray<import("../src/ui/AppFunctional").ITopPodcast> } }'
         }]
       })
     ]

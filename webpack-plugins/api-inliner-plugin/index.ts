@@ -41,7 +41,10 @@ const DEFAULT_CONFIG: Partial<IApiInlinerConfiguration> = {
   saveAsFile: true,
   requestTimeout: 10000,
   retryCount: 2,
-  outputPath: ''
+  outputPath: '',
+  emitDeclarationFile: false,
+  declarationFilePath: 'api-inliner.d.ts',
+  defaultType: 'any'
 };
 
 /**
@@ -163,6 +166,15 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
         });
       });
     }
+
+    // After the emit phase, generate the TypeScript declaration file if enabled
+    compiler.hooks.afterEmit.tapAsync('ApiInlinerPlugin', (compilation: Compilation, callback: () => void) => {
+      if (this.options.emitDeclarationFile && this.dataStore.size > 0) {
+        this.generateDeclarationFile(webpackOutputPath);
+      }
+      
+      callback();
+    });
   }
 
   /**
@@ -254,6 +266,63 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
       // In development mode, just use fallback data
       processData(endpoint.fallbackData || {});
     }
+  }
+
+  /**
+   * Generate TypeScript declaration file for window variables
+   * @param webpackOutputPath - Webpack output directory path
+   */
+  private generateDeclarationFile(webpackOutputPath: string): void {
+    if (this.dataStore.size === 0) {
+      console.log('ApiInlinerPlugin: No data to generate TypeScript declarations for');
+      return;
+    }
+    
+    // Get declaration file path
+    const declarationFilePath: string = path.resolve(
+      webpackOutputPath,
+      this.options.declarationFilePath as string
+    );
+
+    // Create directory if it doesn't exist
+    fs.mkdirSync(path.dirname(declarationFilePath), { recursive: true });
+    
+    // Start building the declaration file content
+    let declarationContent: string = `/**
+ * Auto-generated TypeScript declarations for API Inliner Plugin
+ * Generated on: ${new Date().toISOString()}
+ * DO NOT EDIT DIRECTLY
+ */
+
+declare global {
+  interface Window {\n`;
+
+    // Add each window variable
+    this.dataStore.forEach((entry: IApiDataStoreEntry) => {
+      const endpoint: IEndpointConfig = entry.endpoint;
+      const shouldInline: boolean = endpoint.inlineAsVariable ?? this.options.inlineAsVariable ?? DEFAULT_CONFIG.inlineAsVariable as boolean;
+      
+      if (shouldInline) {
+        const variableName: string = endpoint.variableName || 
+          `${this.options.variablePrefix}_${this.getVariableNameFromUrl(endpoint.url)}`;
+        
+        // Use custom type reference if provided, otherwise use default
+        const typeRef: string = endpoint.typeReference || this.options.defaultType || 'any';
+        
+        declarationContent += `    ${variableName}: ${typeRef};\n`;
+      }
+    });
+
+    // Close the declaration
+    declarationContent += `  }
+}
+
+export {}; // This file is a module
+`;
+
+    // Write to file
+    fs.writeFileSync(declarationFilePath, declarationContent);
+    console.log(`ApiInlinerPlugin: TypeScript declarations generated at ${declarationFilePath}`);
   }
 
   /**

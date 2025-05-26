@@ -82,6 +82,9 @@ if (window.EXAMPLE_PRODUCTS) {
 | `requestTimeout` | `number` | `10000` | Timeout in milliseconds for API requests |
 | `retryCount` | `number` | `2` | Number of times to retry a failed request |
 | `outputPath` | `string` | `''` | Custom path to save JSON files to (relative to webpack output path) |
+| `emitDeclarationFile` | `boolean` | `false` | Whether to emit TypeScript declaration (.d.ts) files for inlined variables |
+| `declarationFilePath` | `string` | `'api-inliner.d.ts'` | Output path for TypeScript declaration file (relative to webpack output path) |
+| `defaultType` | `string` | `'any'` | Default type to use for window variables when no specific type is provided |
 | `onSuccess` | `function` | `undefined` | Callback function to run after successful data fetch |
 | `onError` | `function` | `undefined` | Callback function to run after failed data fetch |
 
@@ -96,6 +99,7 @@ if (window.EXAMPLE_PRODUCTS) {
 | `variableName` | `string` | No | Name of the window variable to use when inlining |
 | `requestOptions` | `object` | No | Options to pass to the http/https request (headers, method, etc) |
 | `saveAsFile` | `boolean` | No | Whether to save data as static JSON file (overrides global setting) |
+| `typeReference` | `string` | No | TypeScript type reference for this endpoint's data |
 
 ## Advanced Configuration
 
@@ -138,6 +142,57 @@ new ApiInlinerPlugin({
 ### Using with CI/CD
 
 This plugin works great with CI/CD pipelines that rebuild your app regularly to keep the data fresh.
+
+### TypeScript Type Safety
+
+The plugin can generate TypeScript declaration files for your inlined window variables:
+
+```javascript
+new ApiInlinerPlugin({
+  emitDeclarationFile: true, // Enable declaration file generation
+  declarationFilePath: 'api-inliner.d.ts', // Path relative to webpack output
+  endpoints: [
+    {
+      url: 'https://api.example.com/products',
+      variableName: 'EXAMPLE_PRODUCTS',
+      // Use custom type reference for this endpoint
+      typeReference: 'import("../src/types").IProduct[]'
+    }
+  ]
+})
+```
+
+The generated declaration file will look like:
+
+```typescript
+/**
+ * Auto-generated TypeScript declarations for API Inliner Plugin
+ * Generated on: 2023-05-25T12:34:56.789Z
+ * DO NOT EDIT DIRECTLY
+ */
+
+declare global {
+  interface Window {
+    EXAMPLE_PRODUCTS: import("../src/types").IProduct[];
+  }
+}
+
+export {}; // This file is a module
+```
+
+Add the declaration file to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    // ...other options
+    "typeRoots": [
+      "./node_modules/@types",
+      "./dist" // Include the directory where declaration files are generated
+    ]
+  }
+}
+```
 
 ## License
 

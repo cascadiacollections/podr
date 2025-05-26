@@ -47,6 +47,12 @@ export interface IEndpointConfig {
    * @default undefined - Inherits from global configuration
    */
   saveAsFile?: boolean;
+  
+  /**
+   * TypeScript type reference for this endpoint's data
+   * Example: "import('../../src/types').ITopPodcasts"
+   */
+  typeReference?: string;
 }
 
 /**
@@ -101,6 +107,24 @@ export interface IApiInlinerConfiguration {
    * @default ""
    */
   outputPath?: string;
+  
+  /**
+   * Whether to emit TypeScript declaration (.d.ts) files for inlined variables
+   * @default false
+   */
+  emitDeclarationFile?: boolean;
+  
+  /**
+   * Output path for TypeScript declaration file (relative to webpack output path)
+   * @default "api-inliner.d.ts"
+   */
+  declarationFilePath?: string;
+  
+  /**
+   * Default type to use for window variables when no specific type is provided
+   * @default "any"
+   */
+  defaultType?: string;
   
   /**
    * Callback function to run after successful data fetch
