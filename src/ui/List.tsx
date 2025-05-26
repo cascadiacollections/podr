@@ -9,7 +9,7 @@ interface IListProps {
 };
 
 /**
- * List component that renders a list of podcast episodes
+ * List component that renders a table of podcast episodes
  * Memoized to prevent unnecessary re-renders
  */
 export const List: FunctionComponent<IListProps> = memo(
@@ -17,24 +17,31 @@ export const List: FunctionComponent<IListProps> = memo(
     const { results, onClick } = props;
 
     return (
-      <ol 
-        className='list list-group feed-items' 
-        reversed
-        aria-label="Podcast episodes"
-      >
-        {results.map((result: Readonly<IFeedItem>) => (
-          <Result
-            key={result.guid}
-            result={result}
-            onClick={onClick}
-          />
-        ))}
-        {results.length === 0 && (
-          <li className="list-group-item empty-state">
-            No episodes available. Search or select a podcast to see episodes.
-          </li>
-        )}
-      </ol>
+      <div className="episodes-container feed-items">
+        <table aria-label="Podcast episodes">
+          <thead>
+            <tr>
+              <th>Episode</th>
+              <th>Date</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((result: Readonly<IFeedItem>) => (
+              <Result
+                key={result.guid}
+                result={result}
+                onClick={onClick}
+              />
+            ))}
+            {results.length === 0 && (
+              <tr>
+                <td colSpan={3}>No episodes available. Search or select a podcast to see episodes.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     );
   },
   // Custom comparison for memoization

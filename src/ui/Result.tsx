@@ -65,21 +65,22 @@ export const Result: FunctionComponent<IResultProps> = memo(
     const formattedDuration = useMemo(() => formatDuration(result.enclosure.duration), [result.enclosure.duration]);
 
     return (
-      <li
-        className={'result list-group-item list-group-item-action'}
+      <tr
+        className='result'
         onClick={onClickCallback}
         onKeyDown={(e) => e.key === 'Enter' && onClickCallback()}
         tabIndex={0}
         role="button"
         aria-label={`Play episode: ${title}`}>
-        <a href={result.enclosure.link} aria-label={`Stream or download: ${title}`}>
-          <h2 className='title' dangerouslySetInnerHTML={{ __html: title }} />
-        </a>
-        <strong className='pubDate'>{formattedDate}</strong>
-        <strong>&nbsp;&bull;&nbsp;</strong>
-        <strong className='duration'>{formattedDuration}</strong>
-        <p className='description' dangerouslySetInnerHTML={{ __html: description }} />
-      </li>
+        <td>
+          <a href={result.enclosure.link} aria-label={`Stream or download: ${title}`}>
+            <div className='title' dangerouslySetInnerHTML={{ __html: title }} />
+          </a>
+          <div className='description' dangerouslySetInnerHTML={{ __html: description }} />
+        </td>
+        <td className='pubDate'>{formattedDate}</td>
+        <td className='duration'>{formattedDuration}</td>
+      </tr>
     );
   },
   // Custom comparison function for memo

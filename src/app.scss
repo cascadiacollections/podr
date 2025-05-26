@@ -65,6 +65,9 @@ img, .result {
   overflow: hidden;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  font-size: 0.85em;
+  color: var(--muted-color);
+  margin: 0;
 }
 
 .feeds {
@@ -72,18 +75,69 @@ img, .result {
   overflow-y: scroll;
 }
 
-.feed-items {
+// Episodes table container
+.episodes-container {
   height: 340px;
-  max-height: 340px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-// List item styles
-li {
-  margin-bottom: 4px;
+// Table styles optimized for mobile vertical scrolling
+table {
+  width: 100%;
+  table-layout: fixed;
+  margin: 0;
+  
+  th, td {
+    padding: 0.5rem;
+    vertical-align: top;
+  }
+  
+  th:first-child, td:first-child {
+    width: 60%;
+  }
+  
+  th:nth-child(2), td:nth-child(2),
+  th:nth-child(3), td:nth-child(3) {
+    width: 20%;
+    text-align: right;
+  }
+}
 
+// Result row styles
+.result {
   &:hover {
-    color: var(--primary-hover);
+    background-color: var(--hover-background);
+  }
+  
+  td {
+    padding: 0.5rem;
+  }
+  
+  .title {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  
+  .pubDate, .duration {
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+}
+
+// Mobile optimizations
+@media (max-width: 576px) {
+  table {
+    th:nth-child(3), td:nth-child(3) {
+      display: none;
+    }
+    
+    th:first-child, td:first-child {
+      width: 70%;
+    }
+    
+    th:nth-child(2), td:nth-child(2) {
+      width: 30%;
+    }
   }
 }
