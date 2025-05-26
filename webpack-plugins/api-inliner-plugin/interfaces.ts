@@ -55,6 +55,12 @@ export interface IEndpointConfig {
   typeReference?: string;
   
   /**
+   * Whether to always fetch from API regardless of production status
+   * @default undefined - Inherits from global configuration
+   */
+  alwaysFetchFromApi?: boolean;
+  
+  /**
    * Override the production setting for this specific endpoint
    * @default undefined - Inherits from global configuration
    */
@@ -77,6 +83,14 @@ export interface IApiInlinerConfiguration {
    * @default process.env.NODE_ENV === 'production'
    */
   production?: boolean;
+  
+  /**
+   * Whether to always fetch from API regardless of production/development mode
+   * This overrides production flag if true, and will try to fetch real data
+   * even in development mode.
+   * @default true
+   */
+  alwaysFetchFromApi?: boolean;
   
   /**
    * Global setting for whether to inline data as window variables

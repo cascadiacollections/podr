@@ -1061,7 +1061,7 @@
     watchpack "2.4.0"
     webpack-dev-server "~4.9.3"
 
-"@rushstack/heft@0.67.2":
+"@rushstack/heft@^0.67.2":
   version "0.67.2"
   resolved "https://registry.npmjs.org/@rushstack/heft/-/heft-0.67.2.tgz"
   integrity sha512-Lf+tdOdi5sWF18PLI1sjo83ywl7l+sVTmCzO9qnTZyF2PdbD1ajsWJZFJhk6OL5KKik/Qn61qKgJf/BLhzJl+g==

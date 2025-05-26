@@ -34,6 +34,7 @@ try {
  */
 const DEFAULT_CONFIG: Partial<IApiInlinerConfiguration> = {
   production: process.env.NODE_ENV === 'production',
+  alwaysFetchFromApi: true, // Always fetch from API by default, regardless of environment
   inlineAsVariable: true,
   variablePrefix: 'API_DATA',
   saveAsFile: true,
@@ -182,7 +183,13 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
    * @returns Promise that resolves when the endpoint is processed
    */
   private async processEndpoint(endpoint: IEndpointConfig, webpackOutputPath: string): Promise<void> {
-    const shouldFetchFromApi: boolean = endpoint.production ?? this.options.production ?? DEFAULT_CONFIG.production as boolean;
+    // Special property to determine if real API calls should be attempted even in development mode
+    const alwaysFetchFromApi: boolean = endpoint.alwaysFetchFromApi ?? this.options.alwaysFetchFromApi ?? true;
+    
+    // If alwaysFetchFromApi is true, we'll attempt to fetch from the API regardless of production status
+    const shouldFetchFromApi: boolean = alwaysFetchFromApi || 
+      (endpoint.production ?? this.options.production ?? DEFAULT_CONFIG.production as boolean);
+    
     const shouldSaveAsFile: boolean = endpoint.saveAsFile ?? this.options.saveAsFile ?? DEFAULT_CONFIG.saveAsFile as boolean;
     
     // Generate output path for this endpoint
@@ -232,7 +239,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
       }
     };
 
-    // Only fetch from API in production mode
+    // Fetch from API if configured to do so
     if (shouldFetchFromApi) {
       try {
         // Fetch data from API using modern fetch API
@@ -261,7 +268,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
         }
       }
     } else {
-      // In development mode, just use fallback data
+      // In development mode without alwaysFetchFromApi, just use fallback data
       await processData(endpoint.fallbackData || {});
     }
   }

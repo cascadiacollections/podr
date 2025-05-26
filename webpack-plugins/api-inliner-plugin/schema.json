@@ -39,6 +39,10 @@
             "type": "string",
             "examples": ["import('../../src/types').ITopPodcasts"]
           },
+          "alwaysFetchFromApi": {
+            "description": "Whether to always fetch from API regardless of production status",
+            "type": "boolean"
+          },
           "production": {
             "description": "Override the production setting for this specific endpoint",
             "type": "boolean"
@@ -51,6 +55,11 @@
       "description": "Whether to fetch data from API (production) or just use fallback (development)",
       "type": "boolean",
       "default": "Uses process.env.NODE_ENV === 'production'"
+    },
+    "alwaysFetchFromApi": {
+      "description": "Whether to always fetch from API regardless of production/development mode",
+      "type": "boolean",
+      "default": true
     },
     "inlineAsVariable": {
       "description": "Global setting for whether to inline data as window variables",
