@@ -15,6 +15,8 @@
 const fs = require('fs');
 const path = require('path');
 
+let apiInlinerModule;
+
 // Check if the new directory structure exists
 // This is expected to be compiled to JS before being published
 if (fs.existsSync(path.join(__dirname, 'api-inliner-plugin/index.ts'))) {
@@ -29,17 +31,30 @@ if (fs.existsSync(path.join(__dirname, 'api-inliner-plugin/index.ts'))) {
       }
     });
     
-    module.exports = require('./api-inliner-plugin/index');
+    apiInlinerModule = require('./api-inliner-plugin/index');
     console.log('ApiInlinerPlugin: Using TypeScript implementation');
   } catch (e) {
     // Fallback to the old implementation
     console.warn('ApiInlinerPlugin: Could not load TypeScript implementation, using backup');
-    module.exports = require('./api-inliner-plugin.old');
+    apiInlinerModule = require('./api-inliner-plugin.old');
   }
 } else if (fs.existsSync(path.join(__dirname, 'api-inliner-plugin/lib/index.js'))) {
   // For production, use the compiled JS
-  module.exports = require('./api-inliner-plugin/lib/index');
+  apiInlinerModule = require('./api-inliner-plugin/lib/index');
 } else {
   // Fallback to the old implementation for backward compatibility
-  module.exports = require('./api-inliner-plugin.old');
+  apiInlinerModule = require('./api-inliner-plugin.old');
 }
+
+// Export the plugin class as both a named export and a default export for backward compatibility
+const ApiInlinerPlugin = apiInlinerModule.ApiInlinerPlugin || apiInlinerModule;
+
+module.exports = ApiInlinerPlugin;
+module.exports.ApiInlinerPlugin = ApiInlinerPlugin;
+
+// Re-export any other exports from the module
+Object.keys(apiInlinerModule).forEach(key => {
+  if (key !== 'default' && key !== 'ApiInlinerPlugin') {
+    module.exports[key] = apiInlinerModule[key];
+  }
+});
