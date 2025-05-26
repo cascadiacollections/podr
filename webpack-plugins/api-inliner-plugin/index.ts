@@ -423,3 +423,6 @@ export default ApiInlinerPlugin;
 
 // Also re-export interfaces for consumers
 export * from './interfaces';
+
+// Export hooks
+export * from './hooks';
