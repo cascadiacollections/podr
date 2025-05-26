@@ -8,6 +8,8 @@ import { memo } from 'preact/compat';
  * @returns Formatted duration string
  */
 function formatDuration(duration: number): string {
+  if (!duration) return '00:00:00';
+  
   const hours = Math.floor(duration / 3600);
   const minutes = Math.floor((duration % 3600) / 60);
   const seconds = Math.floor(duration % 60);
@@ -25,7 +27,17 @@ function formatDuration(duration: number): string {
  * @returns Formatted date string
  */
 function formatPubDate(isoString: string): string {
-  return new Date(isoString.replace(/-/g, "/")).toDateString();
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString.replace(/-/g, "/"));
+    return date.toLocaleDateString(undefined, { 
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return '';
+  }
 }
 
 interface IEnclosure {
@@ -48,12 +60,12 @@ export interface IResultProps {
 
 /**
  * Result component that displays a podcast episode
- * Memoized to prevent unnecessary re-renders
+ * Using HTML5 semantic elements and Pico's classless approach
  */
 export const Result: FunctionComponent<IResultProps> = memo(
   (props: IResultProps) => {
     const { onClick, result } = props;
-    const { description, title } = result;
+    const { description, title, pubDate, enclosure } = result;
 
     // Memoize callback to prevent unnecessary re-renders
     const onClickCallback = useCallback(() => {
@@ -61,25 +73,24 @@ export const Result: FunctionComponent<IResultProps> = memo(
     }, [result, onClick]);
     
     // Memoize formatted date and duration
-    const formattedDate = useMemo(() => formatPubDate(result.pubDate), [result.pubDate]);
-    const formattedDuration = useMemo(() => formatDuration(result.enclosure.duration), [result.enclosure.duration]);
+    const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
+    const formattedDuration = useMemo(() => formatDuration(enclosure.duration), [enclosure.duration]);
 
     return (
-      <li
-        className={'result list-group-item list-group-item-action'}
+      <tr
         onClick={onClickCallback}
         onKeyDown={(e) => e.key === 'Enter' && onClickCallback()}
         tabIndex={0}
         role="button"
         aria-label={`Play episode: ${title}`}>
-        <a href={result.enclosure.link} aria-label={`Stream or download: ${title}`}>
-          <h2 className='title' dangerouslySetInnerHTML={{ __html: title }} />
-        </a>
-        <strong className='pubDate'>{formattedDate}</strong>
-        <strong>&nbsp;&bull;&nbsp;</strong>
-        <strong className='duration'>{formattedDuration}</strong>
-        <p className='description' dangerouslySetInnerHTML={{ __html: description }} />
-      </li>
+        <td>
+          <a href={enclosure.link} aria-label={`Stream or download: ${title}`} dangerouslySetInnerHTML={{ __html: title }} />
+        </td>
+        <td className="date-column">
+          <time dateTime={pubDate}>{formattedDate}</time>
+        </td>
+        <td className="duration-column">{formattedDuration}</td>
+      </tr>
     );
   },
   // Custom comparison function for memo
