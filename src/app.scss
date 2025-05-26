@@ -1,89 +1,89 @@
-@media (prefers-color-scheme: dark) {
-	html, #root {
-		background: black;
-	}
+// Custom styles that work with Pico.css framework
 
-	input[type="search"] {
-		background-color: #75757538;
-		border-color: #292929 !important;
-	}
-
-	li {
-		background: black !important;
-    color: white !important;
-
-		&:hover {
-			color: orange !important;
-		}
-	}
+// Define variables to match Pico's defaults but with our orange accent
+:root {
+  --primary: #ffa500;
+  --primary-hover: #ff8c00;
 }
 
-html, body {
-	font: 14px/1.21 'Helvetica Neue', arial, sans-serif;
-	font-weight: 400;
-	color: #444;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+// Basic styles
+body {
+  font: 14px/1.21 'Helvetica Neue', arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1 {
-	text-align: center;
-	margin: 16px;
-}
-
-h1 a {
-	color: #ffa500
+  text-align: center;
+  margin: 16px;
+  
+  a {
+    color: var(--primary);
+    text-decoration: none;
+  }
 }
 
 input[type="search"] {
-	border: solid;
-    border-radius: 6px;
-    border-color: #ffa500;
-    border-width: 1px;
+  border-color: var(--primary);
+  border-width: 1px;
 }
 
 .section-header {
-	color: #ffa500;
-	text-transform: uppercase;
-    font-size: 14px;
-    margin: 8px 0;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 14px;
+  margin: 8px 0;
 }
 
+// Media player styles
 audio {
-	position: fixed;
-	bottom: 0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  margin: 0;
+  left: 0;
 }
 
+// Results and feed styles
 .results {
-	height: 128px;
-	max-height: 128px;
-	overflow-y: auto;
+  height: 128px;
+  max-height: 128px;
+  overflow-y: auto;
   overflow-x: hidden;
 
-	img {
-		margin: 0px 4px;
-	}
+  img {
+    margin: 0px 4px;
+  }
 }
 
 img, .result {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .description {
-	display: -webkit-box;
-	overflow: hidden;
-	-webkit-line-clamp: 1;
-	-webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .feeds {
-	max-height: 100px;
-	overflow-y: scroll;
+  max-height: 100px;
+  overflow-y: scroll;
 }
 
 .feed-items {
-	height: 340px;
-	max-height: 340px;
-	overflow-y: auto;
+  height: 340px;
+  max-height: 340px;
+  overflow-y: auto;
   overflow-x: hidden;
+}
+
+// List item styles
+li {
+  margin-bottom: 4px;
+
+  &:hover {
+    color: var(--primary-hover);
+  }
 }
