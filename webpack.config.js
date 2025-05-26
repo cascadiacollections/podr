@@ -3,7 +3,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin');
+const ApiInlinerPlugin = require('./webpack-plugins/api-inliner-plugin');
+const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
 /**
  * If the "--production" command-line parameter is specified when invoking Heft, then the
@@ -65,11 +66,17 @@ function createWebpackConfig({ production }) {
         filename: '[name]_[contenthash].css'
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
-      // Add TopPodcastsPlugin with production flag and inlineAsVariable option
-      new TopPodcastsPlugin({
+      
+      // Use the new generalized ApiInlinerPlugin instead
+      new ApiInlinerPlugin({
         production,
-        inlineAsVariable: true, // Default to window variable for fastest initial render
-        variableName: 'PODR_TOP_PODCASTS'
+        inlineAsVariable: true,
+        endpoints: [{
+          url: 'https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10',
+          outputFile: 'top-podcasts.json',
+          fallbackData: { feed: { entry: [] } },
+          variableName: 'PODR_TOP_PODCASTS' // Keep the same variable name for backward compatibility
+        }]
       })
     ]
   };
