@@ -4,6 +4,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const { ApiInlinerPlugin } = require('./webpack-plugins/api-inliner-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
@@ -75,6 +76,18 @@ function createWebpackConfig({ production }) {
             }
           },
           extractComments: false
+        }),
+        new CssMinimizerPlugin({
+          minimizerOptions: {
+            preset: [
+              'default',
+              {
+                discardComments: { removeAll: true },
+                mergeLonghand: true,
+                cssDeclarationSorter: true
+              }
+            ]
+          }
         })
       ],
       splitChunks: production ? {
@@ -97,7 +110,15 @@ function createWebpackConfig({ production }) {
     plugins: [
       new HtmlWebpackPlugin({
         template: 'assets/index.html',
-        favicon: 'assets/favicon.ico'
+        favicon: 'assets/favicon.ico',
+        minify: production ? {
+          collapseWhitespace: true,
+          removeComments: true,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          useShortDoctype: true
+        } : false
       }),
       ...(production ? [new MiniCssExtractPlugin({
         filename: '[name]_[contenthash].css'
