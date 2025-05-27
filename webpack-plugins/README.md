@@ -267,9 +267,65 @@ module.exports = {
 };
 ```
 
+### Using with Webpack 4
+
+When using with Webpack 4, the plugin automatically detects the version and uses the appropriate APIs. Here are some specifics for Webpack 4:
+
+```javascript
+// webpack.config.js for webpack 4
+const ApiInlinerPlugin = require('@cascadiacollections/webpack-api-inliner');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  // webpack 4 configuration
+  plugins: [
+    new HtmlWebpackPlugin(),
+    new ApiInlinerPlugin({
+      endpoints: [
+        // your endpoints here
+      ]
+    })
+  ]
+};
+```
+
+### Using with Webpack 5
+
+For Webpack 5, the usage is identical, but the plugin uses Webpack 5's updated APIs internally:
+
+```javascript
+// webpack.config.js for webpack 5
+const { ApiInlinerPlugin } = require('@cascadiacollections/webpack-api-inliner');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  // webpack 5 configuration
+  plugins: [
+    new HtmlWebpackPlugin(),
+    new ApiInlinerPlugin({
+      endpoints: [
+        // your endpoints here
+      ]
+    })
+  ]
+};
+```
+
 The plugin automatically detects your webpack version and adjusts its behavior accordingly.
 
-## Node.js Version Support
+## Compatibility
+
+### Webpack Compatibility
+
+- **Webpack 4.x**: Fully supported
+- **Webpack 5.x**: Fully supported
+
+### HtmlWebpackPlugin Compatibility
+
+- **HtmlWebpackPlugin 4.x**: Fully supported
+- **HtmlWebpackPlugin 5.x**: Fully supported
+
+### Node.js Version Support
 
 This plugin requires Node.js v18 or later. It uses modern Node.js features such as:
 - Native fetch API
