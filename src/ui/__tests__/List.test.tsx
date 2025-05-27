@@ -5,7 +5,7 @@ import { IFeedItem } from '../Result';
 
 // Mock the Result component to avoid rendering issues in tests
 jest.mock('../Result', () => ({
-  Result: ({ result, onClick }) => (
+  Result: ({ result, onClick }: { result: IFeedItem; onClick: () => void }) => (
     <tr data-testid="mocked-result">
       <td>{result.title}</td>
       <td>{result.pubDate}</td>
