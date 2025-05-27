@@ -134,7 +134,7 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
     // Hook into HtmlWebpackPlugin to inject the window variables if enabled
     if (HtmlWebpackPlugin) {
       // Import the webpack version detection utility
-      const { detectVersions } = require('./webpack-utils');
+// Removed the require statement for detectVersions as it is now imported at the top of the file.
       
       // Detect webpack and HtmlWebpackPlugin versions
       const versionInfo = detectVersions(compiler, HtmlWebpackPlugin);
