@@ -17,6 +17,7 @@ import {
   ApiDataStore,
   IApiDataStoreEntry
 } from './interfaces';
+import { detectVersions } from './webpack-utils';
 
 // Try to load HtmlWebpackPlugin (optional peer dependency)
 let HtmlWebpackPlugin: any;
@@ -133,9 +134,6 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
 
     // Hook into HtmlWebpackPlugin to inject the window variables if enabled
     if (HtmlWebpackPlugin) {
-      // Import the webpack version detection utility
-// Removed the require statement for detectVersions as it is now imported at the top of the file.
-      
       // Detect webpack and HtmlWebpackPlugin versions
       const versionInfo = detectVersions(compiler, HtmlWebpackPlugin);
       

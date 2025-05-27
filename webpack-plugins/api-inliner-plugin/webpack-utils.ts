@@ -6,6 +6,7 @@
  */
 
 import { Compiler } from 'webpack';
+import * as semver from 'semver';
 
 /**
  * Detection result for webpack and HtmlWebpackPlugin versions
@@ -34,11 +35,38 @@ export interface IVersionInfo {
  * @returns Version information for webpack and HtmlWebpackPlugin
  */
 export function detectVersions(compiler: Compiler, HtmlWebpackPlugin: any): IVersionInfo {
-  // Detect webpack version based on compiler features
-  // In webpack 5, compiler.webpack is defined
-  const webpackMajorVersion = compiler.webpack ? 5 : 4;
+  // Detect webpack version using semver for more robust detection
+  let webpackMajorVersion = 4; // Default to webpack 4
   
-  // Initialize result with default values
+  try {
+    // In webpack 5, compiler.webpack is defined with a version property
+    if (compiler.webpack?.version) {
+      const version = compiler.webpack.version;
+      const parsed = semver.parse(version);
+      if (parsed) {
+        webpackMajorVersion = parsed.major;
+      }
+    } else {
+      // For webpack 4, check if we can load webpack and get its version
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const webpack = require('webpack');
+        if (webpack.version) {
+          const parsed = semver.parse(webpack.version);
+          if (parsed) {
+            webpackMajorVersion = parsed.major;
+          }
+        }
+      } catch (e) {
+        // If we can't load webpack directly, default to detected version
+        console.warn('ApiInlinerPlugin: Could not determine webpack version precisely, defaulting to webpack 4');
+      }
+    }
+  } catch (e) {
+    console.warn('ApiInlinerPlugin: Error during webpack version detection:', e);
+  }
+  
+  // Initialize result with detected webpack version
   const result: IVersionInfo = {
     webpackMajorVersion,
     hasHtmlWebpackPluginV4Hooks: false,
@@ -56,15 +84,14 @@ export function detectVersions(compiler: Compiler, HtmlWebpackPlugin: any): IVer
     try {
       // Try to access a compilation to test for hooks
       // This is just a feature detection, no actual hook registration
-      let hooksDetected = false;
       
-      // For webpack 4, compilation is available in the constructor
+      // For webpack 4, mark v4 hooks as available
       if (webpackMajorVersion === 4 && compiler.hooks && compiler.hooks.compilation) {
         // Feature detection for HtmlWebpackPlugin v4
         result.hasHtmlWebpackPluginV4Hooks = true;
       }
       
-      // For webpack 5, we assume v5 hooks if getHooks exists
+      // For webpack 5, mark v5 hooks as available
       if (webpackMajorVersion === 5) {
         result.hasHtmlWebpackPluginV5Hooks = true;
       }

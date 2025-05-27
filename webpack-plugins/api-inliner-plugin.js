@@ -16,22 +16,24 @@
 
 const fs = require('fs');
 const path = require('path');
+const semver = require('semver');
 
 let apiInlinerModule;
 
-// Check webpack version
+// Check webpack version using semver for more robust version detection
 const getWebpackVersion = () => {
   try {
     // Try to load webpack to check version
     const webpack = require('webpack');
     if (webpack.version) {
-      const version = webpack.version.split('.');
-      if (version.length > 0) {
-        return parseInt(version[0], 10);
+      const parsed = semver.parse(webpack.version);
+      if (parsed) {
+        return parsed.major;
       }
     }
   } catch (e) {
     // Webpack not found, continue with default behavior
+    console.warn('ApiInlinerPlugin: Could not determine webpack version precisely', e.message);
   }
   
   // Default to the latest version if we can't detect

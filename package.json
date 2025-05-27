@@ -65,6 +65,7 @@
   "dependencies": {
     "@microsoft/load-themed-styles": "2.0.142",
     "@preact/signals": "^2.0.5",
-    "preact": "10.24.0"
+    "preact": "10.24.0",
+    "semver": "^7.7.2"
   }
 }
