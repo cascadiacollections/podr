@@ -48,11 +48,14 @@ describe('App component', () => {
       }
     });
     
-    render(<App />);
+    const { container } = render(<App />);
     
     // Verify the app title is rendered
     const title = screen.getByText('Podr');
     expect(title).toBeInTheDocument();
+    
+    // Create snapshot of initial app state
+    expect(container).toMatchSnapshot();
   });
 
   test('loads top podcasts on mount', async () => {
@@ -76,7 +79,7 @@ describe('App component', () => {
       }
     });
     
-    render(<App />);
+    const { container } = render(<App />);
     
     // Verify fetch was called for static data
     expect(fetch).toHaveBeenCalledWith('/top-podcasts.json');
@@ -85,6 +88,9 @@ describe('App component', () => {
     await waitFor(() => {
       expect(screen.getByText('Top podcasts')).toBeInTheDocument();
     });
+
+    // Create snapshot after top podcasts have loaded
+    expect(container).toMatchSnapshot();
   });
 
   test('handles search functionality', async () => {
