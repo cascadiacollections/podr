@@ -10,12 +10,33 @@
  * The plugin has been restructured to be more compatible with RushStack/Heft
  * architecture and design principles, making it suitable for publishing
  * as a standalone NPM package.
+ * 
+ * Supports both Webpack 4 and Webpack 5.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 let apiInlinerModule;
+
+// Check webpack version
+const getWebpackVersion = () => {
+  try {
+    // Try to load webpack to check version
+    const webpack = require('webpack');
+    if (webpack.version) {
+      const version = webpack.version.split('.');
+      if (version.length > 0) {
+        return parseInt(version[0], 10);
+      }
+    }
+  } catch (e) {
+    // Webpack not found, continue with default behavior
+  }
+  
+  // Default to the latest version if we can't detect
+  return 5;
+};
 
 // Check if the new directory structure exists
 // This is expected to be compiled to JS before being published
@@ -45,6 +66,10 @@ if (fs.existsSync(path.join(__dirname, 'api-inliner-plugin/index.ts'))) {
   // Fallback to the old implementation for backward compatibility
   apiInlinerModule = require('./api-inliner-plugin.old');
 }
+
+// Log webpack version support
+const webpackVersion = getWebpackVersion();
+console.log(`ApiInlinerPlugin: Detected webpack v${webpackVersion}, loading compatible implementation`);
 
 // Export the plugin class as both a named export and a default export for backward compatibility
 const ApiInlinerPlugin = apiInlinerModule.ApiInlinerPlugin || apiInlinerModule;

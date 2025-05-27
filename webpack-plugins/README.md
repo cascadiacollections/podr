@@ -242,6 +242,33 @@ function ProductList() {
 | `isLoading` | `boolean` | Whether the data is currently loading |
 | `error` | `Error \| null` | Error object if the fetch failed, or null if successful |
 
+## Webpack Compatibility
+
+This plugin supports both webpack 4 and webpack 5:
+
+```javascript
+// For webpack 4
+const { ApiInlinerPlugin } = require('@cascadiacollections/webpack-api-inliner');
+
+// For webpack 5
+const { ApiInlinerPlugin } = require('@cascadiacollections/webpack-api-inliner');
+
+// Works with both webpack 4 and webpack 5
+module.exports = {
+  // ... other webpack config
+  plugins: [
+    new ApiInlinerPlugin({
+      // Configuration is identical for both webpack versions
+      endpoints: [
+        // ... your endpoints
+      ]
+    })
+  ]
+};
+```
+
+The plugin automatically detects your webpack version and adjusts its behavior accordingly.
+
 ## Node.js Version Support
 
 This plugin requires Node.js v18 or later. It uses modern Node.js features such as:

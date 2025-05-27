@@ -133,12 +133,15 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
 
     // Hook into HtmlWebpackPlugin to inject the window variables if enabled
     if (HtmlWebpackPlugin) {
+      // Import the webpack version detection utility
+      const { detectVersions } = require('./webpack-utils');
+      
+      // Detect webpack and HtmlWebpackPlugin versions
+      const versionInfo = detectVersions(compiler, HtmlWebpackPlugin);
+      
       compiler.hooks.compilation.tap('ApiInlinerPlugin', (compilation: Compilation) => {
-        // Get HtmlWebpackPlugin hooks
-        const hooks = HtmlWebpackPlugin.getHooks(compilation);
-        
-        // Hook into the HTML generation process
-        hooks.beforeEmit.tapAsync('ApiInlinerPlugin', (data: any, callback: (error: Error | null, data: any) => void) => {
+        // Function to generate and inject script tags
+        const processHtmlData = (data: any, callback: (error: Error | null, data: any) => void) => {
           // Generate script content for all endpoints that should be inlined
           const scriptTags: string[] = [];
           
@@ -161,8 +164,29 @@ export class ApiInlinerPlugin implements IApiInlinerPlugin {
             data.html = data.html.replace('</head>', `${scriptTags.join('\n')}\n</head>`);
           }
           
+          // Call the callback with modified data
           callback(null, data);
-        });
+        };
+
+        // Handle different HtmlWebpackPlugin versions
+        if (versionInfo.hasHtmlWebpackPluginV5Hooks || versionInfo.hasHtmlWebpackPluginV4Hooks) {
+          // Modern HtmlWebpackPlugin with getHooks API (v4 or v5)
+          try {
+            const hooks = HtmlWebpackPlugin.getHooks(compilation);
+            hooks.beforeEmit.tapAsync('ApiInlinerPlugin', processHtmlData);
+          } catch (e) {
+            console.error('ApiInlinerPlugin: Error registering HtmlWebpackPlugin hooks:', e);
+          }
+        } else {
+          // Legacy approach for very old HtmlWebpackPlugin (fallback)
+          console.warn('ApiInlinerPlugin: Using legacy HtmlWebpackPlugin integration');
+          try {
+            // For older HtmlWebpackPlugin versions without getHooks API
+            compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing?.tapAsync?.('ApiInlinerPlugin', processHtmlData);
+          } catch (e) {
+            console.error('ApiInlinerPlugin: Error registering legacy HtmlWebpackPlugin hooks:', e);
+          }
+        }
       });
     }
 
