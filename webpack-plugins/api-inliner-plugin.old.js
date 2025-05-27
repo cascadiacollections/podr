@@ -104,12 +104,9 @@ class ApiInlinerPlugin {
         console.warn('ApiInlinerPlugin: html-webpack-plugin not found, window variable inlining disabled.');
         return;
       }
-      
-      // Get HtmlWebpackPlugin hooks
-      const hooks = HtmlWebpackPlugin.getHooks(compilation);
-      
-      // Hook into the HTML generation process
-      hooks.beforeEmit.tapAsync('ApiInlinerPlugin', (data, callback) => {
+
+      // Function to process HTML data
+      const processHtmlData = (data, callback) => {
         // Generate script content for all endpoints that should be inlined
         const scriptTags = [];
         
@@ -134,7 +131,41 @@ class ApiInlinerPlugin {
         }
         
         callback(null, data);
-      });
+      };
+      
+      // Check if we're using webpack 4 or 5 by feature detection
+      const isWebpack5 = !!(compiler.webpack);
+
+      // Check if HtmlWebpackPlugin v4+ with getHooks API is available
+      let useGetHooksAPI = false;
+      try {
+        useGetHooksAPI = typeof HtmlWebpackPlugin.getHooks === 'function';
+      } catch (e) {
+        useGetHooksAPI = false;
+      }
+
+      if (useGetHooksAPI) {
+        // Modern HtmlWebpackPlugin with getHooks API (v4 or v5)
+        try {
+          const hooks = HtmlWebpackPlugin.getHooks(compilation);
+          hooks.beforeEmit.tapAsync('ApiInlinerPlugin', processHtmlData);
+        } catch (e) {
+          console.error('ApiInlinerPlugin: Error registering HtmlWebpackPlugin hooks:', e);
+        }
+      } else {
+        // Legacy approach for very old HtmlWebpackPlugin
+        console.warn('ApiInlinerPlugin: Using legacy HtmlWebpackPlugin integration');
+        try {
+          if (compilation.hooks && compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing) {
+            compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync('ApiInlinerPlugin', processHtmlData);
+          } else if (compilation.plugin) {
+            // Very old webpack 3 style
+            compilation.plugin('html-webpack-plugin-before-html-processing', processHtmlData);
+          }
+        } catch (e) {
+          console.error('ApiInlinerPlugin: Error registering legacy HtmlWebpackPlugin hooks:', e);
+        }
+      }
     });
   }
 
