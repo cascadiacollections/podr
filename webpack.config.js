@@ -3,6 +3,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 const { ApiInlinerPlugin } = require('./webpack-plugins/api-inliner-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
@@ -57,6 +59,41 @@ function createWebpackConfig({ production }) {
       port: 9000
     },
     devtool: production ? undefined : 'source-map',
+    // Add optimization settings for production
+    optimization: {
+      minimize: production,
+      minimizer: [
+        new TerserPlugin({
+          parallel: true,
+          terserOptions: {
+            compress: {
+              drop_console: production,
+              drop_debugger: production
+            },
+            output: {
+              comments: false
+            }
+          },
+          extractComments: false
+        })
+      ],
+      splitChunks: production ? {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        minChunks: 1,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        automaticNameDelimiter: '~',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all'
+          }
+        }
+      } : false
+    },
     plugins: [
       new HtmlWebpackPlugin({
         template: 'assets/index.html',
@@ -65,16 +102,24 @@ function createWebpackConfig({ production }) {
       ...(production ? [new MiniCssExtractPlugin({
         filename: '[name]_[contenthash].css'
       })] : []),
+      ...(production ? [new CompressionPlugin({
+        filename: '[path][base].gz',
+        algorithm: 'gzip',
+        test: /\.(js|css|html|svg)$/,
+        threshold: 10240, // Only compress assets bigger than 10kb
+        minRatio: 0.8 // Only compress assets that compress better than 80%
+      })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
       
       // Use the API Inliner plugin
       // This would typically be configured through a separate config file
       // when using the Heft plugin integration
       new ApiInlinerPlugin({
-        // Note: production flag is now automatically determined from process.env.NODE_ENV
-        // but can still be overridden here if needed
+        // Production flag controls whether to fetch from API or use fallback data
+        production: production,
+        // Only fetch from API in production, use fallback data in development
+        alwaysFetchFromApi: false,
         inlineAsVariable: true,
-        alwaysFetchFromApi: true, // Always attempt to fetch from API, regardless of environment
         emitDeclarationFile: true, // Generate TypeScript declaration file
         declarationFilePath: 'api-inliner.d.ts', // Path relative to output directory
         endpoints: [{
