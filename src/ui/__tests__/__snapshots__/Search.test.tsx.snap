@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Search component renders correctly 1`] = `
+<div>
+  <form
+    role="search"
+  >
+    <input
+      aria-label="Search podcasts"
+      class="form-control"
+      placeholder="Search podcasts"
+      type="search"
+    />
+    <button
+      aria-label="Submit search"
+      class="search-button"
+      type="submit"
+    >
+      Search
+    </button>
+  </form>
+</div>
+`;
+
+exports[`Search component renders with query signal 1`] = `
+<div>
+  <form
+    role="search"
+  >
+    <input
+      aria-label="Search podcasts"
+      class="form-control"
+      placeholder="Search podcasts"
+      type="search"
+    />
+    <button
+      aria-label="Submit search"
+      class="search-button"
+      type="submit"
+    >
+      Search
+    </button>
+  </form>
+</div>
+`;
