@@ -1,8 +1,38 @@
 {
-    "editor.rulers": [120],
+    "editor.rulers": [
+        100
+    ],
     "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "npm.packageManager": "yarn",
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/lib": true,
+        "**/lib-commonjs": true,
+        "**/coverage": true,
+        "**/.yarn": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/lib": true,
+        "**/lib-commonjs": true,
+        "**/coverage": true,
+        "**/.yarn": true,
+        "**/yarn.lock": true
+    },
+    "typescript.suggest.autoImports": true,
+    "typescript.suggest.includeCompletionsForModuleExports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always",
     "github-actions.workflows.pinned.workflows": [
         "dynamic/github-code-scanning/codeql",
         ".github/workflows/node.js.yml"
