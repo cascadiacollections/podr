@@ -1,6 +1,6 @@
 [build]
   # Use yarn as package manager (faster than npm)
-  command = "yarn build:ci"
+  command = "yarn install --production=false && yarn build:ci"
   publish = "dist"
   node_version = "24"
 
@@ -14,6 +14,8 @@
   YARN_ENABLE_IMMUTABLE_INSTALLS = "false"
   # Enable build optimizations
   NODE_ENV = "production"
+  # Ensure dev dependencies are installed (needed for heft)
+  NPM_CONFIG_PRODUCTION = "false"
 
 # Redirect configuration for SPA
 [[redirects]]
