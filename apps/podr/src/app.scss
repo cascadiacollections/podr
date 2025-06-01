@@ -1,0 +1,62 @@
+/* Minimal custom styles - letting Pico.css handle most styling */
+
+/* Theme customization */
+:root {
+  --primary: #ffa500;
+  --primary-hover: #ff8c00;
+}
+
+/* Essential utility styles */
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Media player styles */
+audio {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  left: 0;
+  margin: 0;
+}
+
+/* Container styles */
+.results {
+  height: 128px;
+  overflow-y: auto;
+}
+
+.feeds {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* Episodes table container */
+.episodes-container {
+  height: 340px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.episodes-container table {
+  width: 100%;
+  table-layout: fixed;
+  margin: 0;
+}
+
+.episodes-container tr {
+  line-height: 1.2;
+}
+
+.episodes-container td {
+  padding: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Mobile optimizations */
+@media (max-width: 576px) {
+  .duration-column {
+    display: none;
+  }
+}

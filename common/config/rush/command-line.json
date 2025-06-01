@@ -1,0 +1,34 @@
+/**
+ * This configuration file defines custom commands for the "rush" command-line.
+ * More documentation is available on the Rush website: https://rushjs.io
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+
+  "commands": [
+    {
+      "commandKind": "bulk",
+      "name": "test",
+      "summary": "Run tests for each project",
+      "description": "Iterates through each project and runs the test script",
+      "safeForSimultaneousRushProcesses": true,
+      "enableParallelism": false,
+      "ignoreMissingScript": true,
+      "ignoreDependencyOrder": true,
+      "allowWarningsInSuccessfulBuild": false
+    },
+    {
+      "commandKind": "bulk", 
+      "name": "build",
+      "summary": "Build all projects",
+      "description": "Iterates through each project and runs the build script",
+      "safeForSimultaneousRushProcesses": false,
+      "enableParallelism": true,
+      "ignoreMissingScript": false,
+      "ignoreDependencyOrder": false,
+      "allowWarningsInSuccessfulBuild": false
+    }
+  ],
+
+  "parameters": []
+}

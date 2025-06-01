@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`List component renders empty state 1`] = `
+<div>
+  <section
+    class="episodes-container"
+  >
+    <table>
+      <caption>
+        Podcast Episodes
+      </caption>
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Episode
+          </th>
+          <th
+            class="date-column"
+            scope="col"
+          >
+            Date
+          </th>
+          <th
+            class="duration-column"
+            scope="col"
+          >
+            Duration
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td
+            colspan="3"
+          >
+            No episodes available. Search or select a podcast to see episodes.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+`;
+
+exports[`List component renders with results 1`] = `
+<div>
+  <section
+    class="episodes-container"
+  >
+    <table>
+      <caption>
+        Podcast Episodes
+      </caption>
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Episode
+          </th>
+          <th
+            class="date-column"
+            scope="col"
+          >
+            Date
+          </th>
+          <th
+            class="duration-column"
+            scope="col"
+          >
+            Duration
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          aria-label="Play episode: Test Episode 1"
+          role="button"
+          tabindex="0"
+        >
+          <td>
+            <a
+              aria-label="Stream or download: Test Episode 1"
+              href="https://example.com/episode1.mp3"
+            >
+              Test Episode 1
+            </a>
+          </td>
+          <td
+            class="date-column"
+          >
+            <time
+              datetime="2023-05-15T12:00:00Z"
+            >
+              Invalid Date
+            </time>
+          </td>
+          <td
+            class="duration-column"
+          >
+            01:00:00
+          </td>
+        </tr>
+        <tr
+          aria-label="Play episode: Test Episode 2"
+          role="button"
+          tabindex="0"
+        >
+          <td>
+            <a
+              aria-label="Stream or download: Test Episode 2"
+              href="https://example.com/episode2.mp3"
+            >
+              Test Episode 2
+            </a>
+          </td>
+          <td
+            class="date-column"
+          >
+            <time
+              datetime="2023-05-16T12:00:00Z"
+            >
+              Invalid Date
+            </time>
+          </td>
+          <td
+            class="duration-column"
+          >
+            00:30:00
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+`;
