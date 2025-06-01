@@ -1,13 +1,18 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# 🤖 Dependabot Configuration - 2025 Edition
+# Automated dependency management with security-first approach
+# 📚 Documentation: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+
 version: 2
+
 updates:
+  # 📦 Production Dependencies - High Priority
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
     assignees:
       - "kevintcoughlin"
     reviewers:
@@ -15,26 +20,136 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+      - "production"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "deps"
+      prefix-development: "deps-dev"
       include: "scope"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    versioning-strategy: "increase"
+    # 🔒 Security updates take priority
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # 🚀 Group frontend framework updates
+    groups:
+      preact-ecosystem:
+        patterns:
+          - "preact*"
+          - "@preact/*"
+        update-types:
+          - "minor"
+          - "patch"
+      build-tools:
+        patterns:
+          - "webpack*"
+          - "@rushstack/*"
+          - "heft*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing-tools:
+        patterns:
+          - "jest*"
+          - "@testing-library/*"
+          - "@types/jest"
+        update-types:
+          - "minor"
+          - "patch"
+      css-tools:
+        patterns:
+          - "postcss*"
+          - "sass*"
+          - "autoprefixer"
+          - "cssnano"
+        update-types:
+          - "minor"
+          - "patch"
 
-  - package-ecosystem: "github-actions"
+  # 🚨 Security Updates - Immediate Priority
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+      time: "06:00"
+      timezone: "America/Los_Angeles"
+    assignees:
+      - "kevintcoughlin"
+    reviewers:
+      - "kevintcoughlin"
+    labels:
+      - "security"
+      - "critical"
+      - "dependencies"
+    commit-message:
+      prefix: "security"
+      include: "scope"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+    # 🔥 Only security updates for this configuration
+    allow:
+      - dependency-type: "direct"
+        update-types: ["security"]
+      - dependency-type: "indirect"
+        update-types: ["security"]
+
+  # ⚡ GitHub Actions - Automated CI/CD Updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "10:00"
+      timezone: "America/Los_Angeles"
     assignees:
       - "kevintcoughlin"
     reviewers:
       - "kevintcoughlin"
     labels:
       - "dependencies"
-      - "actions"
+      - "github-actions"
+      - "ci-cd"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "ci"
       include: "scope"
-    ignore:
-      - dependency-name: "example-action"
-        versions: ["1.x"]
-    open-pull-requests-limit: 5
-    automerge: true
+    open-pull-requests-limit: 3
+    target-branch: "main"
+    # 🎯 Group related actions together
+    groups:
+      node-actions:
+        patterns:
+          - "actions/setup-node"
+          - "actions/cache"
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+      deployment-actions:
+        patterns:
+          - "peaceiris/actions-gh-pages"
+          - "netlify/actions/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 🐳 Docker Dependencies (if any)
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "11:00"
+      timezone: "America/Los_Angeles"
+    assignees:
+      - "kevintcoughlin"
+    reviewers:
+      - "kevintcoughlin"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "devcontainer"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    open-pull-requests-limit: 2
