@@ -1,0 +1,249 @@
+{
+    // 🎨 VS Code Snippets for Podr Development - 2025 Edition
+    // Custom code snippets for faster React/Preact component development
+
+    // 🧩 Preact Functional Component
+    "Preact Functional Component": {
+        "prefix": ["pfc", "preact-component"],
+        "body": [
+            "import { h } from 'preact';",
+            "import { useState, useEffect } from 'preact/hooks';",
+            "",
+            "interface ${1:ComponentName}Props {",
+            "  ${2:prop}: ${3:string};",
+            "}",
+            "",
+            "export const ${1:ComponentName} = ({ ${2:prop} }: ${1:ComponentName}Props) => {",
+            "  const [${4:state}, set${4/(.*)/${4:/capitalize}/}] = useState${5:<string>}(${6:''});",
+            "",
+            "  useEffect(() => {",
+            "    ${7:// Effect logic here}",
+            "  }, [${8:dependencies}]);",
+            "",
+            "  return (",
+            "    <div className=\"${9:component-class}\">",
+            "      <h2>{${2:prop}}</h2>",
+            "      ${0:<!-- Component content -->}",
+            "    </div>",
+            "  );",
+            "};"
+        ],
+        "description": "Create a new Preact functional component with TypeScript"
+    },
+
+    // 🧪 Jest Test Component
+    "Jest Component Test": {
+        "prefix": ["test", "jest-test"],
+        "body": [
+            "import { render, screen } from '@testing-library/preact';",
+            "import { expect, describe, it } from '@jest/globals';",
+            "import { ${1:ComponentName} } from '../${2:ComponentName}';",
+            "",
+            "describe('${1:ComponentName}', () => {",
+            "  it('should render correctly', () => {",
+            "    const props = {",
+            "      ${3:prop}: '${4:test value}'",
+            "    };",
+            "",
+            "    render(<${1:ComponentName} {...props} />);",
+            "",
+            "    expect(screen.getByText('${4:test value}')).toBeInTheDocument();",
+            "  });",
+            "",
+            "  it('should ${5:handle interaction}', () => {",
+            "    ${0:// Test implementation}",
+            "  });",
+            "});"
+        ],
+        "description": "Create a Jest test for a Preact component"
+    },
+
+    // 🪝 Custom Hook
+    "Custom Hook": {
+        "prefix": ["hook", "use-hook"],
+        "body": [
+            "import { useState, useEffect } from 'preact/hooks';",
+            "",
+            "interface Use${1:HookName}Options {",
+            "  ${2:option}?: ${3:string};",
+            "}",
+            "",
+            "interface Use${1:HookName}Return {",
+            "  ${4:value}: ${5:string};",
+            "  ${6:setValue}: (value: ${5:string}) => void;",
+            "  ${7:loading}: boolean;",
+            "}",
+            "",
+            "export const use${1:HookName} = (options: Use${1:HookName}Options = {}): Use${1:HookName}Return => {",
+            "  const [${4:value}, ${6:setValue}] = useState${8:<${5:string}>}(${9:''});",
+            "  const [${7:loading}, setLoading] = useState(false);",
+            "",
+            "  useEffect(() => {",
+            "    ${10:// Hook logic here}",
+            "  }, [${11:dependencies}]);",
+            "",
+            "  return {",
+            "    ${4:value},",
+            "    ${6:setValue},",
+            "    ${7:loading}",
+            "  };",
+            "};"
+        ],
+        "description": "Create a custom Preact hook with TypeScript"
+    },
+
+    // 🎨 SCSS Component Styles
+    "SCSS Component Styles": {
+        "prefix": ["scss", "styles"],
+        "body": [
+            ".${1:component-name} {",
+            "  // 📱 Mobile-first responsive design",
+            "  display: ${2:flex};",
+            "  ${3:flex-direction: column};",
+            "",
+            "  // 🎨 Visual styling",
+            "  padding: ${4:1rem};",
+            "  margin: ${5:0};",
+            "  border-radius: ${6:0.5rem};",
+            "  background-color: ${7:var(--background-color)};",
+            "",
+            "  // 📱 Tablet styles",
+            "  @media (min-width: 768px) {",
+            "    ${8:// Tablet-specific styles}",
+            "  }",
+            "",
+            "  // 💻 Desktop styles",
+            "  @media (min-width: 1024px) {",
+            "    ${9:// Desktop-specific styles}",
+            "  }",
+            "",
+            "  // 🎯 Element states",
+            "  &:hover {",
+            "    ${10:// Hover styles}",
+            "  }",
+            "",
+            "  &:focus {",
+            "    ${11:// Focus styles}",
+            "  }",
+            "",
+            "  // 🧩 Child elements",
+            "  &__${12:element} {",
+            "    ${13:// Element styles}",
+            "  }",
+            "",
+            "  // 🎨 Modifiers",
+            "  &--${14:modifier} {",
+            "    ${0:// Modifier styles}",
+            "  }",
+            "}"
+        ],
+        "description": "Create BEM-style SCSS component styles with responsive design"
+    },
+
+    // 🔧 TypeScript Interface
+    "TypeScript Interface": {
+        "prefix": ["interface", "type"],
+        "body": [
+            "/**",
+            " * ${2:Description of the interface}",
+            " */",
+            "export interface ${1:InterfaceName} {",
+            "  /** ${4:Description} */",
+            "  ${3:property}: ${5:string};",
+            "  ",
+            "  /** ${7:Optional property description} */",
+            "  ${6:optionalProperty}?: ${8:number};",
+            "  ",
+            "  /** ${10:Method description} */",
+            "  ${9:method}(${11:param}: ${12:string}): ${13:void};",
+            "  ${0:}",
+            "}"
+        ],
+        "description": "Create a documented TypeScript interface"
+    },
+
+    // 🌐 API Hook
+    "API Hook": {
+        "prefix": ["api-hook", "use-api"],
+        "body": [
+            "import { useState, useEffect } from 'preact/hooks';",
+            "",
+            "interface ${1:ApiName}Data {",
+            "  ${2:property}: ${3:string};",
+            "}",
+            "",
+            "interface Use${1:ApiName}Return {",
+            "  data: ${1:ApiName}Data | null;",
+            "  loading: boolean;",
+            "  error: string | null;",
+            "  refetch: () => Promise<void>;",
+            "}",
+            "",
+            "export const use${1:ApiName} = (${4:param}: ${5:string}): Use${1:ApiName}Return => {",
+            "  const [data, setData] = useState<${1:ApiName}Data | null>(null);",
+            "  const [loading, setLoading] = useState(false);",
+            "  const [error, setError] = useState<string | null>(null);",
+            "",
+            "  const fetchData = async () => {",
+            "    try {",
+            "      setLoading(true);",
+            "      setError(null);",
+            "      ",
+            "      const response = await fetch(`${6:/api/endpoint/${${4:param}}}`, {",
+            "        method: 'GET',",
+            "        headers: {",
+            "          'Content-Type': 'application/json',",
+            "        },",
+            "      });",
+            "      ",
+            "      if (!response.ok) {",
+            "        throw new Error(`HTTP error! status: ${response.status}`);",
+            "      }",
+            "      ",
+            "      const result = await response.json();",
+            "      setData(result);",
+            "    } catch (err) {",
+            "      setError(err instanceof Error ? err.message : 'An error occurred');",
+            "    } finally {",
+            "      setLoading(false);",
+            "    }",
+            "  };",
+            "",
+            "  useEffect(() => {",
+            "    if (${4:param}) {",
+            "      fetchData();",
+            "    }",
+            "  }, [${4:param}]);",
+            "",
+            "  return {",
+            "    data,",
+            "    loading,",
+            "    error,",
+            "    refetch: fetchData",
+            "  };",
+            "};"
+        ],
+        "description": "Create an API hook for data fetching with error handling"
+    },
+
+    // 📝 Console Log with Context
+    "Debug Console Log": {
+        "prefix": ["log", "debug"],
+        "body": [
+            "console.log('🐛 [${1:Component/Function}] ${2:Description}:', ${3:variable});"
+        ],
+        "description": "Add a contextual debug console log"
+    },
+
+    // 🎯 TODO Comment
+    "TODO Comment": {
+        "prefix": ["todo", "fixme"],
+        "body": [
+            "// TODO: ${1:Description of what needs to be done}",
+            "// @author ${2:Your Name}",
+            "// @date ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+            "${0:}"
+        ],
+        "description": "Add a TODO comment with author and date"
+    }
+}

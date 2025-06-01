@@ -1,13 +1,77 @@
 {
-	// See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
-	// Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
-
-	// List of extensions which should be recommended for users of this workspace.
-	"recommendations": [
-    "esbenp.prettier-vscode"
-	],
-	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-	"unwantedRecommendations": [
-
-	]
+    // 🧩 VS Code Extension Recommendations - 2025 Edition
+    // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
+    
+    // 🌟 Essential extensions for optimal Podr development experience
+    "recommendations": [
+        // 🎨 Code Formatting & Quality
+        "esbenp.prettier-vscode",              // Code formatter
+        "dbaeumer.vscode-eslint",              // JavaScript/TypeScript linting
+        "editorconfig.editorconfig",           // Cross-editor configuration
+        
+        // ⚡ TypeScript & React/Preact
+        "ms-vscode.vscode-typescript-next",    // Latest TypeScript features
+        "bradlc.vscode-tailwindcss",           // CSS IntelliSense (if using)
+        "jpoissonnier.vscode-styled-components", // Styled components support
+        
+        // 🧪 Testing & Debugging
+        "orta.vscode-jest",                    // Jest test runner integration
+        "ms-vscode.js-debug",                  // JavaScript debugger
+        
+        // 📦 Package Management & Dependencies
+        "christian-kohler.npm-intellisense",   // NPM module IntelliSense
+        "eg2.vscode-npm-script",               // NPM scripts support
+        "ms-vscode.vscode-json",               // JSON language support
+        
+        // 🎯 Productivity & Navigation
+        "ms-vscode.vscode-css-peek",           // CSS class navigation
+        "formulahendry.auto-rename-tag",       // Auto rename HTML/JSX tags
+        "christian-kohler.path-intellisense",  // File path autocomplete
+        "bradlc.vscode-tailwindcss",           // Tailwind CSS IntelliSense
+        
+        // 🔧 Build Tools & Configuration
+        "ms-vscode.vscode-webpack-analyzer",   // Webpack bundle analyzer
+        "yoavbls.pretty-ts-errors",           // Better TypeScript errors
+        
+        // 📝 Documentation & Markdown
+        "yzhang.markdown-all-in-one",         // Markdown support
+        "davidanson.vscode-markdownlint",     // Markdown linting
+        
+        // 🌐 Web Development
+        "ritwickdey.liveserver",              // Live preview server
+        "ms-vscode.live-server",              // Alternative live server
+        
+        // 🚀 Git & GitHub Integration
+        "eamodio.gitlens",                    // Enhanced Git capabilities
+        "github.vscode-pull-request-github",  // GitHub PR integration
+        "github.copilot",                     // AI code assistance
+        "github.copilot-chat",                // AI chat assistance
+        
+        // 🐳 DevContainer & Docker
+        "ms-vscode-remote.remote-containers", // Dev container support
+        "ms-azuretools.vscode-docker",        // Docker integration
+        
+        // 🎨 UI Enhancements
+        "pkief.material-icon-theme",          // Better file icons
+        "zhuangtongfa.material-theme",        // Modern theme
+        "oderwat.indent-rainbow",             // Colorized indentation
+        "streetsidesoftware.code-spell-checker", // Spell checking
+        
+        // 🔍 Search & Analysis
+        "ms-vscode.vscode-todos",             // TODO highlighting
+        "gruntfuggly.todo-tree",              // TODO tree view
+        
+        // ⚙️ Workflow Automation
+        "github.vscode-github-actions",       // GitHub Actions support
+        "ms-vscode.vscode-github-issue-notebooks" // GitHub Issues integration
+    ],
+    
+    // 🚫 Extensions to avoid (may conflict or are outdated)
+    "unwantedRecommendations": [
+        "ms-vscode.vscode-typescript",        // Use typescript-next instead
+        "hookyqr.beautify",                   // Use Prettier instead
+        "ms-vscode.vscode-css",               // Built-in CSS support is sufficient
+        "ms-vscode.vscode-html",              // Built-in HTML support is sufficient
+        "vscode.typescript-language-features" // Built into VS Code
+    ]
 }

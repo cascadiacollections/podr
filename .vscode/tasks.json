@@ -1,0 +1,243 @@
+{
+    // 🎯 VS Code Tasks Configuration - 2025 Edition
+    // Automate common development tasks for optimal workflow
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🚀 Start Development Server",
+            "type": "npm",
+            "script": "start",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "🚀 Development"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "webpack",
+                "source": "webpack",
+                "pattern": {
+                    "regexp": "^\\s*ERROR\\s+in\\s+(.+)$",
+                    "file": 1
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^\\s*webpack\\s+",
+                    "endsPattern": "^\\s*compiled\\s+"
+                }
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "📦 Build Production",
+            "type": "npm",
+            "script": "build:ci",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "📦 Build"
+            },
+            "problemMatcher": [
+                "$tsc",
+                "$eslint-stylish"
+            ]
+        },
+        {
+            "label": "🧪 Run All Tests",
+            "type": "npm",
+            "script": "test",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "🧪 Testing"
+            },
+            "problemMatcher": {
+                "owner": "jest",
+                "pattern": [
+                    {
+                        "regexp": "^\\s*(FAIL|PASS)\\s+(.+)$",
+                        "file": 2
+                    }
+                ]
+            }
+        },
+        {
+            "label": "🧪 Run Tests (Watch)",
+            "type": "npm",
+            "script": "test:watch",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false,
+                "group": "🧪 Testing"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "jest",
+                "pattern": [
+                    {
+                        "regexp": "^\\s*(FAIL|PASS)\\s+(.+)$",
+                        "file": 2
+                    }
+                ],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^\\s*Watch\\s+Usage\\s*$",
+                    "endsPattern": "^\\s*Ran\\s+all\\s+test\\s+suites\\s*"
+                }
+            }
+        },
+        {
+            "label": "📊 Generate Coverage Report",
+            "type": "npm",
+            "script": "test:coverage",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "📊 Analysis"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🔍 ESLint Check",
+            "type": "shell",
+            "command": "yarn",
+            "args": ["eslint", "src/**/*.{ts,tsx,js,jsx}", "--format", "stylish"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "🔍 Quality"
+            },
+            "problemMatcher": "$eslint-stylish"
+        },
+        {
+            "label": "💄 Format Code (Prettier)",
+            "type": "shell",
+            "command": "yarn",
+            "args": ["prettier", "--write", "src/**/*.{ts,tsx,js,jsx,json,css,scss,md}"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "💄 Formatting"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Clean Build Artifacts",
+            "type": "shell",
+            "command": "rm",
+            "args": ["-rf", "lib", "lib-commonjs", "dist", "coverage", "temp"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+                "group": "🧹 Cleanup"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "📦 Install Dependencies",
+            "type": "shell",
+            "command": "yarn",
+            "args": ["install"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "📦 Dependencies"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🔄 Update Dependencies",
+            "type": "shell",
+            "command": "yarn",
+            "args": ["upgrade-interactive", "--latest"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "🔄 Maintenance"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🚀 Deploy to Netlify",
+            "type": "shell",
+            "command": "netlify",
+            "args": ["deploy", "--prod", "--dir=dist"],
+            "group": "build",
+            "dependsOn": "📦 Build Production",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true,
+                "group": "🚀 Deployment"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

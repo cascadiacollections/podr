@@ -1,25 +1,55 @@
 {
-    "editor.rulers": [
-        100
-    ],
+    // 📏 Editor Configuration
+    "editor.rulers": [80, 100, 120],
     "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
     "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": false,
+    "editor.trimAutoWhitespace": true,
+    "editor.renderWhitespace": "boundary",
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 120,
+    "editor.lineNumbers": "on",
+    "editor.minimap.enabled": true,
+    "editor.minimap.scale": 2,
+    "editor.smoothScrolling": true,
+    "editor.cursorBlinking": "smooth",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.inlineSuggest.enabled": true,
+    "editor.accessibilitySupport": "auto",
+
+    // 🎨 Code Actions & Formatting
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit",
-        "source.organizeImports": "explicit"
+        "source.organizeImports": "explicit",
+        "source.removeUnusedImports": "explicit",
+        "source.sortMembers": "explicit"
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+    // 📁 File Management
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
-    "typescript.preferences.importModuleSpecifier": "relative",
-    "npm.packageManager": "yarn",
+    "files.trimFinalNewlines": true,
+    "files.autoSave": "onFocusChange",
+    "files.hotExit": "onExitAndWindowClose",
+    "files.defaultLanguage": "typescript",
+
+    // 🔍 Search & Explorer
     "files.exclude": {
         "**/node_modules": true,
         "**/dist": true,
         "**/lib": true,
         "**/lib-commonjs": true,
         "**/coverage": true,
-        "**/.yarn": true
+        "**/.yarn": true,
+        "**/temp": true,
+        "**/.heft": true,
+        "**/.rush": true,
+        "**/webpack-plugins/node_modules": true
     },
     "search.exclude": {
         "**/node_modules": true,
@@ -28,13 +58,145 @@
         "**/lib-commonjs": true,
         "**/coverage": true,
         "**/.yarn": true,
-        "**/yarn.lock": true
+        "**/yarn.lock": true,
+        "**/temp": true,
+        "**/.heft": true,
+        "**/webpack-plugins/node_modules": true
     },
+    "explorer.confirmDelete": true,
+    "explorer.confirmDragAndDrop": true,
+    "explorer.sortOrder": "type",
+
+    // ⚡ TypeScript Configuration
+    "typescript.preferences.importModuleSpecifier": "relative",
     "typescript.suggest.autoImports": true,
     "typescript.suggest.includeCompletionsForModuleExports": true,
     "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.inlayHints.parameterNames.enabled": "literals",
+    "typescript.inlayHints.parameterTypes.enabled": true,
+    "typescript.inlayHints.variableTypes.enabled": false,
+    "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+    "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+    "typescript.suggest.completeFunctionCalls": true,
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+
+    // 🧪 Testing Configuration
+    "jest.jestCommandLine": "yarn test",
+    "jest.runMode": "deferred",
+    "testing.openTesting": "neverOpen",
+
+    // 📦 Package Management
+    "npm.packageManager": "yarn",
+
+    // 🔧 ESLint Configuration
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "eslint.codeActionsOnSave.mode": "problems",
+    "eslint.format.enable": false,
+
+    // 💄 Prettier Configuration
+    "prettier.requireConfig": true,
+    "prettier.useEditorConfig": true,
+
+    // 🎨 CSS & SCSS
+    "css.lint.duplicateProperties": "warning",
+    "css.lint.emptyRules": "warning",
+    "scss.lint.duplicateProperties": "warning",
+    "scss.lint.emptyRules": "warning",
+    "css.validate": true,
+    "scss.validate": true,
+
+    // 🔗 Git Integration
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "git.suggestSmartCommit": true,
+    "scm.countBadge": "focused",
+    "scm.defaultViewMode": "tree",
+
+    // 🚀 GitHub Actions
     "github-actions.workflows.pinned.workflows": [
         "dynamic/github-code-scanning/codeql",
-        ".github/workflows/node.js.yml"
-    ]
+        ".github/workflows/node.js.yml",
+        ".github/workflows/daily-build.yml"
+    ],
+
+    // 🐛 Debug Configuration
+    "debug.console.fontSize": 14,
+    "debug.console.lineHeight": 22,
+    "debug.openDebug": "openOnDebugBreak",
+
+    // 🌐 Live Server (if extension installed)
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.donotVerifyTags": true,
+
+    // 📱 Emmet Configuration
+    "emmet.includeLanguages": {
+        "typescript": "html",
+        "typescriptreact": "html"
+    },
+    "emmet.triggerExpansionOnTab": true,
+
+    // 🧹 Workbench Settings
+    "workbench.editor.enablePreview": false,
+    "workbench.editor.enablePreviewFromQuickOpen": false,
+    "workbench.startupEditor": "welcomePage",
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.iconTheme": "vs-seti",
+    "workbench.tree.indent": 20,
+    "workbench.activityBar.visible": true,
+
+    // 🔧 Terminal Configuration
+    "terminal.integrated.fontSize": 14,
+    "terminal.integrated.lineHeight": 1.2,
+    "terminal.integrated.cursorStyle": "line",
+    "terminal.integrated.cursorBlinking": true,
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+    // 📝 Language-Specific Settings
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on",
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "strings": "off",
+            "other": "off"
+        }
+    }
 }
