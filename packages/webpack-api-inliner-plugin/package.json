@@ -1,6 +1,6 @@
 {
   "name": "@cascadiacollections/webpack-api-inliner",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A RushStack/Heft-compatible webpack plugin that fetches API data at build time and inlines it or saves it to static files for faster initial page rendering.",
   "main": "index.js",
   "types": "index.d.ts",
