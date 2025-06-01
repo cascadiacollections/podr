@@ -1,17 +1,167 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}\\lib\\src\\index.js"
-    }
-  ]
+    // 🐛 VS Code Debug Configuration - 2025 Edition
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🚀 Launch Podr (Development)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/.bin/heft",
+            "args": ["start"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "🚀 Development",
+                "order": 1
+            }
+        },
+        {
+            "name": "🔧 Build Podr (Production)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/.bin/heft",
+            "args": ["build", "--clean", "--production"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "env": {
+                "NODE_ENV": "production"
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "🔧 Build",
+                "order": 1
+            }
+        },
+        {
+            "name": "🧪 Run Tests (Watch Mode)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/.bin/jest",
+            "args": ["--watch", "--coverage"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "env": {
+                "NODE_ENV": "test"
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "🧪 Testing",
+                "order": 1
+            }
+        },
+        {
+            "name": "🧪 Run Single Test File",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/.bin/jest",
+            "args": ["${relativeFile}"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "env": {
+                "NODE_ENV": "test"
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "🧪 Testing",
+                "order": 2
+            }
+        },
+        {
+            "name": "🌐 Debug Chrome (Attach)",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "trace": true,
+            "urlFilter": "http://localhost:9000/*",
+            "presentation": {
+                "hidden": false,
+                "group": "🌐 Browser",
+                "order": 1
+            }
+        },
+        {
+            "name": "🌐 Launch Chrome (Debug)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:9000",
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+            "runtimeArgs": [
+                "--disable-web-security",
+                "--disable-features=VizDisplayCompositor"
+            ],
+            "presentation": {
+                "hidden": false,
+                "group": "🌐 Browser",
+                "order": 2
+            }
+        },
+        {
+            "name": "🔍 Debug Current TypeScript File",
+            "type": "node",
+            "request": "launch",
+            "program": "${file}",
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js",
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "sourceMaps": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "presentation": {
+                "hidden": false,
+                "group": "🔍 File Debug",
+                "order": 1
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "🚀🌐 Launch Development + Chrome Debug",
+            "configurations": [
+                "🚀 Launch Podr (Development)",
+                "🌐 Launch Chrome (Debug)"
+            ],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "group": "🔄 Compound",
+                "order": 1
+            }
+        }
+    ]
 }

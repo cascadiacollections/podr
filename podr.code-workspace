@@ -1,0 +1,60 @@
+{
+    "folders": [
+        {
+            "name": "🎧 Podr",
+            "path": "."
+        }
+    ],
+    "settings": {
+        // 🎨 Workspace-specific overrides
+        "window.title": "🎧 Podr - Podcast Discovery Platform",
+
+        // 📂 Custom file associations
+        "files.associations": {
+            "*.scss": "scss",
+            "*.css": "css",
+            "*.tsx": "typescriptreact",
+            "*.ts": "typescript",
+            "dependabot.yml": "yaml",
+            "netlify.toml": "toml",
+            ".browserslistrc": "plaintext"
+        },
+
+        // 🎯 Project-specific search settings
+        "search.useGlobalIgnoreFiles": true,
+        "search.useIgnoreFiles": true,
+
+        // 🔧 TypeScript project references
+        "typescript.preferences.includeCompletionsForModuleExports": true,
+        "typescript.suggest.includeCompletionsForImportStatements": true,
+
+        // 🎨 Theme and appearance
+        "workbench.colorCustomizations": {
+            "titleBar.activeBackground": "#673AB7",
+            "titleBar.activeForeground": "#FFFFFF",
+            "activityBar.background": "#673AB7",
+            "activityBar.foreground": "#FFFFFF"
+        },
+
+        // 📊 Custom status bar items
+        "gitlens.statusBar.enabled": true,
+        "gitlens.statusBar.pullRequests.enabled": true
+    },
+    "extensions": {
+        "recommendations": [
+            // Core development extensions already defined in extensions.json
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            // Tasks are defined in tasks.json
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            // Debug configurations are defined in launch.json
+        ]
+    }
+}
