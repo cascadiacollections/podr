@@ -24,7 +24,11 @@
 				"ms-vscode.vscode-typescript-next",
 				"orta.vscode-jest",
 				"ms-vscode.vscode-json",
-				"bradlc.vscode-tailwindcss"
+				"bradlc.vscode-tailwindcss",
+				"ms-vscode.vscode-css-peek",
+				"formulahendry.auto-rename-tag",
+				"christian-kohler.path-intellisense",
+				"ms-vscode.vscode-scss"
 			]
 		}
 	},
@@ -33,10 +37,13 @@
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
 			"nodeGypDependencies": true,
-			"installYarnUsingApt": true
+			"installYarnUsingApt": true,
+			"version": "20"
 		}
 	},
 	"postCreateCommand": "yarn install",
-	"updateContentCommand": "yarn install",
+	"updateContentCommand": "yarn install", 
+	"initializeCommand": "echo '🔧 Initializing Podr development environment...'",
+	"onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
 	"remoteUser": "node"
 }
