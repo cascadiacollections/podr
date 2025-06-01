@@ -1,0 +1,58 @@
+{
+  "name": "@cascadiacollections/webpack-api-inliner",
+  "version": "1.0.0",
+  "description": "A RushStack/Heft-compatible webpack plugin that fetches API data at build time and inlines it or saves it to static files for faster initial page rendering.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "interfaces.js", 
+    "interfaces.d.ts",
+    "hooks.js",
+    "hooks.d.ts",
+    "heft-plugin.js",
+    "heft-plugin.d.ts",
+    "schema.json",
+    "README.md"
+  ],
+  "keywords": [
+    "webpack",
+    "plugin",
+    "api", 
+    "inliner",
+    "build-time",
+    "inline",
+    "static",
+    "prerender",
+    "performance",
+    "rushstack",
+    "heft"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cascadiacollections/podr",
+    "directory": "packages/webpack-api-inliner-plugin"
+  },
+  "author": "Cascadia Collections",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "peerDependencies": {
+    "html-webpack-plugin": ">=5.0.0", 
+    "webpack": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

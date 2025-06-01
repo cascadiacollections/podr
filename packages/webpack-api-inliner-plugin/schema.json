@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "API Inliner Plugin Configuration",
+  "description": "Schema for configuring the @cascadiacollections/webpack-api-inliner plugin",
+  "type": "object",
+  "properties": {
+    "endpoints": {
+      "description": "API endpoints to fetch data from during build",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "description": "The API endpoint URL to fetch data from",
+            "type": "string"
+          },
+          "outputFile": {
+            "description": "The filename to save the fetched data to (if saveAsFile is true)",
+            "type": "string"
+          },
+          "fallbackData": {
+            "description": "The fallback data to use if the API request fails or in development mode",
+            "type": "object"
+          },
+          "inlineAsVariable": {
+            "description": "Whether to inline data as window variable",
+            "type": "boolean"
+          },
+          "variableName": {
+            "description": "Name of the window variable to use when inlining",
+            "type": "string"
+          },
+          "requestOptions": {
+            "description": "Options to pass to the fetch API (headers, method, etc)",
+            "type": "object"
+          },
+          "typeReference": {
+            "description": "TypeScript type reference for this endpoint's data",
+            "type": "string",
+            "examples": ["import('../../src/types').ITopPodcasts"]
+          },
+          "alwaysFetchFromApi": {
+            "description": "Whether to always fetch from API regardless of production status",
+            "type": "boolean"
+          },
+          "production": {
+            "description": "Override the production setting for this specific endpoint",
+            "type": "boolean"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    "production": {
+      "description": "Whether to fetch data from API (production) or just use fallback (development)",
+      "type": "boolean",
+      "default": "Uses process.env.NODE_ENV === 'production'"
+    },
+    "alwaysFetchFromApi": {
+      "description": "Whether to always fetch from API regardless of production/development mode",
+      "type": "boolean",
+      "default": true
+    },
+    "inlineAsVariable": {
+      "description": "Global setting for whether to inline data as window variables",
+      "type": "boolean",
+      "default": true
+    },
+    "variablePrefix": {
+      "description": "Prefix for all window variables when auto-generating names",
+      "type": "string",
+      "default": "API_DATA"
+    },
+    "saveAsFile": {
+      "description": "Whether to save data as static JSON files",
+      "type": "boolean",
+      "default": true
+    },
+    "requestTimeout": {
+      "description": "Timeout in milliseconds for API requests",
+      "type": "number",
+      "default": 10000
+    },
+    "retryCount": {
+      "description": "Number of times to retry a failed request",
+      "type": "number",
+      "default": 2
+    },
+    "outputPath": {
+      "description": "Custom path to save JSON files to (relative to webpack output path)",
+      "type": "string",
+      "default": ""
+    },
+    "emitDeclarationFile": {
+      "description": "Whether to emit TypeScript declaration (.d.ts) files for inlined variables",
+      "type": "boolean",
+      "default": false
+    },
+    "declarationFilePath": {
+      "description": "Output path for TypeScript declaration file (relative to webpack output path)",
+      "type": "string",
+      "default": "api-inliner.d.ts"
+    },
+    "defaultType": {
+      "description": "Default type to use for window variables when no specific type is provided",
+      "type": "string",
+      "default": "any"
+    }
+  },
+  "required": ["endpoints"]
+}
