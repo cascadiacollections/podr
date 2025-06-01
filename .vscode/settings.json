@@ -148,7 +148,6 @@
     "workbench.colorTheme": "Default Dark+",
     "workbench.iconTheme": "vs-seti",
     "workbench.tree.indent": 20,
-    "workbench.activityBar.visible": true,
 
     // 🔧 Terminal Configuration
     "terminal.integrated.fontSize": 14,
