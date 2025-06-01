@@ -6,7 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
-const { ApiInlinerPlugin } = require('./webpack-plugins/api-inliner-plugin');
+const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
 /**

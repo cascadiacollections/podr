@@ -155,25 +155,38 @@ yarn test:coverage      # Ensure coverage targets met
 
 ## 🏗️ Project Architecture
 
-### 📁 Directory Structure
+### 📁 Repository Structure
+
+This repository is organized as a monorepo containing the main Podr application and reusable packages:
 
 ```
-📦 src/
-├── 🎨 ui/                    # React/Preact components
-│   ├── 🧪 __tests__/         # Component test suites
-│   ├── 📱 App.tsx            # Main application shell
-│   ├── 🔍 Search.tsx         # Podcast search interface
-│   ├── 📋 List.tsx           # Podcast listing component
-│   ├── 📄 Result.tsx         # Individual search results
-│   └── 🛡️ ErrorBoundary.tsx  # Error handling wrapper
-├── 🛠️ utils/                 # Shared utilities & helpers
-│   ├── 🌐 AppContext.tsx     # Global application state
-│   ├── 🔧 helpers.ts         # Pure utility functions
-│   └── 🪝 hooks.ts           # Custom React hooks
-├── 📝 types/                 # TypeScript type definitions
-│   └── testing-library__jest-dom.d.ts
-└── 🎨 app.scss              # Global styles & variables
+📦 podr/
+├── 📱 src/                           # Main Podr application
+│   ├── 🎨 ui/                        # React/Preact components
+│   │   ├── 🧪 __tests__/             # Component test suites
+│   │   ├── 📱 App.tsx                # Main application shell
+│   │   ├── 🔍 Search.tsx             # Podcast search interface
+│   │   ├── 📋 List.tsx               # Podcast listing component
+│   │   ├── 📄 Result.tsx             # Individual search results
+│   │   └── 🛡️ ErrorBoundary.tsx      # Error handling wrapper
+│   ├── 🛠️ utils/                     # Shared utilities & helpers
+│   │   ├── 🌐 AppContext.tsx         # Global application state
+│   │   ├── 🔧 helpers.ts             # Pure utility functions
+│   │   └── 🪝 hooks.ts               # Custom React hooks
+│   ├── 📝 types/                     # TypeScript type definitions
+│   │   └── testing-library__jest-dom.d.ts
+│   └── 🎨 app.scss                   # Global styles & variables
+└── 📦 packages/                      # Reusable packages
+    └── 🔌 webpack-api-inliner-plugin/ # API inlining webpack plugin
+        ├── 📖 README.md              # Plugin documentation
+        ├── 📝 CHANGELOG.md           # Release notes
+        ├── 🔧 index.ts               # Main plugin implementation
+        └── 📋 package.json           # Package configuration
 ```
+
+### 📦 Packages
+
+- **[webpack-api-inliner-plugin](packages/webpack-api-inliner-plugin/)** - A webpack plugin that fetches API data at build time and inlines it for faster initial page rendering
 
 ### 🏛️ Architecture Principles
 
