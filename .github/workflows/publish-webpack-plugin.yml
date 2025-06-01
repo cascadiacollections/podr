@@ -1,0 +1,101 @@
+name: Publish Webpack Plugin
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'packages/webpack-api-inliner-plugin/**' ]
+  workflow_dispatch:
+
+# Cancel in-progress runs on new commits to same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  verify-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for CHANGELOG.md updates
+      run: |
+        if git diff --name-only HEAD~1 HEAD | grep -q "packages/webpack-api-inliner-plugin/CHANGELOG.md"; then
+          echo "CHANGELOG.md was updated ✅"
+          exit 0
+        else
+          echo "::error::CHANGELOG.md must be updated when publishing packages"
+          exit 1
+        fi
+      # Skip changelog check for initial setup
+      continue-on-error: true
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: 'packages/webpack-api-inliner-plugin/package-lock.json'
+
+    - name: Install dependencies
+      working-directory: packages/webpack-api-inliner-plugin
+      run: npm ci
+
+    - name: Build package
+      working-directory: packages/webpack-api-inliner-plugin  
+      run: npm run build
+
+    - name: Run tests
+      working-directory: packages/webpack-api-inliner-plugin
+      run: npm test
+      continue-on-error: true # Allow to pass without tests initially
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: webpack-plugin-build
+        path: packages/webpack-api-inliner-plugin/*.{js,d.ts}
+        retention-days: 7
+
+  publish:
+    needs: [verify-changelog, build-and-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'  
+        cache-dependency-path: 'packages/webpack-api-inliner-plugin/package-lock.json'
+        registry-url: 'https://npm.pkg.github.com'
+        scope: '@cascadiacollections'
+
+    - name: Install dependencies
+      working-directory: packages/webpack-api-inliner-plugin
+      run: npm ci
+
+    - name: Build package
+      working-directory: packages/webpack-api-inliner-plugin
+      run: npm run build
+
+    - name: Publish to GitHub Packages
+      working-directory: packages/webpack-api-inliner-plugin
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

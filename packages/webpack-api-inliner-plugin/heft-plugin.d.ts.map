@@ -1,0 +1,1 @@
+{"version":3,"file":"heft-plugin.d.ts","sourceRoot":"","sources":["heft-plugin.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAIH,OAAO,EAAE,iBAAiB,EAAE,WAAW,EAAgB,MAAM,iBAAiB,CAAC;AAS/E;;GAEG;AACH,qBAAa,oBAAoB;IAC/B;;OAEG;WACW,KAAK,CACjB,WAAW,EAAE,WAAW,EACxB,iBAAiB,EAAE,iBAAiB,GACnC,IAAI;CA6DR;AAGD,wBAAgB,qBAAqB,CAAC,WAAW,EAAE,WAAW,EAAE,iBAAiB,EAAE,iBAAiB,GAAG,IAAI,CAE1G"}
