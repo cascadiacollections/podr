@@ -1,21 +1,45 @@
 {
-    "extends": "./node_modules/@rushstack/heft-web-rig/profiles/library/tsconfig-base.json",
-    "compilerOptions": {
-        "downlevelIteration": true,
-        "types": [
-            "webpack-env",
-            "jest",
-            "node",
-            "@testing-library/jest-dom"
-        ],
-        "jsx": "react",
-        "jsxFactory": "h",
-        "typeRoots": [
-            "./node_modules/@types",
-            "./src/types"
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ]
+  "extends": "./node_modules/@rushstack/heft-web-rig/profiles/library/tsconfig-base.json",
+  "compilerOptions": {
+    "downlevelIteration": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "types": [
+      "webpack-env",
+      "jest",
+      "node",
+      "@testing-library/jest-dom"
+    ],
+    "jsx": "react",
+    "jsxFactory": "h",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@/components/*": [
+        "src/ui/*"
+      ],
+      "@/utils/*": [
+        "src/utils/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "lib",
+    "lib-commonjs",
+    "coverage"
+  ]
 }
