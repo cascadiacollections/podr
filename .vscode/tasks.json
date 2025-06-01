@@ -82,7 +82,8 @@
                 "pattern": [
                     {
                         "regexp": "^\\s*(FAIL|PASS)\\s+(.+)$",
-                        "file": 2
+                        "file": 2,
+                        "message": 1
                     }
                 ]
             }
@@ -107,7 +108,8 @@
                 "pattern": [
                     {
                         "regexp": "^\\s*(FAIL|PASS)\\s+(.+)$",
-                        "file": 2
+                        "file": 2,
+                        "message": 1
                     }
                 ],
                 "background": {
