@@ -1,0 +1,23 @@
+# Modern browsers (2025)
+> 1%
+last 2 versions
+not dead
+not ie 11
+
+# Mobile browsers
+ios >= 13
+android >= 8
+
+# Modern browser features
+supports es6-module
+supports css-grid
+
+# Desktop browsers
+chrome >= 91
+firefox >= 90
+safari >= 14
+edge >= 91
+
+# Exclude problematic browsers
+not op_mini all
+not kaios 2.5
