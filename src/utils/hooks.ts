@@ -487,7 +487,7 @@ interface ClassNameDebugInfo {
  */
 interface UseClassNamesResult {
   readonly className: string;
-  readonly debug?: ClassNameDebugInfo;
+  debug?: ClassNameDebugInfo; // Remove readonly to allow assignment
 }
 
 /**
@@ -614,7 +614,13 @@ function resolveClassNames(
  * ```
  */
 export function useClassNames(
-  ...args: [...ClassNameInput[], UseClassNamesOptions?]
+  ...inputs: ClassNameInput[]
+): UseClassNamesResult;
+export function useClassNames(
+  ...argsWithOptions: [...ClassNameInput[], UseClassNamesOptions]
+): UseClassNamesResult;
+export function useClassNames(
+  ...args: Array<ClassNameInput | UseClassNamesOptions>
 ): UseClassNamesResult {
   // Extract options from the last argument if it's an options object
   const lastArg = args[args.length - 1];
