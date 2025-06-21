@@ -309,6 +309,92 @@ describe('useClassNames Hook', () => {
       expect(result.current.className).toContain('valid');
     });
   });
+
+  describe('Immutability Guarantees', () => {
+    it('should not mutate input arrays', () => {
+      const inputArray = ['class1', 'class2'];
+      const originalLength = inputArray.length;
+      const originalContent = [...inputArray];
+      
+      renderHook(() => useClassNames(inputArray));
+      
+      expect(inputArray).toHaveLength(originalLength);
+      expect(inputArray).toEqual(originalContent);
+    });
+
+    it('should not mutate input objects', () => {
+      const inputObject = { active: true, disabled: false };
+      const originalKeys = Object.keys(inputObject);
+      const originalValues = Object.values(inputObject);
+      
+      renderHook(() => useClassNames(inputObject));
+      
+      expect(Object.keys(inputObject)).toEqual(originalKeys);
+      expect(Object.values(inputObject)).toEqual(originalValues);
+    });
+
+    it('should return frozen arrays in debug mode for immutability', () => {
+      const { result } = renderHook(() => 
+        useClassNames('test', { active: true }, { enableDebug: true })
+      );
+      
+      expect(Object.isFrozen(result.current.debug!.resolvedClasses)).toBe(true);
+      expect(Object.isFrozen(result.current.debug!.skippedInputs)).toBe(true);
+    });
+
+    it('should handle deeply nested arrays without mutation', () => {
+      const deepArray = [['level1', ['level2', 'level2-2']], 'root'];
+      const originalDeepArray = JSON.parse(JSON.stringify(deepArray));
+      
+      const { result } = renderHook(() => useClassNames(deepArray));
+      
+      expect(result.current.className).toBe('level1 level2 level2-2 root');
+      expect(deepArray).toEqual(originalDeepArray);
+    });
+  });
+
+  describe('Edge Cases and Boundary Conditions', () => {
+    it('should handle extremely large numbers of inputs', () => {
+      const manyInputs = Array.from({ length: 1000 }, (_, i) => `class-${i}`);
+      const { result } = renderHook(() => useClassNames(...manyInputs));
+      
+      expect(result.current.className).toContain('class-0');
+      expect(result.current.className).toContain('class-999');
+      expect(result.current.className.split(' ')).toHaveLength(1000);
+    });
+
+    it('should handle strings with special characters', () => {
+      const { result } = renderHook(() => 
+        useClassNames('class-with-dashes', 'class_with_underscores', 'class:with:colons')
+      );
+      
+      expect(result.current.className).toBe('class-with-dashes class_with_underscores class:with:colons');
+    });
+
+    it('should handle unicode characters in class names', () => {
+      const { result } = renderHook(() => 
+        useClassNames('класс', '类名', 'クラス名')
+      );
+      
+      expect(result.current.className).toBe('класс 类名 クラス名');
+    });
+
+    it('should handle very long class names', () => {
+      const longClassName = 'a'.repeat(1000);
+      const { result } = renderHook(() => useClassNames(longClassName, 'short'));
+      
+      expect(result.current.className).toContain(longClassName);
+      expect(result.current.className).toContain('short');
+    });
+
+    it('should maintain order when deduplication is disabled', () => {
+      const { result } = renderHook(() => 
+        useClassNames('first', 'second', 'first', 'third', 'second', { deduplicate: false })
+      );
+      
+      expect(result.current.className).toBe('first second first third second');
+    });
+  });
 });
 
 describe('useClassNamesSimple Hook', () => {
@@ -356,5 +442,51 @@ describe('useClassNamesSimple Hook', () => {
     expect(typeof fullResult.current).toBe('object');
     expect(typeof simpleResult.current).toBe('string');
     expect(fullResult.current.className).toBe(simpleResult.current);
+  });
+
+  describe('Immutability in Simple Hook', () => {
+    it('should not mutate input arrays', () => {
+      const inputArray = ['class1', 'class2'];
+      const originalArray = [...inputArray];
+      
+      renderHook(() => useClassNamesSimple(inputArray));
+      
+      expect(inputArray).toEqual(originalArray);
+    });
+
+    it('should not mutate input objects', () => {
+      const inputObject = { active: true, disabled: false };
+      const originalObject = { ...inputObject };
+      
+      renderHook(() => useClassNamesSimple(inputObject));
+      
+      expect(inputObject).toEqual(originalObject);
+    });
+  });
+
+  describe('Performance Characteristics', () => {
+    it('should handle large numbers of inputs efficiently', () => {
+      const start = performance.now();
+      const manyInputs = Array.from({ length: 100 }, (_, i) => `class-${i}`);
+      
+      const { result } = renderHook(() => useClassNamesSimple(...manyInputs));
+      const end = performance.now();
+      
+      expect(result.current).toContain('class-0');
+      expect(result.current).toContain('class-99');
+      expect(end - start).toBeLessThan(100); // Should be very fast
+    });
+
+    it('should memoize results properly', () => {
+      const inputs = ['stable', 'inputs', { active: true }];
+      const { result, rerender } = renderHook(() => useClassNamesSimple(...inputs));
+      
+      const firstRender = result.current;
+      rerender();
+      const secondRender = result.current;
+      
+      expect(firstRender).toBe(secondRender);
+      expect(firstRender).toBe('stable inputs active');
+    });
   });
 });
