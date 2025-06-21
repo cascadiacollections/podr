@@ -6,10 +6,13 @@ exports[`Result component renders correctly 1`] = `
     <tbody>
       <tr
         aria-label="Play episode: Test Episode Title"
+        class="episode-row"
         role="button"
         tabindex="0"
       >
-        <td>
+        <td
+          class="episode-title-cell"
+        >
           <a
             aria-label="Stream or download: Test Episode Title"
             href="https://example.com/episode.mp3"
@@ -23,7 +26,7 @@ exports[`Result component renders correctly 1`] = `
           <time
             datetime="2023-05-15T12:00:00Z"
           >
-            Invalid Date
+            May 15, 2023
           </time>
         </td>
         <td
@@ -43,10 +46,13 @@ exports[`Result component renders with empty duration and date 1`] = `
     <tbody>
       <tr
         aria-label="Play episode: Test Episode Title"
+        class="episode-row"
         role="button"
         tabindex="0"
       >
-        <td>
+        <td
+          class="episode-title-cell"
+        >
           <a
             aria-label="Stream or download: Test Episode Title"
             href="https://example.com/episode.mp3"
@@ -60,7 +66,7 @@ exports[`Result component renders with empty duration and date 1`] = `
           <time
             datetime=""
           >
-            
+            Unknown date
           </time>
         </td>
         <td
