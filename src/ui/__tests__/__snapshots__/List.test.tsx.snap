@@ -3,9 +3,11 @@
 exports[`List component renders empty state 1`] = `
 <div>
   <section
-    class="episodes-container"
+    class="episodes-container empty-state"
   >
-    <table>
+    <table
+      class="episodes-table"
+    >
       <caption>
         Podcast Episodes
       </caption>
@@ -31,11 +33,18 @@ exports[`List component renders empty state 1`] = `
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr
+          class="empty-row"
+        >
           <td
+            class="empty-cell"
             colspan="3"
           >
-            No episodes available. Search or select a podcast to see episodes.
+            <div
+              class="empty-message"
+            >
+              No episodes available. Search or select a podcast to see episodes.
+            </div>
           </td>
         </tr>
       </tbody>
@@ -49,7 +58,9 @@ exports[`List component renders with results 1`] = `
   <section
     class="episodes-container"
   >
-    <table>
+    <table
+      class="episodes-table"
+    >
       <caption>
         Podcast Episodes
       </caption>
@@ -77,10 +88,13 @@ exports[`List component renders with results 1`] = `
       <tbody>
         <tr
           aria-label="Play episode: Test Episode 1"
+          class="episode-row"
           role="button"
           tabindex="0"
         >
-          <td>
+          <td
+            class="episode-title-cell"
+          >
             <a
               aria-label="Stream or download: Test Episode 1"
               href="https://example.com/episode1.mp3"
@@ -94,7 +108,7 @@ exports[`List component renders with results 1`] = `
             <time
               datetime="2023-05-15T12:00:00Z"
             >
-              Invalid Date
+              May 15, 2023
             </time>
           </td>
           <td
@@ -105,10 +119,13 @@ exports[`List component renders with results 1`] = `
         </tr>
         <tr
           aria-label="Play episode: Test Episode 2"
+          class="episode-row"
           role="button"
           tabindex="0"
         >
-          <td>
+          <td
+            class="episode-title-cell"
+          >
             <a
               aria-label="Stream or download: Test Episode 2"
               href="https://example.com/episode2.mp3"
@@ -122,7 +139,7 @@ exports[`List component renders with results 1`] = `
             <time
               datetime="2023-05-16T12:00:00Z"
             >
-              Invalid Date
+              May 16, 2023
             </time>
           </td>
           <td

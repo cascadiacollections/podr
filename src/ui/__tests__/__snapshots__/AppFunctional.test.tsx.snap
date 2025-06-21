@@ -10,16 +10,22 @@ exports[`App component loads top podcasts on mount 1`] = `
     </a>
   </h1>
   <form
+    class="search-form"
     role="search"
   >
-    <input
-      aria-label="Search podcasts"
-      class="form-control"
-      placeholder="Search podcasts"
-      type="search"
-    />
+    <div
+      class="search-input-container"
+    >
+      <input
+        aria-label="Search podcasts"
+        autocomplete="off"
+        class="form-control"
+        placeholder="Search podcasts"
+        type="search"
+      />
+    </div>
     <button
-      aria-label="Submit search"
+      aria-label="Search"
       class="search-button"
       type="submit"
     >
@@ -57,9 +63,11 @@ exports[`App component loads top podcasts on mount 1`] = `
     Episodes
   </h2>
   <section
-    class="episodes-container"
+    class="episodes-container empty-state"
   >
-    <table>
+    <table
+      class="episodes-table"
+    >
       <caption>
         Podcast Episodes
       </caption>
@@ -85,11 +93,18 @@ exports[`App component loads top podcasts on mount 1`] = `
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr
+          class="empty-row"
+        >
           <td
+            class="empty-cell"
             colspan="3"
           >
-            No episodes available. Search or select a podcast to see episodes.
+            <div
+              class="empty-message"
+            >
+              No episodes available. Search or select a podcast to see episodes.
+            </div>
           </td>
         </tr>
       </tbody>
@@ -114,16 +129,22 @@ exports[`App component renders without crashing 1`] = `
     </a>
   </h1>
   <form
+    class="search-form"
     role="search"
   >
-    <input
-      aria-label="Search podcasts"
-      class="form-control"
-      placeholder="Search podcasts"
-      type="search"
-    />
+    <div
+      class="search-input-container"
+    >
+      <input
+        aria-label="Search podcasts"
+        autocomplete="off"
+        class="form-control"
+        placeholder="Search podcasts"
+        type="search"
+      />
+    </div>
     <button
-      aria-label="Submit search"
+      aria-label="Search"
       class="search-button"
       type="submit"
     >
@@ -152,9 +173,11 @@ exports[`App component renders without crashing 1`] = `
     Episodes
   </h2>
   <section
-    class="episodes-container"
+    class="episodes-container empty-state"
   >
-    <table>
+    <table
+      class="episodes-table"
+    >
       <caption>
         Podcast Episodes
       </caption>
@@ -180,11 +203,18 @@ exports[`App component renders without crashing 1`] = `
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr
+          class="empty-row"
+        >
           <td
+            class="empty-cell"
             colspan="3"
           >
-            No episodes available. Search or select a podcast to see episodes.
+            <div
+              class="empty-message"
+            >
+              No episodes available. Search or select a podcast to see episodes.
+            </div>
           </td>
         </tr>
       </tbody>

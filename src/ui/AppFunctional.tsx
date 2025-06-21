@@ -4,30 +4,9 @@ import { signal, computed, effect, Signal } from '@preact/signals';
 
 import { IFeedItem } from './Result';
 import { List } from './List';
-import { getFeedUrl, getSecureUrl, ToArray } from '../utils/helpers';
+import { getFeedUrl, getSecureUrl, toArray } from '../utils/helpers';
 import { Search } from './Search';
-
-interface IFeed {
-  readonly collectionName: string;
-  readonly feedUrl: string;
-  readonly artworkUrl100: string;
-  readonly artworkUrl600: string;
-}
-
-interface ITopPodcast {
-  readonly title: {
-    readonly label: string;
-  };
-  readonly id: {
-    readonly label: string;
-    readonly attributes: {
-      readonly 'im:id': string;
-    };
-  };
-  readonly 'im:image': ReadonlyArray<{
-    readonly label: string;
-  }>;
-}
+import { APP_CONFIG, IFeed, ITopPodcast } from '../utils/AppContext';
 
 declare global {
   interface Window { 
@@ -36,23 +15,17 @@ declare global {
   }
 }
 
-// Constants
-const API_BASE_URL = 'https://podr-svc-48579879001.us-west4.run.app';
-const LOCAL_STORAGE_FEEDS_KEY = 'podr_feeds';
-const LOCAL_STORAGE_RESULTS_KEY = 'podr_results';
-const DEFAULT_SEARCH_LIMIT = 14;
-
 // Create signals for state
 const query = signal('');
-const favorited = signal<Set<IFeed>>(new Set());
+const favorited = signal<ReadonlySet<IFeed>>(new Set());
 const results = signal<ReadonlyArray<IFeedItem>>(
-  JSON.parse(localStorage.getItem(LOCAL_STORAGE_RESULTS_KEY) || '[]')
+  JSON.parse(localStorage.getItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY) || '[]')
 );
 const searchResults = signal<ReadonlyArray<IFeed>>([]);
 const topResults = signal<ReadonlyArray<ITopPodcast>>([]);
 
 // Computed values
-const feeds = computed(() => ToArray(favorited.value.values()));
+const feeds = computed(() => toArray(favorited.value.values()));
 
 // Custom hook for localStorage persistence
 const useLocalStorage = <T,>(key: string, value: Signal<T>) => {
@@ -62,7 +35,7 @@ const useLocalStorage = <T,>(key: string, value: Signal<T>) => {
     if (savedValue) {
       try {
         const parsedValue = JSON.parse(savedValue);
-        if (key === LOCAL_STORAGE_FEEDS_KEY) {
+        if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
           // Handle special case for Set
           const feedSet = new Set<IFeed>();
           parsedValue.forEach((feed: IFeed) => {
@@ -80,8 +53,8 @@ const useLocalStorage = <T,>(key: string, value: Signal<T>) => {
 
   // Save to localStorage on change
   effect(() => {
-    if (key === LOCAL_STORAGE_FEEDS_KEY) {
-      localStorage.setItem(key, JSON.stringify(ToArray(favorited.value.values())));
+    if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
+      localStorage.setItem(key, JSON.stringify(toArray(favorited.value.values())));
     } else {
       localStorage.setItem(key, JSON.stringify(value.value));
     }
@@ -129,8 +102,8 @@ export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   
   // Initialize localStorage
-  useLocalStorage(LOCAL_STORAGE_FEEDS_KEY, feeds as any);
-  useLocalStorage(LOCAL_STORAGE_RESULTS_KEY, results);
+  useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds as any);
+  useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results);
   
   // Fetch top podcasts - uses inlined window variable or static file for initial render, then optionally updates from API
   useEffect(() => {
@@ -165,7 +138,7 @@ export const App = (): JSX.Element => {
 
   // Function to fetch top podcasts from API
   const fetchTopPodcastsFromAPI = () => {
-    fetch(`${API_BASE_URL}/?q=toppodcasts&limit=10`)
+    fetch(`${APP_CONFIG.API_BASE_URL}/?q=toppodcasts&limit=10`)
       .then(async (response: Response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -195,7 +168,7 @@ export const App = (): JSX.Element => {
       })
       .then(({ items: feedResults = [] }) => {
         results.value = feedResults;
-        localStorage.setItem(LOCAL_STORAGE_RESULTS_KEY, JSON.stringify(feedResults));
+        localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
       })
       .catch((err: Error) => {
         window.gtag('event', 'exception', {
@@ -205,7 +178,7 @@ export const App = (): JSX.Element => {
       });
   }, []);
 
-  const onSearch = useCallback((searchQuery: string, limit: number = DEFAULT_SEARCH_LIMIT) => {
+  const onSearch = useCallback((searchQuery: string, limit: number = APP_CONFIG.SEARCH.DEFAULT_LIMIT) => {
     window.gtag('event', 'search', {
       'search_term': searchQuery,
       transport: 'beacon'
@@ -223,7 +196,7 @@ export const App = (): JSX.Element => {
       ['limit', limit.toString()]
     ]);
 
-    fetch(`${API_BASE_URL}/?${queryParams.toString()}`)
+    fetch(`${APP_CONFIG.API_BASE_URL}/?${queryParams.toString()}`)
       .then(async (response: Response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -334,7 +307,7 @@ export const App = (): JSX.Element => {
               alt={result.title.label}
               onClick={async () => {
                 const itunesId = result.id.attributes['im:id'];
-                const feedResults = await fetch(`${API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
+                const feedResults = await fetch(`${APP_CONFIG.API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
                   if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                   }

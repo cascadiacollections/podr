@@ -3,16 +3,22 @@
 exports[`Search component renders correctly 1`] = `
 <div>
   <form
+    class="search-form"
     role="search"
   >
-    <input
-      aria-label="Search podcasts"
-      class="form-control"
-      placeholder="Search podcasts"
-      type="search"
-    />
+    <div
+      class="search-input-container"
+    >
+      <input
+        aria-label="Search podcasts"
+        autocomplete="off"
+        class="form-control"
+        placeholder="Search podcasts"
+        type="search"
+      />
+    </div>
     <button
-      aria-label="Submit search"
+      aria-label="Search"
       class="search-button"
       type="submit"
     >
@@ -25,16 +31,22 @@ exports[`Search component renders correctly 1`] = `
 exports[`Search component renders with query signal 1`] = `
 <div>
   <form
+    class="search-form"
     role="search"
   >
-    <input
-      aria-label="Search podcasts"
-      class="form-control"
-      placeholder="Search podcasts"
-      type="search"
-    />
+    <div
+      class="search-input-container"
+    >
+      <input
+        aria-label="Search podcasts"
+        autocomplete="off"
+        class="form-control"
+        placeholder="Search podcasts"
+        type="search"
+      />
+    </div>
     <button
-      aria-label="Submit search"
+      aria-label="Search"
       class="search-button"
       type="submit"
     >
