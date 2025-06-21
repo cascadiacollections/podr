@@ -457,3 +457,246 @@ export function useAnalytics() {
     trackPerformance,
   };
 }
+
+/**
+ * Type definitions for CSS class name inputs
+ */
+type ClassNameValue = string | number | boolean | null | undefined;
+type ClassNameObject = Record<string, ClassNameValue>;
+type ClassNameArray = ReadonlyArray<ClassNameInput>;
+type ClassNameFunction = () => ClassNameInput;
+type ClassNameInput = 
+  | ClassNameValue 
+  | ClassNameObject 
+  | ClassNameArray 
+  | ClassNameFunction;
+
+/**
+ * Development debugging interface for CSS class names
+ */
+interface ClassNameDebugInfo {
+  readonly finalClassName: string;
+  readonly inputCount: number;
+  readonly resolvedClasses: ReadonlyArray<string>;
+  readonly skippedInputs: ReadonlyArray<unknown>;
+  readonly computationTime: number;
+}
+
+/**
+ * Hook return type with optional development debugging
+ */
+interface UseClassNamesResult {
+  readonly className: string;
+  readonly debug?: ClassNameDebugInfo;
+}
+
+/**
+ * Configuration options for the useClassNames hook
+ */
+interface UseClassNamesOptions {
+  /** Enable development debugging features (defaults to NODE_ENV !== 'production') */
+  readonly enableDebug?: boolean;
+  /** Custom separator for joining classes (defaults to single space) */
+  readonly separator?: string;
+  /** Whether to deduplicate identical class names (defaults to true) */
+  readonly deduplicate?: boolean;
+}
+
+/**
+ * Cache for memoizing class name computations
+ * Using WeakMap for automatic garbage collection
+ */
+const classNameCache = new WeakMap<object, string>();
+const debugCache = new WeakMap<object, ClassNameDebugInfo>();
+
+/**
+ * Performant utility function to resolve class names from various input types
+ * @param input - The class name input to resolve
+ * @param skipped - Array to collect skipped inputs for debugging
+ * @returns Array of resolved class names
+ */
+function resolveClassNames(
+  input: ClassNameInput, 
+  skipped: unknown[] = []
+): string[] {
+  // Handle falsy values
+  if (!input) {
+    skipped.push(input);
+    return [];
+  }
+
+  // Handle primitive values
+  if (typeof input === 'string') {
+    return input.trim() ? [input.trim()] : [];
+  }
+  
+  if (typeof input === 'number') {
+    return [String(input)];
+  }
+
+  // Handle functions
+  if (typeof input === 'function') {
+    try {
+      return resolveClassNames(input(), skipped);
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Error executing className function:', error);
+      }
+      skipped.push(input);
+      return [];
+    }
+  }
+
+  // Handle arrays
+  if (Array.isArray(input)) {
+    const result: string[] = [];
+    for (const item of input) {
+      result.push(...resolveClassNames(item, skipped));
+    }
+    return result;
+  }
+
+  // Handle objects
+  if (typeof input === 'object' && input !== null) {
+    const result: string[] = [];
+    for (const [key, value] of Object.entries(input)) {
+      if (value) {
+        result.push(key);
+      } else {
+        skipped.push({ [key]: value });
+      }
+    }
+    return result;
+  }
+
+  skipped.push(input);
+  return [];
+}
+
+/**
+ * Enhanced custom hook for performant CSS class name concatenation
+ * 
+ * Provides memory-efficient and runtime-optimized class name computation with 
+ * comprehensive TypeScript support, development debugging, and compatibility
+ * with both Preact and React.
+ * 
+ * @param inputs - Variable arguments of class name inputs
+ * @param options - Configuration options for the hook
+ * @returns Object containing the computed className and optional debug info
+ * 
+ * @example
+ * ```tsx
+ * // Basic usage with strings and conditionals
+ * const { className } = useClassNames(
+ *   'base-class',
+ *   isActive && 'active',
+ *   isLoading && 'loading'
+ * );
+ * 
+ * // Object-based conditionals
+ * const { className } = useClassNames('button', {
+ *   'button--primary': isPrimary,
+ *   'button--disabled': isDisabled,
+ *   'button--loading': isLoading
+ * });
+ * 
+ * // Mixed inputs with arrays and functions
+ * const { className } = useClassNames(
+ *   'component',
+ *   ['conditional', 'classes'],
+ *   () => dynamicCondition ? 'dynamic' : null,
+ *   { 'object-based': objectCondition }
+ * );
+ * 
+ * // Development debugging
+ * const { className, debug } = useClassNames('test', { dev: true }, { enableDebug: true });
+ * console.log(debug?.resolvedClasses); // ['test', 'dev']
+ * ```
+ */
+export function useClassNames(
+  ...args: [...ClassNameInput[], UseClassNamesOptions?]
+): UseClassNamesResult {
+  // Extract options from the last argument if it's an options object
+  const lastArg = args[args.length - 1];
+  const isOptionsObject = lastArg && 
+    typeof lastArg === 'object' && 
+    !Array.isArray(lastArg) &&
+    ('enableDebug' in lastArg || 'separator' in lastArg || 'deduplicate' in lastArg);
+  
+  const options: UseClassNamesOptions = isOptionsObject ? lastArg as UseClassNamesOptions : {};
+  const inputs = isOptionsObject ? args.slice(0, -1) as ClassNameInput[] : args as ClassNameInput[];
+  
+  const {
+    enableDebug = process.env.NODE_ENV !== 'production',
+    separator = ' ',
+    deduplicate = true
+  } = options;
+
+  return useMemo(() => {
+    const startTime = enableDebug ? performance.now() : 0;
+    const skippedInputs: unknown[] = [];
+    
+    // Resolve all class names
+    const resolvedClasses: string[] = [];
+    for (const input of inputs) {
+      resolvedClasses.push(...resolveClassNames(input, skippedInputs));
+    }
+    
+    // Filter out empty strings and optionally deduplicate
+    const validClasses = resolvedClasses.filter(Boolean);
+    const finalClasses = deduplicate ? [...new Set(validClasses)] : validClasses;
+    
+    // Join with separator
+    const className = finalClasses.join(separator);
+    
+    const result: UseClassNamesResult = { className };
+    
+    // Add debugging information in development
+    if (enableDebug) {
+      const computationTime = performance.now() - startTime;
+      result.debug = {
+        finalClassName: className,
+        inputCount: inputs.length,
+        resolvedClasses: finalClasses,
+        skippedInputs,
+        computationTime
+      };
+      
+      // Development logging for debugging
+      if (process.env.NODE_ENV !== 'production' && skippedInputs.length > 0) {
+        console.debug('useClassNames skipped inputs:', skippedInputs);
+      }
+    }
+    
+    return result;
+  }, [inputs, separator, deduplicate, enableDebug]);
+}
+
+/**
+ * Simplified version of useClassNames that returns only the className string
+ * Optimized for cases where debugging is not needed
+ * 
+ * @param inputs - Variable arguments of class name inputs
+ * @returns The computed className string
+ * 
+ * @example
+ * ```tsx
+ * const className = useClassNamesSimple(
+ *   'base',
+ *   isActive && 'active',
+ *   { loading: isLoading }
+ * );
+ * ```
+ */
+export function useClassNamesSimple(...inputs: ClassNameInput[]): string {
+  return useMemo(() => {
+    const resolvedClasses: string[] = [];
+    for (const input of inputs) {
+      resolvedClasses.push(...resolveClassNames(input));
+    }
+    
+    // Deduplicate and filter empty strings
+    const finalClasses = [...new Set(resolvedClasses.filter(Boolean))];
+    return finalClasses.join(' ');
+  }, [inputs]);
+}
