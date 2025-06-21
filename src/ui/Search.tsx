@@ -1,7 +1,7 @@
 import { h, JSX, FunctionComponent, Fragment } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
-import { useAnalytics } from '../utils/hooks';
+import { useAnalytics, useClassNames } from '../utils/hooks';
 
 /**
  * Search configuration constants
@@ -128,17 +128,17 @@ export const Search: FunctionComponent<ISearchProps> = ({
   );
   
   /**
-   * Memoized CSS classes for performance
+   * Optimized CSS classes using the performance-focused useClassNames hook
    */
-  const inputClassName = useMemo(() => 
-    `form-control${isLoading ? ' loading' : ''}${disabled ? ' disabled' : ''}`,
-    [isLoading, disabled]
-  );
+  const inputClassName = useClassNames('form-control', {
+    loading: isLoading,
+    disabled: disabled
+  });
   
-  const buttonClassName = useMemo(() => 
-    `search-button${isLoading ? ' loading' : ''}${disabled ? ' disabled' : ''}`,
-    [isLoading, disabled]
-  );
+  const buttonClassName = useClassNames('search-button', {
+    loading: isLoading,
+    disabled: disabled
+  });
 
   return (
     <form onSubmit={handleSubmit} role="search" className="search-form">
