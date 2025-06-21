@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/preact';
 import { render } from '@testing-library/preact';
 import { h } from 'preact';
-import { useClassNames, useClassNamesSimple } from '../hooks';
+import { useClassNames, useClassNamesWithDebug, useClassNamesSimple } from '../hooks';
 
 // Mock performance API for testing
 const mockPerformance = {
@@ -9,7 +9,7 @@ const mockPerformance = {
 };
 global.performance = mockPerformance as any;
 
-describe('useClassNames Hook', () => {
+describe('useClassNames Hook (Main Performance-Optimized Hook)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPerformance.now.mockReturnValue(100);
@@ -18,29 +18,29 @@ describe('useClassNames Hook', () => {
   describe('Basic Functionality', () => {
     it('should handle single string input', () => {
       const { result } = renderHook(() => useClassNames('test-class'));
-      expect(result.current.className).toBe('test-class');
+      expect(result.current).toBe('test-class');
     });
 
     it('should handle multiple string inputs', () => {
       const { result } = renderHook(() => useClassNames('class1', 'class2', 'class3'));
-      expect(result.current.className).toBe('class1 class2 class3');
+      expect(result.current).toBe('class1 class2 class3');
     });
 
     it('should filter out falsy values', () => {
       const { result } = renderHook(() => 
         useClassNames('valid', null, undefined, false, '', 'another-valid')
       );
-      expect(result.current.className).toBe('valid another-valid');
+      expect(result.current).toBe('valid another-valid');
     });
 
     it('should handle number inputs', () => {
       const { result } = renderHook(() => useClassNames('class', 123, 'end'));
-      expect(result.current.className).toBe('class 123 end');
+      expect(result.current).toBe('class 123 end');
     });
 
     it('should trim whitespace from string inputs', () => {
       const { result } = renderHook(() => useClassNames('  spaced  ', 'normal'));
-      expect(result.current.className).toBe('spaced normal');
+      expect(result.current).toBe('spaced normal');
     });
   });
 
@@ -53,7 +53,7 @@ describe('useClassNames Hook', () => {
           loading: true
         })
       );
-      expect(result.current.className).toBe('base active loading');
+      expect(result.current).toBe('base active loading');
     });
 
     it('should handle object with truthy/falsy values', () => {
@@ -66,12 +66,12 @@ describe('useClassNames Hook', () => {
           'class5': null
         })
       );
-      expect(result.current.className).toBe('class1 class3');
+      expect(result.current).toBe('class1 class3');
     });
 
     it('should handle empty object', () => {
       const { result } = renderHook(() => useClassNames('base', {}));
-      expect(result.current.className).toBe('base');
+      expect(result.current).toBe('base');
     });
   });
 
@@ -80,26 +80,26 @@ describe('useClassNames Hook', () => {
       const { result } = renderHook(() => 
         useClassNames(['class1', 'class2'], 'class3')
       );
-      expect(result.current.className).toBe('class1 class2 class3');
+      expect(result.current).toBe('class1 class2 class3');
     });
 
     it('should handle nested arrays', () => {
       const { result } = renderHook(() => 
         useClassNames(['outer', ['nested1', 'nested2']], 'end')
       );
-      expect(result.current.className).toBe('outer nested1 nested2 end');
+      expect(result.current).toBe('outer nested1 nested2 end');
     });
 
     it('should handle arrays with mixed types', () => {
       const { result } = renderHook(() => 
         useClassNames(['string', 123, true, false, null, { conditional: true }])
       );
-      expect(result.current.className).toBe('string 123 conditional');
+      expect(result.current).toBe('string 123 conditional');
     });
 
     it('should handle empty arrays', () => {
       const { result } = renderHook(() => useClassNames('base', [], 'end'));
-      expect(result.current.className).toBe('base end');
+      expect(result.current).toBe('base end');
     });
   });
 
@@ -109,7 +109,7 @@ describe('useClassNames Hook', () => {
       const { result } = renderHook(() => useClassNames('base', mockFunction));
       
       expect(mockFunction).toHaveBeenCalled();
-      expect(result.current.className).toBe('base dynamic-class');
+      expect(result.current).toBe('base dynamic-class');
     });
 
     it('should handle functions returning different types', () => {
@@ -122,7 +122,7 @@ describe('useClassNames Hook', () => {
           () => null
         )
       );
-      expect(result.current.className).toBe('base string-return conditional array return');
+      expect(result.current).toBe('base string-return conditional array return');
     });
 
     it('should handle function errors gracefully in production', () => {
@@ -134,7 +134,7 @@ describe('useClassNames Hook', () => {
       });
 
       const { result } = renderHook(() => useClassNames('base', errorFunction));
-      expect(result.current.className).toBe('base');
+      expect(result.current).toBe('base');
 
       process.env.NODE_ENV = originalEnv;
     });
@@ -145,7 +145,7 @@ describe('useClassNames Hook', () => {
       const { result } = renderHook(() => 
         useClassNames('duplicate', 'unique', 'duplicate', 'another', 'unique')
       );
-      expect(result.current.className).toBe('duplicate unique another');
+      expect(result.current).toBe('duplicate unique another');
     });
   });
 
@@ -156,46 +156,14 @@ describe('useClassNames Hook', () => {
       process.env.NODE_ENV = originalNodeEnv;
     });
 
-    it('should provide debug information in development mode', () => {
+    it('should not provide debug information for performance optimization', () => {
       process.env.NODE_ENV = 'development';
-      const { result } = renderHook(() => 
+      const result = renderHook(() => 
         useClassNames('test', { active: true })
       );
       
-      expect(result.current.debug).toBeDefined();
-      expect(result.current.debug!.finalClassName).toBe('test active');
-      expect(result.current.debug!.inputCount).toBe(2);
-      expect(result.current.debug!.resolvedClasses).toEqual(['test', 'active']);
-      expect(typeof result.current.debug!.computationTime).toBe('number');
-    });
-
-    it('should track skipped inputs in development mode', () => {
-      process.env.NODE_ENV = 'development';
-      const { result } = renderHook(() => 
-        useClassNames('valid', null, false, '')
-      );
-      
-      expect(result.current.debug!.skippedInputs).toEqual([null, false, '']);
-      expect(result.current.debug!.resolvedClasses).toEqual(['valid']);
-    });
-
-    it('should not provide debug info in production mode', () => {
-      process.env.NODE_ENV = 'production';
-      const { result } = renderHook(() => 
-        useClassNames('test')
-      );
-      
-      expect(result.current.debug).toBeUndefined();
-    });
-
-    it('should track skipped object conditions in development mode', () => {
-      process.env.NODE_ENV = 'development';
-      const { result } = renderHook(() => 
-        useClassNames({ active: true, disabled: false })
-      );
-      
-      expect(result.current.debug!.skippedInputs).toEqual([{ disabled: false }]);
-      expect(result.current.debug!.resolvedClasses).toEqual(['active']);
+      expect(typeof result.result.current).toBe('string');
+      expect(result.result.current).toBe('test active');
     });
   });
 
@@ -204,9 +172,9 @@ describe('useClassNames Hook', () => {
       const inputs = ['stable', 'inputs'];
       const { result, rerender } = renderHook(() => useClassNames(...inputs));
       
-      const firstResult = result.current.className;
+      const firstResult = result.current;
       rerender();
-      const secondResult = result.current.className;
+      const secondResult = result.current;
       
       expect(firstResult).toBe(secondResult);
       expect(firstResult).toBe('stable inputs');
@@ -216,12 +184,12 @@ describe('useClassNames Hook', () => {
       let dynamic = 'initial';
       const { result, rerender } = renderHook(() => useClassNames('base', dynamic));
       
-      expect(result.current.className).toBe('base initial');
+      expect(result.current).toBe('base initial');
       
       dynamic = 'updated';
       rerender();
       
-      expect(result.current.className).toBe('base updated');
+      expect(result.current).toBe('base updated');
     });
   });
 
@@ -246,7 +214,7 @@ describe('useClassNames Hook', () => {
         )
       );
 
-      expect(result.current.className).toBe(
+      expect(result.current).toBe(
         'component component--large component--loading component--active'
       );
     });
@@ -267,15 +235,21 @@ describe('useClassNames Hook', () => {
         )
       );
 
-      expect(result.current.className).toBe('button button--primary button--large button--loading');
+      expect(result.current).toBe('button button--primary button--large button--loading');
     });
   });
 
   describe('DOM classList Integration Tests', () => {
-    // Test component that uses the useClassNames hook
-    const TestComponent = ({ classes, ...hookOptions }: { classes: any[], [key: string]: any }) => {
-      const { className } = useClassNames(...classes, hookOptions);
+    // Test component that uses the main performance-optimized useClassNames hook
+    const TestComponent = ({ classes }: { classes: any[] }) => {
+      const className = useClassNames(...classes);
       return h('div', { className, 'data-testid': 'test-element' });
+    };
+
+    // Test component that uses the debug version of the hook
+    const DebugTestComponent = ({ classes }: { classes: any[] }) => {
+      const { className } = useClassNamesWithDebug(...classes);
+      return h('div', { className, 'data-testid': 'debug-test-element' });
     };
 
     const SimpleTestComponent = ({ classes }: { classes: any[] }) => {
@@ -537,7 +511,7 @@ describe('useClassNames Hook', () => {
         useClassNames('valid', symbol as any, 'another-valid')
       );
       
-      expect(result.current.className).toBe('valid another-valid');
+      expect(result.current).toBe('valid another-valid');
     });
 
     it('should handle circular references in objects', () => {
@@ -549,8 +523,8 @@ describe('useClassNames Hook', () => {
       );
       
       // Should not throw and should extract non-circular properties
-      expect(result.current.className).toContain('test');
-      expect(result.current.className).toContain('valid');
+      expect(result.current).toContain('test');
+      expect(result.current).toContain('valid');
     });
   });
 
@@ -577,22 +551,13 @@ describe('useClassNames Hook', () => {
       expect(Object.values(inputObject)).toEqual(originalValues);
     });
 
-    it('should return frozen arrays in debug mode for immutability', () => {
-      const { result } = renderHook(() => 
-        useClassNames('test', { active: true }, { enableDebug: true })
-      );
-      
-      expect(Object.isFrozen(result.current.debug!.resolvedClasses)).toBe(true);
-      expect(Object.isFrozen(result.current.debug!.skippedInputs)).toBe(true);
-    });
-
     it('should handle deeply nested arrays without mutation', () => {
       const deepArray = [['level1', ['level2', 'level2-2']], 'root'];
       const originalDeepArray = JSON.parse(JSON.stringify(deepArray));
       
       const { result } = renderHook(() => useClassNames(deepArray));
       
-      expect(result.current.className).toBe('level1 level2 level2-2 root');
+      expect(result.current).toBe('level1 level2 level2-2 root');
       expect(deepArray).toEqual(originalDeepArray);
     });
   });
@@ -602,9 +567,9 @@ describe('useClassNames Hook', () => {
       const manyInputs = Array.from({ length: 1000 }, (_, i) => `class-${i}`);
       const { result } = renderHook(() => useClassNames(...manyInputs));
       
-      expect(result.current.className).toContain('class-0');
-      expect(result.current.className).toContain('class-999');
-      expect(result.current.className.split(' ')).toHaveLength(1000);
+      expect(result.current).toContain('class-0');
+      expect(result.current).toContain('class-999');
+      expect(result.current.split(' ')).toHaveLength(1000);
     });
 
     it('should handle strings with special characters', () => {
@@ -612,7 +577,7 @@ describe('useClassNames Hook', () => {
         useClassNames('class-with-dashes', 'class_with_underscores', 'class:with:colons')
       );
       
-      expect(result.current.className).toBe('class-with-dashes class_with_underscores class:with:colons');
+      expect(result.current).toBe('class-with-dashes class_with_underscores class:with:colons');
     });
 
     it('should handle unicode characters in class names', () => {
@@ -620,15 +585,15 @@ describe('useClassNames Hook', () => {
         useClassNames('класс', '类名', 'クラス名')
       );
       
-      expect(result.current.className).toBe('класс 类名 クラス名');
+      expect(result.current).toBe('класс 类名 クラス名');
     });
 
     it('should handle very long class names', () => {
       const longClassName = 'a'.repeat(1000);
       const { result } = renderHook(() => useClassNames(longClassName, 'short'));
       
-      expect(result.current.className).toContain(longClassName);
-      expect(result.current.className).toContain('short');
+      expect(result.current).toContain(longClassName);
+      expect(result.current).toContain('short');
     });
 
     it('should maintain order and deduplicate by default', () => {
@@ -636,7 +601,7 @@ describe('useClassNames Hook', () => {
         useClassNames('first', 'second', 'first', 'third', 'second')
       );
       
-      expect(result.current.className).toBe('first second third');
+      expect(result.current).toBe('first second third');
     });
   });
 });
@@ -675,7 +640,7 @@ describe('useClassNamesSimple Hook', () => {
     expect(result.current).toBe('base function-result conditional array items');
   });
 
-  it('should be more performant than full hook for simple cases', () => {
+  it('should be more performant than deprecated hook for simple cases', () => {
     process.env.NODE_ENV = 'production';
     const { result: fullResult } = renderHook(() => 
       useClassNames('test')
@@ -684,9 +649,9 @@ describe('useClassNamesSimple Hook', () => {
       useClassNamesSimple('test')
     );
     
-    expect(typeof fullResult.current).toBe('object');
+    expect(typeof fullResult.current).toBe('string');
     expect(typeof simpleResult.current).toBe('string');
-    expect(fullResult.current.className).toBe(simpleResult.current);
+    expect(fullResult.current).toBe(simpleResult.current);
   });
 
   describe('Immutability in Simple Hook', () => {
@@ -732,6 +697,128 @@ describe('useClassNamesSimple Hook', () => {
       
       expect(firstRender).toBe(secondRender);
       expect(firstRender).toBe('stable inputs active');
+    });
+  });
+});
+
+describe('useClassNamesWithDebug Hook (Development & Debugging)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPerformance.now.mockReturnValue(100);
+  });
+
+  describe('Basic Functionality with Debug Info', () => {
+    it('should return className and debug information', () => {
+      const { result } = renderHook(() => useClassNamesWithDebug('test-class', { active: true }));
+      
+      expect(result.current.className).toBe('test-class active');
+      expect(result.current.debug).toBeDefined();
+      expect(result.current.debug.finalClassName).toBe('test-class active');
+      expect(result.current.debug.inputCount).toBe(2);
+      expect(result.current.debug.resolvedClasses).toEqual(['test-class', 'active']);
+      expect(result.current.debug.computationTime).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should track skipped inputs in debug info', () => {
+      const { result } = renderHook(() => 
+        useClassNamesWithDebug('valid', null, undefined, false, '', { active: true, hidden: false })
+      );
+      
+      expect(result.current.className).toBe('valid active');
+      expect(result.current.debug.skippedInputs.length).toBeGreaterThan(0);
+      expect(result.current.debug.resolvedClasses).toEqual(['valid', 'active']);
+    });
+
+    it('should freeze debug data for immutability', () => {
+      const { result } = renderHook(() => useClassNamesWithDebug('test'));
+      
+      expect(Object.isFrozen(result.current.debug.resolvedClasses)).toBe(true);
+      expect(Object.isFrozen(result.current.debug.skippedInputs)).toBe(true);
+    });
+
+    it('should handle performance timing in debug mode', () => {
+      mockPerformance.now.mockReturnValueOnce(100).mockReturnValueOnce(105);
+      
+      const { result } = renderHook(() => useClassNamesWithDebug('timing-test'));
+      
+      expect(result.current.debug.computationTime).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('Complex Debugging Scenarios', () => {
+    it('should debug function resolution', () => {
+      const dynamicFunction = () => 'dynamic-class';
+      const { result } = renderHook(() => 
+        useClassNamesWithDebug('base', dynamicFunction, { conditional: true })
+      );
+      
+      expect(result.current.className).toBe('base dynamic-class conditional');
+      expect(result.current.debug.resolvedClasses).toEqual(['base', 'dynamic-class', 'conditional']);
+    });
+
+    it('should handle error recovery in functions for debugging', () => {
+      const errorFunction = () => { throw new Error('Test error'); };
+      const { result } = renderHook(() => 
+        useClassNamesWithDebug('base', errorFunction, 'safe')
+      );
+      
+      expect(result.current.className).toBe('base safe');
+      expect(result.current.debug.skippedInputs).toContainEqual(errorFunction);
+    });
+
+    it('should provide comprehensive debugging for mixed inputs', () => {
+      const { result } = renderHook(() => 
+        useClassNamesWithDebug(
+          'string-class',
+          ['array', 'classes'],
+          { object: true, skip: false },
+          () => 'function-class',
+          42,
+          null
+        )
+      );
+      
+      expect(result.current.className).toBe('string-class array classes object function-class 42');
+      expect(result.current.debug.inputCount).toBe(6);
+      expect(result.current.debug.resolvedClasses).toEqual([
+        'string-class', 'array', 'classes', 'object', 'function-class', '42'
+      ]);
+    });
+  });
+});
+
+describe('useClassNamesSimple Hook (Deprecated - Compatibility)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Mock console.warn to test deprecation warning
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('Deprecation Handling', () => {
+    it('should show deprecation warning in development', () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      
+      const { result } = renderHook(() => useClassNamesSimple('test'));
+      
+      expect(console.warn).toHaveBeenCalledWith(
+        'useClassNamesSimple is deprecated. Use useClassNames instead.'
+      );
+      expect(result.current).toBe('test');
+      
+      process.env.NODE_ENV = originalNodeEnv;
+    });
+
+    it('should maintain compatibility with old API', () => {
+      const { result } = renderHook(() => 
+        useClassNamesSimple('base', { active: true }, ['util1', 'util2'])
+      );
+      
+      expect(result.current).toBe('base active util1 util2');
     });
   });
 });

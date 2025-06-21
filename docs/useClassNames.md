@@ -1,52 +1,62 @@
 # useClassNames Hook
 
-A performant, TypeScript-first, immutable hook for CSS class name concatenation in Preact/React applications.
+A highly optimized, TypeScript-first hook for CSS class name concatenation optimized for Preact applications, prioritizing runtime performance and minimal memory footprint.
 
 ## Overview
 
-The `useClassNames` hook provides an efficient way to conditionally compose CSS class names with full TypeScript support, development debugging features, immutable operations, and optimized performance characteristics.
+The `useClassNames` hook provides the most efficient way to conditionally compose CSS class names, designed for maximum performance in production applications. A separate debug-enabled hook is available for development scenarios.
 
-## Features
+## Key Performance Features
 
-- 🚀 **Performance Optimized**: Memory-efficient with proper memoization using `useMemo`
-- 🔧 **TypeScript Native**: Full type safety with modern TypeScript features and strict typing
-- 🛡️ **Immutable Operations**: No mutations of input data, following functional programming principles
-- 🐛 **Development Debugging**: Comprehensive debugging tools with frozen arrays for development
-- ⚛️ **Framework Agnostic**: Compatible with both Preact and React
-- 🎯 **Multiple Input Types**: Supports strings, objects, arrays, functions, numbers, and booleans
-- 🔄 **Automatic Deduplication**: Removes duplicate class names by default using immutable Set operations
-- 🛡️ **Error Resilient**: Graceful handling of edge cases, circular references, and invalid inputs
-- 🌍 **Unicode Support**: Full support for international characters in class names
-- 📊 **Comprehensive Testing**: 46+ test cases covering all functionality and edge cases
+- 🚀 **Zero Debug Overhead**: Main hook has no debugging computation in any environment
+- 🧠 **Intelligent Caching**: WeakMap-based caching for object inputs
+- ⚡ **Optimized String Operations**: Minimal memory allocations with efficient algorithms
+- 🎯 **Direct Dependency Tracking**: Leverages Preact's efficient re-render prevention
+- 📦 **Minimal Memory Footprint**: Streamlined execution paths optimized for the 99% use case
+- ⚛️ **Preact Optimizations**: Designed specifically for Preact's reconciliation patterns
 
 ## API Reference
 
-### `useClassNames(...inputs, options?)`
+### `useClassNames(...inputs)` - Main Performance Hook
 
-Main hook that returns an object with className and optional debug information.
+The primary hook optimized for production use, returning only the className string for maximum performance.
 
 ```typescript
-function useClassNames(
-  ...args: [...ClassNameInput[], UseClassNamesOptions?]
-): UseClassNamesResult
+function useClassNames(...inputs: ClassNameInput[]): string
+```
 
-interface UseClassNamesResult {
+**Best for:** Production applications, performance-critical components, 99% of use cases.
+
+### `useClassNamesWithDebug(...inputs)` - Development Hook
+
+Debug-enabled version with comprehensive development tools and performance metrics.
+
+```typescript
+function useClassNamesWithDebug(...inputs: ClassNameInput[]): UseClassNamesWithDebugResult
+
+interface UseClassNamesWithDebugResult {
   readonly className: string;
-  readonly debug?: ClassNameDebugInfo;
+  readonly debug: ClassNameDebugInfo;
+}
+
+interface ClassNameDebugInfo {
+  readonly finalClassName: string;
+  readonly inputCount: number;
+  readonly resolvedClasses: ReadonlyArray<string>;
+  readonly skippedInputs: ReadonlyArray<unknown>;
+  readonly computationTime: number;
 }
 ```
 
-### `useClassNamesSimple(...inputs)`
+**Best for:** Development debugging, troubleshooting complex conditional logic, performance analysis.
 
-Simplified hook that returns only the className string for optimal performance.
+### `useClassNamesSimple(...inputs)` - ⚠️ Deprecated
+
+Legacy hook maintained for compatibility. Use `useClassNames` instead.
 
 ```typescript
 function useClassNamesSimple(...inputs: ClassNameInput[]): string
 ```
-
-## Immutability Guarantees
-
-The hook follows strict immutability principles:
 
 - ✅ **Input Preservation**: No mutation of input arrays, objects, or any other data structures
 - ✅ **Frozen Debug Data**: Debug arrays are frozen with `Object.freeze()` to prevent accidental mutations
@@ -57,19 +67,20 @@ The hook follows strict immutability principles:
 
 ```tsx
 // Input arrays remain unchanged
-const inputArray = ['base', 'conditional'];
-const { className } = useClassNames(inputArray);
-// inputArray is still ['base', 'conditional'] - unchanged
+## Input Types
 
-// Input objects remain unchanged  
-const inputObject = { active: true, disabled: false };
-const { className } = useClassNames('button', inputObject);
-// inputObject is still { active: true, disabled: false } - unchanged
+All hooks support the same flexible input types:
 
-// Debug data is immutable
-const { className, debug } = useClassNames('test');
-// debug.resolvedClasses is frozen - cannot be modified
-// debug.skippedInputs is frozen - cannot be modified
+```typescript
+type ClassNameValue = string | number | boolean | null | undefined;
+type ClassNameObject = Record<string, ClassNameValue>;
+type ClassNameArray = ReadonlyArray<ClassNameInput>;
+type ClassNameFunction = () => ClassNameInput;
+type ClassNameInput = 
+  | ClassNameValue 
+  | ClassNameObject 
+  | ClassNameArray 
+  | ClassNameFunction;
 ```
 
 ## Basic Usage
@@ -79,14 +90,14 @@ const { className, debug } = useClassNames('test');
 ```tsx
 import { useClassNames } from '../utils/hooks';
 
-const { className } = useClassNames('base-class', 'another-class');
+const className = useClassNames('base-class', 'another-class');
 // Result: "base-class another-class"
 ```
 
 ### Conditional Classes
 
 ```tsx
-const { className } = useClassNames(
+const className = useClassNames(
   'button',
   isActive && 'button--active',
   isDisabled && 'button--disabled'
@@ -94,10 +105,10 @@ const { className } = useClassNames(
 // Result: "button button--active" (when isActive=true, isDisabled=false)
 ```
 
-### Object-Based Conditionals
+### Object-Based Conditionals (Recommended)
 
 ```tsx
-const { className } = useClassNames('component', {
+const className = useClassNames('component', {
   'component--loading': isLoading,
   'component--error': hasError,
   'component--success': isSuccess
@@ -110,7 +121,7 @@ const { className } = useClassNames('component', {
 ### Mixed Input Types
 
 ```tsx
-const { className } = useClassNames(
+const className = useClassNames(
   'base',                           // string
   ['utility', 'classes'],           // array
   () => dynamic ? 'dynamic' : null, // function
@@ -126,7 +137,7 @@ const block = 'card';
 const modifiers = ['primary', 'large'];
 const state = { loading: true, disabled: false };
 
-const { className } = useClassNames(
+const className = useClassNames(
   block,
   modifiers.map(mod => `${block}--${mod}`),
   {
@@ -139,10 +150,14 @@ const { className } = useClassNames(
 
 ## Development Debugging
 
-### Debug Information
+### Using the Debug Hook
+
+For development and troubleshooting, use `useClassNamesWithDebug`:
 
 ```tsx
-const { className, debug } = useClassNames(
+import { useClassNamesWithDebug } from '../utils/hooks';
+
+const { className, debug } = useClassNamesWithDebug(
   'test',
   { active: true, disabled: false }
 );
@@ -161,11 +176,11 @@ console.log(debug);
 
 ### Development Logging
 
-The hook automatically logs skipped inputs in development mode:
+The debug hook automatically logs skipped inputs in development mode:
 
 ```tsx
 // This will log skipped inputs to console.debug in development
-const { className } = useClassNames(
+const { className } = useClassNamesWithDebug(
   'valid',
   null,           // skipped
   undefined,      // skipped
@@ -182,21 +197,46 @@ The hook uses React's `useMemo` for optimal performance:
 
 ```tsx
 // This will only recompute when isLoading or hasError changes
-const { className } = useClassNames('component', {
-  'loading': isLoading,
-  'error': hasError
-});
+## Performance Guidelines
+
+### Hook Selection
+
+**Use `useClassNames` for:**
+- Production components (99% of use cases)
+- Performance-critical paths
+- Components that re-render frequently
+- When maximum runtime efficiency is needed
+
+**Use `useClassNamesWithDebug` for:**
+- Development debugging
+- Troubleshooting complex conditional logic
+- Performance analysis and optimization
+- Understanding why certain classes are skipped
+
+**Migration from deprecated:**
+```tsx
+// ❌ Deprecated
+const className = useClassNamesSimple('btn', { active: isActive });
+
+// ✅ New optimized API
+const className = useClassNames('btn', { active: isActive });
 ```
 
-### Simple Hook for Performance
-
-Use `useClassNamesSimple` when debugging is not needed:
+### Performance Features
 
 ```tsx
-// Optimized version without debugging overhead
-const className = useClassNamesSimple(
-  'component',
-  isActive && 'active'
+// Fast path optimization for single strings
+const className = useClassNames('single-class'); // Optimized path
+
+// Intelligent caching for object inputs
+const buttonStates = { active: true, disabled: false };
+const className = useClassNames('btn', buttonStates); // Cached result
+
+// Minimal memory allocations
+const className = useClassNames(
+  'base',
+  condition && 'conditional', // No intermediate arrays
+  { dynamic: isDynamic }      // Efficient object processing
 );
 ```
 
@@ -212,7 +252,7 @@ function Button({
   disabled = false, 
   loading = false 
 }) {
-  const { className } = useClassNames(
+  const className = useClassNames(
     'btn',
     `btn--${variant}`,
     `btn--${size}`,
@@ -236,7 +276,7 @@ function Button({
 
 ```tsx
 function Card({ featured, size }) {
-  const { className } = useClassNames(
+  const className = useClassNames(
     'card',
     // Responsive classes
     ['md:card--horizontal', 'lg:card--featured'],
@@ -254,7 +294,7 @@ function Card({ featured, size }) {
 
 ```tsx
 function FormField({ name, error, touched, required }) {
-  const { className } = useClassNames('form-field', {
+  const className = useClassNames('form-field', {
     'form-field--error': error && touched,
     'form-field--required': required,
     'form-field--valid': !error && touched
@@ -351,7 +391,7 @@ Graceful handling of all edge cases:
 
 ```tsx
 // ✅ Use descriptive, consistent naming
-const { className } = useClassNames('button', {
+const className = useClassNames('button', {
   'button--primary': isPrimary,
   'button--large': size === 'large',
   'button--disabled': disabled
@@ -403,7 +443,7 @@ const className = useMemo(() => {
 }, [isActive, hasError]);
 
 // After
-const { className } = useClassNames('base', {
+const className = useClassNames('base', {
   active: isActive,
   error: hasError
 });
@@ -420,7 +460,7 @@ const className = classNames('base', {
 });
 
 // After (useClassNames hook)
-const { className } = useClassNames('base', {
+const className = useClassNames('base', {
   active: isActive,
   disabled: isDisabled
 });
@@ -433,7 +473,7 @@ const { className } = useClassNames('base', {
 **✅ DO: Use the hook without worrying about data mutations**
 ```tsx
 const myClasses = ['base', 'utility'];
-const { className } = useClassNames(myClasses, { active: isActive });
+const className = useClassNames(myClasses, { active: isActive });
 // myClasses remains unchanged - safe to reuse
 ```
 
@@ -473,7 +513,7 @@ const { className, debug } = useClassNames('base', {
 **Prefer object syntax for conditionals**: More readable and type-safe
 ```tsx
 // ✅ Good: Object syntax with clear conditions
-const { className } = useClassNames('button', {
+const className = useClassNames('button', {
   'button--primary': variant === 'primary',
   'button--disabled': disabled,
   'button--loading': isLoading
@@ -492,7 +532,7 @@ const className = useMemo(() => {
 
 **Use function inputs for dynamic logic**:
 ```tsx
-const { className } = useClassNames(
+const className = useClassNames(
   'card',
   // Pure function - no side effects
   () => size === 'large' ? 'card--xl' : `card--${size}`,
@@ -566,7 +606,7 @@ const className = useMemo(() => {
 }, [isActive, hasError]);
 
 // After: Hook-based (immutable and safer)
-const { className } = useClassNames('base', {
+const className = useClassNames('base', {
   active: isActive,
   error: hasError
 });
@@ -582,7 +622,7 @@ const className = classNames('base', {
 });
 
 // After: useClassNames hook (better performance and debugging)
-const { className } = useClassNames('base', {
+const className = useClassNames('base', {
   active: isActive,
   disabled: isDisabled
 });

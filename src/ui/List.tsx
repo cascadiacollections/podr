@@ -2,7 +2,7 @@ import { FunctionComponent, h } from "preact";
 import { memo, useMemo } from "preact/compat";
 import { IFeedItem } from "./Result";
 import { Result } from "./Result";
-import { useClassNamesSimple } from "../utils/hooks";
+import { useClassNames } from "../utils/hooks";
 
 /**
  * Props for the List component with enhanced type safety
@@ -51,8 +51,8 @@ export const List: FunctionComponent<IListProps> = memo(
       return isLoading ? LIST_CONFIG.LOADING_MESSAGE : emptyMessage;
     }, [isLoading, emptyMessage]);
     
-    // Memoize container CSS classes using the new performant hook
-    const containerClassName = useClassNamesSimple(
+    // Memoize container CSS classes using the main performant hook
+    const containerClassName = useClassNames(
       LIST_CONFIG.CSS_CLASSES.CONTAINER,
       {
         [LIST_CONFIG.CSS_CLASSES.LOADING]: isLoading,

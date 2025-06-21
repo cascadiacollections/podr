@@ -8,6 +8,19 @@ jest.mock('../../utils/hooks', () => ({
   useAnalytics: () => ({
     trackSearch: jest.fn(),
   }),
+  useClassNames: jest.fn((...args) => {
+    // Simple mock that handles object conditions
+    return args.flat().map(arg => {
+      if (typeof arg === 'string') return arg;
+      if (typeof arg === 'object' && arg !== null) {
+        return Object.entries(arg)
+          .filter(([, value]) => value)
+          .map(([key]) => key)
+          .join(' ');
+      }
+      return '';
+    }).filter(Boolean).join(' ');
+  }),
 }));
 
 describe('Search component', () => {
