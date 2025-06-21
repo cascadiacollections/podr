@@ -67,7 +67,7 @@ const { className } = useClassNames('button', inputObject);
 // inputObject is still { active: true, disabled: false } - unchanged
 
 // Debug data is immutable
-const { className, debug } = useClassNames('test', { enableDebug: true });
+const { className, debug } = useClassNames('test');
 // debug.resolvedClasses is frozen - cannot be modified
 // debug.skippedInputs is frozen - cannot be modified
 ```
@@ -137,22 +137,6 @@ const { className } = useClassNames(
 // Result: "card card--primary card--large card--loading"
 ```
 
-### Custom Configuration
-
-```tsx
-const { className } = useClassNames(
-  'class1',
-  'class2',
-  'class1', // duplicate
-  {
-    separator: '|',      // Custom separator
-    deduplicate: false,  // Keep duplicates
-    enableDebug: true    // Enable debugging
-  }
-);
-// Result: "class1|class2|class1"
-```
-
 ## Development Debugging
 
 ### Debug Information
@@ -160,8 +144,7 @@ const { className } = useClassNames(
 ```tsx
 const { className, debug } = useClassNames(
   'test',
-  { active: true, disabled: false },
-  { enableDebug: true }
+  { active: true, disabled: false }
 );
 
 console.log(debug);
@@ -386,9 +369,7 @@ const CSS_CLASSES = {
 
 ```tsx
 // ✅ Spread operators for immutable updates
-const finalClasses = deduplicate 
-  ? [...new Set(validClasses)] 
-  : [...validClasses];
+const finalClasses = [...new Set(validClasses)]; // always deduplicate
 
 // ✅ Object.freeze for development data
 result.debug = {
@@ -467,7 +448,7 @@ const { className } = useClassNames(myClasses, { active: isActive });
 
 **❌ DON'T: Try to modify the returned debug data**
 ```tsx
-const { debug } = useClassNames('test', { enableDebug: true });
+const { debug } = useClassNames('test');
 // This will throw an error in strict mode:
 // debug.resolvedClasses.push('new-class'); // ❌ Error!
 ```
@@ -483,7 +464,7 @@ const className = useClassNamesSimple('base', { active: isActive });
 **Enable debugging only in development**: Use conditional debugging based on environment
 ```tsx
 const { className, debug } = useClassNames('base', {
-  enableDebug: process.env.NODE_ENV === 'development'
+  'base--active': isActive
 });
 ```
 
@@ -536,14 +517,13 @@ const { className } = useClassNames(
 **Classes not applying correctly**:
 - Check that class names don't have leading/trailing spaces (automatically trimmed)
 - Verify CSS is properly loaded and classes exist
-- Use debug mode to inspect resolved classes: `{ enableDebug: true }`
+- Use debug mode in development to inspect resolved classes
 - Ensure conditional logic is working as expected
 
 **Performance issues**:
 - Use `useClassNamesSimple` for hot paths and performance-critical components
 - Memoize complex function inputs separately using `useCallback` or `useMemo`
 - Avoid creating new objects/arrays on every render inside the hook inputs
-- Consider using the `deduplicate: false` option if you have many unique classes
 
 **TypeScript errors**:
 - Ensure inputs match the supported `ClassNameInput` types
@@ -563,11 +543,10 @@ const { className } = useClassNames(
 // Enable debug mode to troubleshoot issues
 const { className, debug } = useClassNames(
   'problematic-classes',
-  { conditional: someCondition },
-  { enableDebug: true }
+  { conditional: someCondition }
 );
 
-// Inspect the debug information
+// Inspect the debug information (available in development mode)
 console.log('Final className:', debug.finalClassName);
 console.log('Resolved classes:', debug.resolvedClasses);
 console.log('Skipped inputs:', debug.skippedInputs);

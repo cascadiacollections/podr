@@ -498,15 +498,11 @@ interface UseClassNamesResult {
 }
 
 /**
- * Configuration options for the useClassNames hook with sensible defaults
+ * Configuration options for the useClassNames hook (internal use only)
  */
 interface UseClassNamesOptions {
-  /** Enable development debugging features (defaults to NODE_ENV !== 'production') */
+  /** Enable development debugging features (automatically determined by NODE_ENV) */
   readonly enableDebug?: boolean;
-  /** Custom separator for joining classes (defaults to single space) */
-  readonly separator?: string;
-  /** Whether to deduplicate identical class names (defaults to true) */
-  readonly deduplicate?: boolean;
 }
 
 /**
@@ -594,7 +590,6 @@ function resolveClassNames(
  * - 🎯 Multiple input types with intelligent type detection
  * 
  * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
- * @param options - Optional configuration object for customizing behavior
  * @returns Object containing the computed className and optional debug information
  * 
  * @example
@@ -622,36 +617,17 @@ function resolveClassNames(
  * );
  * 
  * // Development debugging with immutable debug data
- * const { className, debug } = useClassNames('test', { dev: true }, { enableDebug: true });
+ * const { className, debug } = useClassNames('test', { dev: true });
  * console.log(debug?.resolvedClasses); // ['test', 'dev'] - frozen array
  * ```
  * 
  * @see {@link useClassNamesSimple} For a performance-optimized version without debugging
  */
-export function useClassNames(
-  ...inputs: ClassNameInput[]
-): UseClassNamesResult;
-export function useClassNames(
-  ...argsWithOptions: [...ClassNameInput[], UseClassNamesOptions]
-): UseClassNamesResult;
-export function useClassNames(
-  ...args: Array<ClassNameInput | UseClassNamesOptions>
-): UseClassNamesResult {
-  // Extract options from the last argument if it's an options object
-  const lastArg = args[args.length - 1];
-  const isOptionsObject = lastArg && 
-    typeof lastArg === 'object' && 
-    !Array.isArray(lastArg) &&
-    ('enableDebug' in lastArg || 'separator' in lastArg || 'deduplicate' in lastArg);
-  
-  const options: UseClassNamesOptions = isOptionsObject ? lastArg as UseClassNamesOptions : {};
-  const inputs = isOptionsObject ? args.slice(0, -1) as ClassNameInput[] : args as ClassNameInput[];
-  
-  const {
-    enableDebug = process.env.NODE_ENV !== 'production',
-    separator = ' ',
-    deduplicate = true
-  } = options;
+export function useClassNames(...inputs: ClassNameInput[]): UseClassNamesResult {
+  // Extract options - no public configuration, use sensible defaults
+  const enableDebug = process.env.NODE_ENV !== 'production';
+  const separator = ' ';
+  const deduplicate = true;
 
   return useMemo(() => {
     const startTime = enableDebug ? performance.now() : 0;

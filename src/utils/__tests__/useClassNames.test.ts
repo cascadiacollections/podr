@@ -147,39 +147,19 @@ describe('useClassNames Hook', () => {
       );
       expect(result.current.className).toBe('duplicate unique another');
     });
-
-    it('should allow disabling deduplication', () => {
-      const { result } = renderHook(() => 
-        useClassNames('duplicate', 'unique', 'duplicate', { deduplicate: false })
-      );
-      expect(result.current.className).toBe('duplicate unique duplicate');
-    });
-  });
-
-  describe('Custom Separator', () => {
-    it('should use custom separator when provided', () => {
-      const { result } = renderHook(() => 
-        useClassNames('class1', 'class2', 'class3', { separator: '|' })
-      );
-      expect(result.current.className).toBe('class1|class2|class3');
-    });
-
-    it('should handle empty separator', () => {
-      const { result } = renderHook(() => 
-        useClassNames('a', 'b', 'c', { separator: '' })
-      );
-      expect(result.current.className).toBe('abc');
-    });
   });
 
   describe('Development Debugging', () => {
-    beforeEach(() => {
-      process.env.NODE_ENV = 'development';
+    const originalNodeEnv = process.env.NODE_ENV;
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalNodeEnv;
     });
 
-    it('should provide debug information when enabled', () => {
+    it('should provide debug information in development mode', () => {
+      process.env.NODE_ENV = 'development';
       const { result } = renderHook(() => 
-        useClassNames('test', { active: true }, { enableDebug: true })
+        useClassNames('test', { active: true })
       );
       
       expect(result.current.debug).toBeDefined();
@@ -189,26 +169,29 @@ describe('useClassNames Hook', () => {
       expect(typeof result.current.debug!.computationTime).toBe('number');
     });
 
-    it('should track skipped inputs in debug mode', () => {
+    it('should track skipped inputs in development mode', () => {
+      process.env.NODE_ENV = 'development';
       const { result } = renderHook(() => 
-        useClassNames('valid', null, false, '', { enableDebug: true })
+        useClassNames('valid', null, false, '')
       );
       
       expect(result.current.debug!.skippedInputs).toEqual([null, false, '']);
       expect(result.current.debug!.resolvedClasses).toEqual(['valid']);
     });
 
-    it('should not provide debug info when disabled', () => {
+    it('should not provide debug info in production mode', () => {
+      process.env.NODE_ENV = 'production';
       const { result } = renderHook(() => 
-        useClassNames('test', { enableDebug: false })
+        useClassNames('test')
       );
       
       expect(result.current.debug).toBeUndefined();
     });
 
-    it('should track skipped object conditions in debug mode', () => {
+    it('should track skipped object conditions in development mode', () => {
+      process.env.NODE_ENV = 'development';
       const { result } = renderHook(() => 
-        useClassNames({ active: true, disabled: false }, { enableDebug: true })
+        useClassNames({ active: true, disabled: false })
       );
       
       expect(result.current.debug!.skippedInputs).toEqual([{ disabled: false }]);
@@ -497,24 +480,6 @@ describe('useClassNames Hook', () => {
       expect(element).toHaveClass('クラス名');
     });
 
-    it('should maintain class order in DOM when deduplication is disabled', () => {
-      const { getByTestId } = render(
-        h(TestComponent, { 
-          classes: ['first', 'second', 'first', 'third'],
-          deduplicate: false
-        })
-      );
-      
-      const element = getByTestId('test-element');
-      // DOM automatically deduplicates even when our hook doesn't
-      expect(element).toHaveClass('first');
-      expect(element).toHaveClass('second');
-      expect(element).toHaveClass('third');
-      
-      // The DOM classList will still contain unique classes only
-      expect(element.classList.length).toBe(3);
-    });
-
     it('should handle edge case with very long class names in DOM', () => {
       const longClassName = 'very-long-class-name-' + 'a'.repeat(100);
       const { getByTestId } = render(
@@ -527,21 +492,6 @@ describe('useClassNames Hook', () => {
       expect(element).toHaveClass(longClassName);
       expect(element).toHaveClass('short');
       expect(element.classList.contains(longClassName)).toBe(true);
-    });
-
-    it('should handle classList with custom separators (edge case)', () => {
-      // Custom separators would create invalid class names for DOM, 
-      // but we test that the output is at least safely applied
-      const { getByTestId } = render(
-        h(TestComponent, { 
-          classes: ['class1', 'class2'],
-          separator: '|'
-        })
-      );
-      
-      const element = getByTestId('test-element');
-      // The entire string becomes the className due to custom separator
-      expect(element.className).toBe('class1|class2');
     });
 
     it('should handle real-world component state patterns in classList', () => {
@@ -681,12 +631,12 @@ describe('useClassNames Hook', () => {
       expect(result.current.className).toContain('short');
     });
 
-    it('should maintain order when deduplication is disabled', () => {
+    it('should maintain order and deduplicate by default', () => {
       const { result } = renderHook(() => 
-        useClassNames('first', 'second', 'first', 'third', 'second', { deduplicate: false })
+        useClassNames('first', 'second', 'first', 'third', 'second')
       );
       
-      expect(result.current.className).toBe('first second first third second');
+      expect(result.current.className).toBe('first second third');
     });
   });
 });
@@ -726,8 +676,9 @@ describe('useClassNamesSimple Hook', () => {
   });
 
   it('should be more performant than full hook for simple cases', () => {
+    process.env.NODE_ENV = 'production';
     const { result: fullResult } = renderHook(() => 
-      useClassNames('test', { enableDebug: false })
+      useClassNames('test')
     );
     const { result: simpleResult } = renderHook(() => 
       useClassNamesSimple('test')
