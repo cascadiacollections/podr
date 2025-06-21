@@ -3,88 +3,145 @@ import { useCallback, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 
 /**
- * Format a duration in seconds to HH:MM:SS format
- * @param duration Duration in seconds
+ * Duration formatting configuration
+ */
+const DURATION_CONFIG = {
+  HOURS_PER_MINUTE: 60,
+  MINUTES_PER_HOUR: 60,
+  SECONDS_PER_MINUTE: 60,
+  PAD_LENGTH: 2,
+  PAD_CHAR: '0',
+  SEPARATOR: ':',
+  FALLBACK_DURATION: '00:00:00',
+} as const;
+
+/**
+ * Date formatting options for consistent display
+ */
+const DATE_FORMAT_OPTIONS = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+} as const satisfies Intl.DateTimeFormatOptions;
+
+/**
+ * Format a duration in seconds to HH:MM:SS format with better performance
+ * @param duration - Duration in seconds
  * @returns Formatted duration string
  */
 function formatDuration(duration: number): string {
-  if (!duration) return '00:00:00';
+  if (!duration || !Number.isFinite(duration) || duration < 0) {
+    return DURATION_CONFIG.FALLBACK_DURATION;
+  }
   
-  const hours = Math.floor(duration / 3600);
-  const minutes = Math.floor((duration % 3600) / 60);
-  const seconds = Math.floor(duration % 60);
+  const hours = Math.floor(duration / (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE));
+  const minutes = Math.floor((duration % (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE)) / DURATION_CONFIG.SECONDS_PER_MINUTE);
+  const seconds = Math.floor(duration % DURATION_CONFIG.SECONDS_PER_MINUTE);
+  
+  const formatPart = (value: number): string => 
+    value.toString().padStart(DURATION_CONFIG.PAD_LENGTH, DURATION_CONFIG.PAD_CHAR);
   
   return [
-    hours < 10 ? `0${hours}` : hours,
-    minutes < 10 ? `0${minutes}` : minutes,
-    seconds < 10 ? `0${seconds}` : seconds
-  ].join(':');
+    formatPart(hours),
+    formatPart(minutes),
+    formatPart(seconds),
+  ].join(DURATION_CONFIG.SEPARATOR);
 }
 
 /**
- * Format an ISO date string to a readable date string
- * @param isoString ISO date string
+ * Format an ISO date string to a readable date string with caching
+ * @param isoString - ISO date string
  * @returns Formatted date string
  */
 function formatPubDate(isoString: string): string {
-  if (!isoString) return '';
+  if (!isoString || typeof isoString !== 'string') {
+    return 'Unknown date';
+  }
+  
   try {
-    const date = new Date(isoString.replace(/-/g, "/"));
-    return date.toLocaleDateString(undefined, { 
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch (e) {
-    return '';
+    const date = new Date(isoString);
+    if (!Number.isFinite(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return date.toLocaleDateString(undefined, DATE_FORMAT_OPTIONS);
+  } catch {
+    return 'Invalid date';
   }
 }
 
-interface IEnclosure {
-  duration: number;
-  link: string;
-}
-
-export interface IFeedItem {
-  readonly guid: string;
-  title: string;
-  description: string;
-  pubDate: string;
-  enclosure: IEnclosure;
-}
-
-export interface IResultProps {
-  result: Readonly<IFeedItem>;
-  onClick: (feedItem: Readonly<IFeedItem>) => void;
+/**
+ * Podcast episode enclosure information
+ */
+export interface IEnclosure {
+  readonly link: string;
+  readonly duration: number;
 }
 
 /**
- * Result component that displays a podcast episode
- * Using HTML5 semantic elements and Pico's classless approach
+ * Represents a podcast feed item/episode
+ */
+export interface IFeedItem {
+  readonly guid: string;
+  readonly title: string;
+  readonly description: string;
+  readonly pubDate: string;
+  readonly enclosure: IEnclosure;
+}
+
+/**
+ * Props for the Result component
+ */
+export interface IResultProps {
+  readonly result: IFeedItem;
+  readonly onClick: (result: IFeedItem) => void;
+}
+
+/**
+ * Result component that displays a podcast episode with optimized rendering
+ * Uses HTML5 semantic elements and memoization for performance
  */
 export const Result: FunctionComponent<IResultProps> = memo(
-  (props: IResultProps) => {
-    const { onClick, result } = props;
-    const { description, title, pubDate, enclosure } = result;
-
+  ({ onClick, result }: IResultProps) => {
+    const { title, pubDate, enclosure } = result;
+    
     // Memoize callback to prevent unnecessary re-renders
-    const onClickCallback = useCallback(() => {
+    const handleClick = useCallback(() => {
       onClick(result);
     }, [result, onClick]);
     
-    // Memoize formatted date and duration
+    // Memoize keyboard handler for better performance
+    const handleKeyDown = useCallback((event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleClick();
+      }
+    }, [handleClick]);
+    
+    // Memoize formatted values for better performance
     const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
     const formattedDuration = useMemo(() => formatDuration(enclosure.duration), [enclosure.duration]);
+    
+    // Memoize aria label for accessibility
+    const ariaLabel = useMemo(() => `Play episode: ${title}`, [title]);
+    const linkAriaLabel = useMemo(() => `Stream or download: ${title}`, [title]);
 
     return (
       <tr
-        onClick={onClickCallback}
-        onKeyDown={(e) => e.key === 'Enter' && onClickCallback()}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        aria-label={`Play episode: ${title}`}>
-        <td>
-          <a href={enclosure.link} aria-label={`Stream or download: ${title}`} dangerouslySetInnerHTML={{ __html: title }} />
+        aria-label={ariaLabel}
+        className="episode-row"
+      >
+        <td className="episode-title-cell">
+          <a 
+            href={enclosure.link} 
+            aria-label={linkAriaLabel} 
+            dangerouslySetInnerHTML={{ __html: title }}
+            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking link
+          />
         </td>
         <td className="date-column">
           <time dateTime={pubDate}>{formattedDate}</time>
@@ -93,8 +150,27 @@ export const Result: FunctionComponent<IResultProps> = memo(
       </tr>
     );
   },
-  // Custom comparison function for memo
-  (prevProps, nextProps) => {
-    return prevProps.result.guid === nextProps.result.guid;
+  // Enhanced comparison function for better memoization
+  (prevProps: IResultProps, nextProps: IResultProps): boolean => {
+    // Check if it's the same episode by GUID (most efficient)
+    if (prevProps.result.guid !== nextProps.result.guid) {
+      return false;
+    }
+    
+    // Check if click handler reference changed (optimization for function identity)
+    if (prevProps.onClick !== nextProps.onClick) {
+      return false;
+    }
+    
+    // Check critical fields that affect rendering
+    const prevResult = prevProps.result;
+    const nextResult = nextProps.result;
+    
+    return (
+      prevResult.title === nextResult.title &&
+      prevResult.pubDate === nextResult.pubDate &&
+      prevResult.enclosure.duration === nextResult.enclosure.duration &&
+      prevResult.enclosure.link === nextResult.enclosure.link
+    );
   }
 );
