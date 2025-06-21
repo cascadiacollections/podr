@@ -15,6 +15,7 @@
     ],
     "jsx": "react",
     "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"

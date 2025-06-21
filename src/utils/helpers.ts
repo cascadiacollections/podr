@@ -60,8 +60,8 @@ export function getFeedUrl(
  * @param iterator - The iterator to convert
  * @returns An array containing all elements from the iterator
  */
-export function toArray<T>(iterator: IterableIterator<T>): readonly T[] {
-  return [...iterator] as const;
+export function toArray<T>(iterator: IterableIterator<T>): T[] {
+  return [...iterator];
 }
 
 /**

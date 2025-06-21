@@ -1,4 +1,4 @@
-import { h, JSX, FunctionComponent } from 'preact';
+import { h, JSX, FunctionComponent, Fragment } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
 import { useAnalytics } from '../utils/hooks';
@@ -169,10 +169,10 @@ export const Search: FunctionComponent<ISearchProps> = ({
         disabled={disabled || isLoading}
       >
         {isLoading ? (
-          <>
+          <Fragment>
             <span className="loading-spinner" aria-hidden="true" />
             <span className="sr-only">Searching...</span>
-          </>
+          </Fragment>
         ) : (
           SEARCH_CONFIG.SUBMIT_BUTTON_TEXT
         )}
