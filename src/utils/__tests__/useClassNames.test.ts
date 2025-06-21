@@ -1,4 +1,6 @@
 import { renderHook } from '@testing-library/preact';
+import { render } from '@testing-library/preact';
+import { h } from 'preact';
 import { useClassNames, useClassNamesSimple } from '../hooks';
 
 // Mock performance API for testing
@@ -283,6 +285,298 @@ describe('useClassNames Hook', () => {
       );
 
       expect(result.current.className).toBe('button button--primary button--large button--loading');
+    });
+  });
+
+  describe('DOM classList Integration Tests', () => {
+    // Test component that uses the useClassNames hook
+    const TestComponent = ({ classes, ...hookOptions }: { classes: any[], [key: string]: any }) => {
+      const { className } = useClassNames(...classes, hookOptions);
+      return h('div', { className, 'data-testid': 'test-element' });
+    };
+
+    const SimpleTestComponent = ({ classes }: { classes: any[] }) => {
+      const className = useClassNamesSimple(...classes);
+      return h('div', { className, 'data-testid': 'simple-test-element' });
+    };
+
+    it('should apply individual classes to DOM element classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { classes: ['base', 'active', 'primary'] })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('base');
+      expect(element).toHaveClass('active');
+      expect(element).toHaveClass('primary');
+      expect(element.classList.contains('base')).toBe(true);
+      expect(element.classList.contains('active')).toBe(true);
+      expect(element.classList.contains('primary')).toBe(true);
+    });
+
+    it('should handle conditional classes in classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'button',
+            { 'button--active': true, 'button--disabled': false, 'button--large': true }
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('button');
+      expect(element).toHaveClass('button--active');
+      expect(element).toHaveClass('button--large');
+      expect(element).not.toHaveClass('button--disabled');
+      
+      // Check classList directly
+      expect(element.classList.length).toBe(3);
+      expect(Array.from(element.classList)).toEqual(['button', 'button--active', 'button--large']);
+    });
+
+    it('should handle mixed input types in classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'base',
+            ['utility', 'responsive'],
+            { conditional: true, hidden: false },
+            () => 'dynamic',
+            123
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('base');
+      expect(element).toHaveClass('utility');
+      expect(element).toHaveClass('responsive');
+      expect(element).toHaveClass('conditional');
+      expect(element).toHaveClass('dynamic');
+      expect(element).toHaveClass('123');
+      expect(element).not.toHaveClass('hidden');
+    });
+
+    it('should deduplicate classes in DOM classList automatically', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: ['duplicate', 'unique', 'duplicate', 'another', 'unique']
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('duplicate');
+      expect(element).toHaveClass('unique');
+      expect(element).toHaveClass('another');
+      
+      // DOM automatically deduplicates, so we should only have 3 unique classes
+      expect(element.classList.length).toBe(3);
+      expect(Array.from(element.classList)).toEqual(['duplicate', 'unique', 'another']);
+    });
+
+    it('should handle empty and falsy values in classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: ['valid', null, undefined, false, '', 0, 'another-valid']
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('valid');
+      expect(element).toHaveClass('another-valid');
+      // These shouldn't appear as class names
+      expect(element.className).not.toContain('null');
+      expect(element.className).not.toContain('undefined');
+      expect(element.className).not.toContain('false');
+      expect(element.className).not.toContain('0');
+      
+      expect(element.classList.length).toBe(2);
+    });
+
+    it('should work with BEM methodology in DOM classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'card',
+            'card--featured',
+            'card--large',
+            { 'card--active': true, 'card--disabled': false }
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('card');
+      expect(element).toHaveClass('card--featured');
+      expect(element).toHaveClass('card--large');
+      expect(element).toHaveClass('card--active');
+      expect(element).not.toHaveClass('card--disabled');
+    });
+
+    it('should handle responsive utility classes in classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'grid',
+            'sm:grid-cols-1',
+            'md:grid-cols-2',
+            'lg:grid-cols-3',
+            { 'xl:grid-cols-4': true }
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('grid');
+      expect(element).toHaveClass('sm:grid-cols-1');
+      expect(element).toHaveClass('md:grid-cols-2');
+      expect(element).toHaveClass('lg:grid-cols-3');
+      expect(element).toHaveClass('xl:grid-cols-4');
+    });
+
+    it('should handle dynamic function returns in classList', () => {
+      const getThemeClass = (isDark: boolean) => isDark ? 'theme-dark' : 'theme-light';
+      const getVariantClass = () => Math.random() > 0.5 ? 'variant-a' : 'variant-b';
+      
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'component',
+            () => getThemeClass(true),
+            () => 'static-from-function'
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('component');
+      expect(element).toHaveClass('theme-dark');
+      expect(element).toHaveClass('static-from-function');
+    });
+
+    it('should work with useClassNamesSimple in DOM classList', () => {
+      const { getByTestId } = render(
+        h(SimpleTestComponent, { 
+          classes: [
+            'simple-base',
+            { 'simple-active': true, 'simple-hidden': false },
+            ['simple-util-1', 'simple-util-2']
+          ]
+        })
+      );
+      
+      const element = getByTestId('simple-test-element');
+      expect(element).toHaveClass('simple-base');
+      expect(element).toHaveClass('simple-active');
+      expect(element).toHaveClass('simple-util-1');
+      expect(element).toHaveClass('simple-util-2');
+      expect(element).not.toHaveClass('simple-hidden');
+    });
+
+    it('should handle special characters and unicode in classList', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'class-with-dashes',
+            'class_with_underscores',
+            'class:with:colons',
+            'класс',    // Cyrillic
+            '类名',     // Chinese
+            'クラス名'  // Japanese
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('class-with-dashes');
+      expect(element).toHaveClass('class_with_underscores');
+      expect(element).toHaveClass('class:with:colons');
+      expect(element).toHaveClass('класс');
+      expect(element).toHaveClass('类名');
+      expect(element).toHaveClass('クラス名');
+    });
+
+    it('should maintain class order in DOM when deduplication is disabled', () => {
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: ['first', 'second', 'first', 'third'],
+          deduplicate: false
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      // DOM automatically deduplicates even when our hook doesn't
+      expect(element).toHaveClass('first');
+      expect(element).toHaveClass('second');
+      expect(element).toHaveClass('third');
+      
+      // The DOM classList will still contain unique classes only
+      expect(element.classList.length).toBe(3);
+    });
+
+    it('should handle edge case with very long class names in DOM', () => {
+      const longClassName = 'very-long-class-name-' + 'a'.repeat(100);
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [longClassName, 'short']
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass(longClassName);
+      expect(element).toHaveClass('short');
+      expect(element.classList.contains(longClassName)).toBe(true);
+    });
+
+    it('should handle classList with custom separators (edge case)', () => {
+      // Custom separators would create invalid class names for DOM, 
+      // but we test that the output is at least safely applied
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: ['class1', 'class2'],
+          separator: '|'
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      // The entire string becomes the className due to custom separator
+      expect(element.className).toBe('class1|class2');
+    });
+
+    it('should handle real-world component state patterns in classList', () => {
+      const componentState = {
+        isLoading: true,
+        hasError: false,
+        variant: 'primary',
+        size: 'large',
+        isDisabled: false
+      };
+
+      const { getByTestId } = render(
+        h(TestComponent, { 
+          classes: [
+            'btn',
+            `btn--${componentState.variant}`,
+            `btn--${componentState.size}`,
+            {
+              'btn--loading': componentState.isLoading,
+              'btn--error': componentState.hasError,
+              'btn--disabled': componentState.isDisabled
+            }
+          ]
+        })
+      );
+      
+      const element = getByTestId('test-element');
+      expect(element).toHaveClass('btn');
+      expect(element).toHaveClass('btn--primary');
+      expect(element).toHaveClass('btn--large');
+      expect(element).toHaveClass('btn--loading');
+      expect(element).not.toHaveClass('btn--error');
+      expect(element).not.toHaveClass('btn--disabled');
+      
+      expect(element.classList.length).toBe(4);
     });
   });
 
