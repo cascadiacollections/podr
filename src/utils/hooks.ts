@@ -773,3 +773,170 @@ export function useClassNamesSimple(...inputs: ClassNameInput[]): string {
   }
   return useClassNames(...inputs);
 }
+
+/**
+ * Element collection type for classList operations
+ */
+type ElementCollection = Element | Element[] | NodeList | HTMLCollection;
+
+/**
+ * Utility function to normalize element input to an array for iteration
+ * @param elements - Single element or collection of elements
+ * @returns Array of Element objects
+ */
+function normalizeElements(elements: ElementCollection): Element[] {
+  if (!elements) return [];
+  
+  // Single element
+  if (elements instanceof Element) {
+    return [elements];
+  }
+  
+  // Array of elements
+  if (Array.isArray(elements)) {
+    return elements.filter((el): el is Element => el instanceof Element);
+  }
+  
+  // NodeList or HTMLCollection
+  return Array.from(elements).filter((el): el is Element => el instanceof Element);
+}
+
+/**
+ * Optimized classList manipulation API for setting CSS classes on DOM element(s)
+ * 
+ * Adds the specified classes to the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Single element with various input types
+ * setClassList(button, 'btn', 'btn--primary');
+ * setClassList(button, { 'btn--active': isActive, 'btn--disabled': disabled });
+ * setClassList(button, ['utility', 'classes'], () => dynamic ? 'dynamic' : null);
+ * 
+ * // Multiple elements
+ * const buttons = document.querySelectorAll('.button');
+ * setClassList(buttons, 'btn--hover');
+ * ```
+ */
+export function setClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Apply classes to all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.add(className);
+    }
+  }
+}
+
+/**
+ * Optimized classList manipulation API for removing CSS classes from DOM element(s)
+ * 
+ * Removes the specified classes from the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Remove classes from single element
+ * unsetClassList(button, 'btn--active', 'btn--focus');
+ * unsetClassList(button, { 'btn--disabled': wasDisabled, 'btn--loading': wasLoading });
+ * 
+ * // Remove classes from multiple elements
+ * const cards = document.querySelectorAll('.card');
+ * unsetClassList(cards, 'card--highlighted');
+ * ```
+ */
+export function unsetClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Remove classes from all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.remove(className);
+    }
+  }
+}
+
+/**
+ * Optimized classList manipulation API for toggling CSS classes on DOM element(s)
+ * 
+ * Toggles the specified classes on the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * For object inputs, only processes truthy conditions - falsy conditions are ignored.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Toggle classes on single element
+ * toggleClassList(modal, 'modal--open');
+ * toggleClassList(button, { 'btn--active': shouldToggleActive });
+ * 
+ * // Toggle classes on multiple elements
+ * const items = document.querySelectorAll('.nav-item');
+ * toggleClassList(items, 'nav-item--selected');
+ * ```
+ */
+export function toggleClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Toggle classes on all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.toggle(className);
+    }
+  }
+}
