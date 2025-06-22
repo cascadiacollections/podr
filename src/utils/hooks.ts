@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { Signal, effect, signal } from '@preact/signals';
-import { createElement, ComponentType, JSX, FunctionComponent, cloneElement, Fragment } from 'preact';
+import { createElement, ComponentType, JSX, FunctionComponent, cloneElement, Fragment, ComponentChildren } from 'preact';
 import { APP_CONFIG } from './AppContext';
 
 /**
@@ -1248,9 +1248,9 @@ export function useToggleClassListSelector(
  * Props for components that can be enhanced with class list management
  * Generic type preserves the original component's prop structure
  */
-interface ClassListEnhancedProps<T extends Record<string, unknown> = Record<string, unknown>> extends T {
+type ClassListEnhancedProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
   readonly className?: string;
-}
+};
 
 /**
  * Configuration for the withClassList HOC
@@ -1647,10 +1647,10 @@ export function useOptimizedClassList(
     };
 
     if (reduceCreateElement && !children) {
-      return createElement(type, elementProps);
+      return createElement(type as any, elementProps);
     }
 
-    return createElement(type, elementProps, children);
+    return createElement(type as any, elementProps, children);
   }, [baseClassName, reduceCreateElement]);
 
   const renderWithClasses = useCallback((
@@ -1672,7 +1672,7 @@ export function useOptimizedClassList(
       className = uniqueClasses.join(' ');
     }
     
-    return createElement(type, { ...props, className }, children);
+    return createElement(type as any, { ...props, className }, children);
   }, [baseClasses]);
 
   return {
@@ -1764,26 +1764,26 @@ interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<EventTarget>> {
 export function h<T extends keyof JSX.IntrinsicElements>(
   type: T,
   props: (JSX.IntrinsicElements[T] & { classList?: ClassNameInput }) | null,
-  ...children: readonly unknown[]
+  ...children: ComponentChildren[]
 ): JSX.Element;
 export function h<P extends Record<string, unknown>>(
   type: ComponentType<P>,
   props: (P & { classList?: ClassNameInput; className?: string }) | null,
-  ...children: readonly unknown[]
+  ...children: ComponentChildren[]
 ): JSX.Element;
 export function h(
   type: string | ComponentType<Record<string, unknown>>,
   props: EnhancedJSXProps | null,
-  ...children: readonly unknown[]
+  ...children: ComponentChildren[]
 ): JSX.Element {
   // Handle null/undefined props - performance fast path
   if (!props) {
-    return createElement(type, null, ...children);
+    return createElement(type as any, null, ...children as any);
   }
   
   // Fast path: no classList prop present - avoid object destructuring overhead
   if (!('classList' in props)) {
-    return createElement(type, props, ...children);
+    return createElement(type as any, props, ...children as any);
   }
   
   // Extract classList and className, keeping other props immutable
@@ -1791,7 +1791,7 @@ export function h(
   
   // Handle empty classList - another fast path
   if (!classList) {
-    return createElement(type, { ...restProps, className }, ...children);
+    return createElement(type as any, { ...restProps, className }, ...children as any);
   }
   
   // Build array of all class inputs for unified processing
@@ -1802,7 +1802,7 @@ export function h(
   
   // Early return for empty inputs
   if (allInputs.length === 0) {
-    return createElement(type, restProps, ...children);
+    return createElement(type as any, restProps, ...children as any);
   }
   
   // Use the same optimized logic as useClassNames for consistency
@@ -1823,7 +1823,7 @@ export function h(
     ...(finalClassName && { className: finalClassName })
   };
   
-  return createElement(type, finalProps, ...children);
+  return createElement(type as any, finalProps, ...children as any);
 }
 
 /**
@@ -1883,9 +1883,9 @@ declare module 'preact' {
 export function createEnhancedElement(
   type: string | ComponentType<Record<string, unknown>>,
   props: EnhancedJSXProps | null = null,
-  ...children: readonly unknown[]
+  ...children: ComponentChildren[]
 ): JSX.Element {
-  return h(type, props, ...children);
+  return h(type as any, props as any, ...children);
 }
 
 /**

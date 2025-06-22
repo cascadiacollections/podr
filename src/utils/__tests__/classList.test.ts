@@ -975,7 +975,7 @@ describe('Preact Idiomatic classList APIs', () => {
           )
         );
 
-        const { rerender } = render(createElement(TestComponent));
+        const { rerender } = render(createElement(TestComponent, null));
         
         let modal = screen.getByTestId('modal');
         expect(modal.classList.contains('modal')).toBe(true);
@@ -983,7 +983,7 @@ describe('Preact Idiomatic classList APIs', () => {
 
         // Simulate props change
         isActive = true;
-        rerender(createElement(TestComponent));
+        rerender(createElement(TestComponent, null));
         
         modal = screen.getByTestId('modal');
         expect(modal.classList.contains('modal--open')).toBe(true);
@@ -1115,7 +1115,7 @@ describe('Preact Idiomatic classList APIs', () => {
           return renderOptimized('div', { 'conditional': true }, 'Content', { 'data-testid': 'optimized-div' });
         };
 
-        render(createElement(TestComponent));
+        render(createElement(TestComponent, null));
 
         const div = screen.getByTestId('optimized-div');
         expect(div.classList.contains('base')).toBe(true);
@@ -1130,7 +1130,7 @@ describe('Preact Idiomatic classList APIs', () => {
           return renderWithClasses('span', ['extra', 'classes'], 'Span content', { 'data-testid': 'render-span' });
         };
 
-        render(createElement(TestComponent));
+        render(createElement(TestComponent, null));
 
         const span = screen.getByTestId('render-span');
         expect(span.classList.contains('base')).toBe(true);
@@ -1148,7 +1148,7 @@ describe('Preact Idiomatic classList APIs', () => {
           return renderOptimized('button', { 'btn--primary': true }, undefined, { 'data-testid': 'reduced-btn' });
         };
 
-        render(createElement(TestComponent));
+        render(createElement(TestComponent, null));
 
         const button = screen.getByTestId('reduced-btn');
         expect(button.classList.contains('btn')).toBe(true);
@@ -1164,7 +1164,7 @@ describe('Preact Idiomatic classList APIs', () => {
           return renderOptimized('div', 'only-conditional', 'Content', { 'data-testid': 'no-base' });
         };
 
-        render(createElement(TestComponent));
+        render(createElement(TestComponent, null));
 
         const div = screen.getByTestId('no-base');
         expect(div.classList.contains('only-conditional')).toBe(true);
@@ -1209,12 +1209,12 @@ describe('Preact Idiomatic classList APIs', () => {
 
           const { renderOptimized } = useOptimizedClassList(['nested']);
 
-          return createElement('div', { 'data-testid': 'complex-container' },
+          return createElement('div', { 'data-testid': 'complex-container' } as any,
             createElement(ClassListProvider, {
               classes: ['wrapper', { 'wrapper--themed': theme === 'dark' }]
             }, (wrapperClassName: string) =>
               createElement('div', { className: wrapperClassName },
-                createElement(EnhancedCard, { isActive, 'data-testid': 'complex-card' }),
+                createElement(EnhancedCard, { isActive, 'data-testid': 'complex-card' } as any),
                 renderOptimized('span', { 'nested--active': isActive }, 'Nested content', { 'data-testid': 'nested-span' })
               )
             )
@@ -1393,7 +1393,7 @@ describe('Preact Idiomatic classList APIs', () => {
           type: 'submit',
           disabled: true,
           'data-testid': 'test-button'
-        });
+        } as any);
         expect(element.type).toBe('button');
         expect(element.props.className).toBe('base dynamic');
         expect(element.props.type).toBe('submit');
