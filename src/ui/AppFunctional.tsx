@@ -17,7 +17,7 @@ declare global {
 
 
 // Single stable empty array for all empty signal defaults
-const EMPTY_ARRAY: readonly unknown[] = Object.freeze([]);
+import { EMPTY_ARRAY } from '../utils/AppContext';
 
 const query = signal<string>('');
 const favorited = signal<ReadonlySet<IFeed>>(new Set());
@@ -25,14 +25,14 @@ const results = signal<readonly IFeedItem[]>(
   (() => {
     const raw = localStorage.getItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY);
     try {
-      return raw ? JSON.parse(raw) : EMPTY_ARRAY as readonly IFeedItem[];
+      return raw ? JSON.parse(raw) : EMPTY_ARRAY;
     } catch {
-      return EMPTY_ARRAY as readonly IFeedItem[];
+      return EMPTY_ARRAY;
     }
   })()
 );
-const searchResults = signal<readonly IFeed[]>(EMPTY_ARRAY as readonly IFeed[]);
-const topResults = signal<readonly ITopPodcast[]>(EMPTY_ARRAY as readonly ITopPodcast[]);
+const searchResults = signal<readonly IFeed[]>(EMPTY_ARRAY);
+const topResults = signal<readonly ITopPodcast[]>(EMPTY_ARRAY);
 
 // Computed values
 const feeds = computed(() => Array.from(favorited.value.values()));
