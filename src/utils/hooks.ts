@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { Signal, effect, signal } from '@preact/signals';
+import { createElement, ComponentType, JSX, FunctionComponent } from 'preact';
 import { APP_CONFIG } from './AppContext';
 
 /**
@@ -460,16 +461,19 @@ export function useAnalytics() {
 
 /**
  * Type definitions for CSS class name inputs with comprehensive support for various data types
+ * Enhanced with immutability patterns and modern TypeScript features
  */
 type ClassNameValue = string | number | boolean | null | undefined;
-type ClassNameObject = Record<string, ClassNameValue>;
+type ClassNameObject = Readonly<Record<string, ClassNameValue>>;
 type ClassNameArray = ReadonlyArray<ClassNameInput>;
 type ClassNameFunction = () => ClassNameInput;
+type ClassNameSignal = Signal<ClassNameInput>;
 type ClassNameInput = 
   | ClassNameValue 
   | ClassNameObject 
   | ClassNameArray 
-  | ClassNameFunction;
+  | ClassNameFunction
+  | ClassNameSignal;
 
 /**
  * Development debugging interface for CSS class names with immutable data structures
@@ -509,21 +513,30 @@ const classNameCache = new WeakMap<object, string>();
  * @param input - The class name input to resolve
  * @returns Array of resolved class name strings
  */
-function resolveClassNamesOptimized(input: ClassNameInput): string[] {
+function resolveClassNamesOptimized(input: ClassNameInput): readonly string[] {
   // Handle falsy values - early return for performance
-  if (!input) return [];
+  if (!input) return Object.freeze([]);
 
   // Handle strings - most common case, optimized path
   if (typeof input === 'string') {
     const trimmed = input.trim();
-    if (!trimmed) return [];
+    if (!trimmed) return Object.freeze([]);
     // Split by whitespace to handle multiple classes in one string
-    return trimmed.split(/\s+/).filter(Boolean);
+    return Object.freeze(trimmed.split(/\s+/).filter(Boolean));
   }
   
   // Handle numbers - convert directly
   if (typeof input === 'number') {
-    return [String(input)];
+    return Object.freeze([String(input)]);
+  }
+
+  // Handle Preact signals - extract value efficiently
+  if (input && typeof input === 'object' && 'value' in input && typeof (input as any).value !== 'undefined') {
+    try {
+      return resolveClassNamesOptimized((input as Signal<ClassNameInput>).value);
+    } catch {
+      return Object.freeze([]); // Silent failure for performance in production
+    }
   }
 
   // Handle functions - with error boundary
@@ -531,20 +544,21 @@ function resolveClassNamesOptimized(input: ClassNameInput): string[] {
     try {
       return resolveClassNamesOptimized(input());
     } catch {
-      return []; // Silent failure for performance in production
+      return Object.freeze([]); // Silent failure for performance in production
     }
   }
 
-  // Handle arrays - flatten efficiently
+  // Handle arrays - flatten efficiently with immutability
   if (Array.isArray(input)) {
     const result: string[] = [];
     for (const item of input) {
-      result.push(...resolveClassNamesOptimized(item));
+      const resolved = resolveClassNamesOptimized(item);
+      result.push(...resolved);
     }
-    return result;
+    return Object.freeze(result);
   }
 
-  // Handle objects - extract truthy keys efficiently
+  // Handle objects - extract truthy keys efficiently with immutability
   if (typeof input === 'object' && input !== null) {
     const result: string[] = [];
     for (const [key, value] of Object.entries(input)) {
@@ -552,10 +566,10 @@ function resolveClassNamesOptimized(input: ClassNameInput): string[] {
         result.push(key);
       }
     }
-    return result;
+    return Object.freeze(result);
   }
 
-  return [];
+  return Object.freeze([]);
 }
 
 /**
@@ -659,12 +673,12 @@ function resolveClassNamesWithDebug(
  * );
  * ```
  */
-export function useClassNames(...inputs: ClassNameInput[]): string {
+export function useClassNames(...inputs: readonly ClassNameInput[]): string {
   return useMemo(() => {
-    // Fast path for empty inputs
+    // Fast path for empty inputs - immutable empty string
     if (inputs.length === 0) return '';
     
-    // Use cache for object inputs to prevent recomputation
+    // Use WeakMap cache for object inputs to prevent recomputation
     const cacheKey = inputs.length === 1 && typeof inputs[0] === 'object' && inputs[0] !== null
       ? inputs[0] as object
       : null;
@@ -673,30 +687,34 @@ export function useClassNames(...inputs: ClassNameInput[]): string {
       return classNameCache.get(cacheKey)!;
     }
     
-    // Fast path for single string input (most common case)
+    // Fast path for single string input (most common case) - optimize whitespace handling
     if (inputs.length === 1 && typeof inputs[0] === 'string') {
       const trimmed = inputs[0].trim();
-      return trimmed;
+      // Handle multiple classes in single string efficiently
+      const multipleClasses = trimmed.includes(' ') 
+        ? [...new Set(trimmed.split(/\s+/).filter(Boolean))].join(' ')
+        : trimmed;
+      return multipleClasses;
     }
     
-    // Process all inputs with optimized resolution
+    // Process all inputs with optimized resolution, maintaining immutability
     const classes: string[] = [];
     for (const input of inputs) {
       const resolved = resolveClassNamesOptimized(input);
       classes.push(...resolved);
     }
     
-    // Deduplicate and join efficiently
+    // Deduplicate and join efficiently with Set optimization
     const uniqueClasses = [...new Set(classes.filter(Boolean))];
     const result = uniqueClasses.join(' ');
     
-    // Cache result for object inputs
+    // Cache result for object inputs - performance optimization
     if (cacheKey) {
       classNameCache.set(cacheKey, result);
     }
     
     return result;
-  }, [inputs]);
+  }, inputs); // Simplified dependency array for better performance
 }
 
 /**
@@ -1222,9 +1240,6 @@ export function useToggleClassListSelector(
 // JSX HOC and Declarative APIs for Performance Optimization
 // =============================================================================
 
-import { ComponentType, FunctionComponent, createElement, cloneElement, Fragment } from 'preact';
-import { JSX } from 'preact';
-
 /**
  * Props for components that can be enhanced with class list management
  */
@@ -1357,7 +1372,7 @@ interface ClassListProviderProps {
   /** Class name inputs to resolve */
   readonly classes: ClassNameInput[];
   /** Render prop function that receives the computed className */
-  readonly children: (className: string) => JSX.Element;
+  readonly children?: (className: string) => JSX.Element;
   /** Whether to optimize rendering performance */
   readonly optimize?: boolean;
 }
@@ -1415,6 +1430,11 @@ export const ClassListProvider: FunctionComponent<ClassListProviderProps> = ({
     const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
     return uniqueClasses.join(' ');
   }, optimize ? [classes] : []);
+
+  // Return empty fragment if no children provided (for testing)
+  if (!children) {
+    return createElement('div', { className });
+  }
 
   return children(className);
 };
@@ -1597,8 +1617,8 @@ export function useOptimizedClassList(
   const renderOptimized = useCallback((
     type: string | ComponentType<any>,
     conditionalClasses: ClassNameInput,
-    children?: JSX.Element | string | (JSX.Element | string)[],
-    props: Record<string, unknown> = {}
+    children?: JSX.Element | string | readonly (JSX.Element | string)[],
+    props: Readonly<Record<string, unknown>> = {}
   ): JSX.Element => {
     const fullClassName = useMemo(() => {
       const inputs: ClassNameInput[] = [];
@@ -1616,25 +1636,25 @@ export function useOptimizedClassList(
       return uniqueClasses.join(' ');
     }, [conditionalClasses]);
 
-    const elementProps = {
+    const elementProps: Readonly<Record<string, unknown>> = {
       ...props,
       className: fullClassName
-    };
+    } as const;
 
     if (reduceCreateElement && !children) {
-      return createElement(type, elementProps);
+      return createElement(type as any, elementProps);
     }
 
-    return createElement(type, elementProps, children);
+    return createElement(type as any, elementProps, children);
   }, [baseClassName, reduceCreateElement]);
 
   const renderWithClasses = useCallback((
     type: string | ComponentType<any>,
-    classes: ClassNameInput[],
-    children?: JSX.Element | string | (JSX.Element | string)[],
-    props: Record<string, unknown> = {}
+    classes: readonly ClassNameInput[],
+    children?: JSX.Element | string | readonly (JSX.Element | string)[],
+    props: Readonly<Record<string, unknown>> = {}
   ): JSX.Element => {
-    const allInputs = [...baseClasses, ...classes];
+    const allInputs = [...baseClasses, ...classes] as const;
     
     let className = '';
     if (allInputs.length > 0) {
@@ -1647,14 +1667,14 @@ export function useOptimizedClassList(
       className = uniqueClasses.join(' ');
     }
     
-    return createElement(type, { ...props, className }, children);
+    return createElement(type as any, { ...props, className } as const, children);
   }, [baseClasses]);
 
   return {
     renderOptimized: memoizeElements ? useMemo(() => renderOptimized, [renderOptimized]) : renderOptimized,
     renderWithClasses: memoizeElements ? useMemo(() => renderWithClasses, [renderWithClasses]) : renderWithClasses,
     baseClassName
-  };
+  } as const;
 }
 
 // ========================================================================================
@@ -1664,13 +1684,26 @@ export function useOptimizedClassList(
 /**
  * Enhanced props interface that includes classList alongside standard JSX props
  * This extends the standard JSX props to include our custom classList property
+ * Uses readonly for immutability and proper typing for better performance
  */
-interface EnhancedJSXProps extends JSX.HTMLAttributes<any> {
+interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<any>> {
   /**
    * Dynamic class list input using the same flexible patterns as useClassNames
    * Can accept strings, objects, arrays, functions, or any combination
    */
-  classList?: ClassNameInput;
+  readonly classList?: ClassNameInput;
+  /**
+   * Standard className prop for compatibility
+   */
+  readonly className?: string;
+  /**
+   * Children elements - made more specific than JSX.Element
+   */
+  readonly children?: JSX.Element | JSX.Element[] | string | string[];
+  /**
+   * Allow any additional props for maximum flexibility
+   */
+  readonly [key: string]: any;
 }
 
 /**
@@ -1730,49 +1763,56 @@ interface EnhancedJSXProps extends JSX.HTMLAttributes<any> {
 export function h(
   type: string | ComponentType<any>,
   props: EnhancedJSXProps | null,
-  ...children: any[]
+  ...children: readonly any[]
 ): JSX.Element {
-  // Handle null/undefined props
+  // Handle null/undefined props - performance fast path
   if (!props) {
-    return createElement(type, props, ...children);
+    return createElement(type as any, null, ...children);
   }
   
-  // Fast path: no classList prop present
+  // Fast path: no classList prop present - avoid object destructuring overhead
   if (!('classList' in props)) {
-    return createElement(type, props, ...children);
+    return createElement(type as any, props, ...children);
   }
   
-  // Extract classList and className, keeping other props intact
+  // Extract classList and className, keeping other props immutable
   const { classList, className, ...restProps } = props;
   
-  // Handle empty classList
+  // Handle empty classList - another fast path
   if (!classList) {
-    return createElement(type, { ...restProps, className }, ...children);
+    return createElement(type as any, { ...restProps, className } as const, ...children);
   }
   
   // Build array of all class inputs for unified processing
-  const allInputs: ClassNameInput[] = [];
-  if (className) allInputs.push(className);
-  if (classList) allInputs.push(classList);
+  const allInputs: readonly ClassNameInput[] = [
+    ...(className ? [className] : []),
+    ...(classList ? [classList] : [])
+  ] as const;
   
-  // Use the same logic as useClassNames for consistency
+  // Early return for empty inputs
+  if (allInputs.length === 0) {
+    return createElement(type as any, restProps, ...children);
+  }
+  
+  // Use the same optimized logic as useClassNames for consistency
   const allClasses: string[] = [];
   for (const input of allInputs) {
     const resolved = resolveClassNamesOptimized(input);
     allClasses.push(...resolved);
   }
   
-  // Deduplicate and create final className
+  // Deduplicate and create final className - use Set for performance
   const finalClassName = allClasses.length > 0 
     ? [...new Set(allClasses.filter(Boolean))].join(' ')
     : undefined;
   
-  // Create element with merged className
-  return createElement(
-    type,
-    { ...restProps, className: finalClassName },
-    ...children
-  );
+  // Create element with merged className, maintain immutability
+  const finalProps = {
+    ...restProps,
+    ...(finalClassName && { className: finalClassName })
+  } as const;
+  
+  return createElement(type as any, finalProps, ...children);
 }
 
 /**
@@ -1832,7 +1872,7 @@ declare module 'preact' {
 export function createEnhancedElement(
   type: string | ComponentType<any>,
   props: EnhancedJSXProps | null = null,
-  ...children: any[]
+  ...children: readonly any[]
 ): JSX.Element {
   return h(type, props, ...children);
 }
