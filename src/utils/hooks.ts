@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { Signal, effect, signal } from '@preact/signals';
-import { createElement, ComponentType, JSX, FunctionComponent } from 'preact';
+import { createElement, ComponentType, JSX, FunctionComponent, cloneElement, Fragment } from 'preact';
 import { APP_CONFIG } from './AppContext';
 
 /**
@@ -1242,10 +1242,11 @@ export function useToggleClassListSelector(
 
 /**
  * Props for components that can be enhanced with class list management
+ * Made more flexible to work with any component props including data attributes
  */
 interface ClassListEnhancedProps {
   readonly className?: string;
-  readonly [key: string]: unknown;
+  readonly [key: string]: any;
 }
 
 /**

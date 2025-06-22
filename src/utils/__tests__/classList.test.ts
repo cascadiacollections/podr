@@ -852,13 +852,25 @@ describe('Preact Idiomatic classList APIs', () => {
   });
 
   describe('JSX HOC and Declarative APIs', () => {
-    // Helper components for testing
-    const Button: FunctionComponent<{ className?: string; children?: any; onClick?: () => void }> = ({ className, children, onClick }) => (
-      createElement('button', { className, onClick }, children)
+    // Helper components for testing with proper TypeScript interfaces
+    const Button: FunctionComponent<{ 
+      className?: string; 
+      children?: any; 
+      onClick?: () => void;
+      'data-testid'?: string;
+    }> = ({ className, children, onClick, 'data-testid': testId }) => (
+      createElement('button', { className, onClick, 'data-testid': testId }, children)
     );
 
-    const Card: FunctionComponent<{ className?: string; isActive?: boolean; variant?: string; children?: any }> = ({ className, children }) => (
-      createElement('div', { className }, children)
+    const Card: FunctionComponent<{ 
+      className?: string; 
+      isActive?: boolean; 
+      variant?: string; 
+      children?: any;
+      disabled?: boolean;
+      'data-testid'?: string;
+    }> = ({ className, children, 'data-testid': testId }) => (
+      createElement('div', { className, 'data-testid': testId }, children)
     );
 
     describe('withClassList HOC', () => {
@@ -1588,10 +1600,10 @@ describe('Preact Idiomatic classList APIs', () => {
           }, 'Click me');
         };
 
-        // Test the component directly instead of the h() wrapper
+        // Test the component directly instead of the h() wrapper  
         const buttonElement = Button({ variant: 'primary', size: 'large' });
-        expect(buttonElement.type).toBe('button');
-        expect(buttonElement.props.className).toBe('btn btn--primary btn--large');
+        expect(buttonElement?.type).toBe('button');
+        expect(buttonElement?.props.className).toBe('btn btn--primary btn--large');
         
         // Test that h() correctly passes props to component
         const element = h(Button, { variant: 'primary', size: 'large' });
