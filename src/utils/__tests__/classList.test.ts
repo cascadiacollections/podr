@@ -1,4 +1,4 @@
-import { setClassList, unsetClassList, toggleClassList, useClassListSelector, useElementClassList, useConditionalClassList, useToggleClassListSelector, withClassList, ClassListProvider, OptimizedClassList, useOptimizedClassList } from '../hooks';
+import { setClassList, unsetClassList, toggleClassList, useClassListSelector, useElementClassList, useConditionalClassList, useToggleClassListSelector, withClassList, ClassListProvider, OptimizedClassList, useOptimizedClassList, h, enhancedJSX, createEnhancedElement, useClassList } from '../hooks';
 import { renderHook, render, screen } from '@testing-library/preact';
 import { createRef, createElement, FunctionComponent } from 'preact';
 import { JSX } from 'preact';
@@ -1253,6 +1253,395 @@ describe('Preact Idiomatic classList APIs', () => {
           expect(item.classList.contains('item')).toBe(true);
           expect(item.classList.contains('item--optimized')).toBe(true);
         });
+      });
+    });
+  });
+
+  // ========================================================================================
+  // Enhanced JSX Props with Custom Pragma Tests
+  // ========================================================================================
+
+  describe('Enhanced JSX Props with Custom Pragma', () => {
+    describe('h (custom JSX factory)', () => {
+      it('should work with no props', () => {
+        const element = h('div', null);
+        expect(element.type).toBe('div');
+        expect(element.props).toEqual({});
+      });
+
+      it('should pass through props when no classList is present', () => {
+        const element = h('div', { className: 'test', id: 'example' });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('test');
+        expect(element.props.id).toBe('example');
+      });
+
+      it('should handle classList with no className', () => {
+        const element = h('div', { classList: 'dynamic-class' });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('dynamic-class');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should merge className and classList', () => {
+        const element = h('div', { 
+          className: 'base-class',
+          classList: 'dynamic-class'
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base-class dynamic-class');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle object-based classList', () => {
+        const element = h('div', {
+          className: 'base',
+          classList: {
+            'active': true,
+            'disabled': false,
+            'loading': true
+          }
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base active loading');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle array-based classList', () => {
+        const element = h('div', {
+          className: 'base',
+          classList: ['utility', 'responsive', null, undefined, '']
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base utility responsive');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle function-based classList', () => {
+        const getDynamicClass = () => 'dynamic-result';
+        const element = h('div', {
+          className: 'base',
+          classList: getDynamicClass
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base dynamic-result');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle mixed classList inputs', () => {
+        const element = h('div', {
+          className: 'base',
+          classList: [
+            'string-class',
+            { 'conditional': true, 'disabled': false },
+            () => 'function-class',
+            null,
+            undefined
+          ]
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base string-class conditional function-class');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should deduplicate classes', () => {
+        const element = h('div', {
+          className: 'base duplicate',
+          classList: ['base', 'duplicate', 'unique']
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base duplicate unique');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle empty classList gracefully', () => {
+        const element = h('div', {
+          className: 'base',
+          classList: null
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle empty className gracefully', () => {
+        const element = h('div', {
+          className: '',
+          classList: 'dynamic'
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('dynamic');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should preserve other props', () => {
+        const element = h('button', {
+          className: 'base',
+          classList: 'dynamic',
+          type: 'submit',
+          disabled: true,
+          'data-testid': 'test-button'
+        });
+        expect(element.type).toBe('button');
+        expect(element.props.className).toBe('base dynamic');
+        expect(element.props.type).toBe('submit');
+        expect(element.props.disabled).toBe(true);
+        expect(element.props['data-testid']).toBe('test-button');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should work with component types', () => {
+        const MyComponent = (props: any) => h('div', props);
+        const element = h(MyComponent, {
+          className: 'base',
+          classList: 'dynamic'
+        });
+        expect(element.type).toBe(MyComponent);
+        expect(element.props.className).toBe('base dynamic');
+        expect(element.props.classList).toBeUndefined();
+      });
+
+      it('should handle children correctly', () => {
+        const element = h('div', 
+          { className: 'base', classList: 'dynamic' },
+          'text content',
+          h('span', null, 'nested')
+        );
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base dynamic');
+        expect(element.props.children).toEqual(['text content', expect.any(Object)]);
+      });
+    });
+
+    describe('enhancedJSX (alternative export)', () => {
+      it('should be identical to h function', () => {
+        expect(enhancedJSX).toBe(h);
+      });
+
+      it('should work identically to h', () => {
+        const element1 = h('div', { className: 'base', classList: 'dynamic' });
+        const element2 = enhancedJSX('div', { className: 'base', classList: 'dynamic' });
+        
+        expect(element1.type).toBe(element2.type);
+        expect(element1.props.className).toBe(element2.props.className);
+      });
+    });
+
+    describe('createEnhancedElement', () => {
+      it('should create element with merged classes', () => {
+        const element = createEnhancedElement('div', {
+          className: 'base',
+          classList: { 'active': true, 'disabled': false }
+        });
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('base active');
+      });
+
+      it('should handle null props', () => {
+        const element = createEnhancedElement('div', null, 'content');
+        expect(element.type).toBe('div');
+        expect(element.props.children).toBe('content');
+      });
+
+      it('should handle children', () => {
+        const element = createEnhancedElement('div', 
+          { classList: 'dynamic' },
+          'text',
+          createEnhancedElement('span', null, 'nested')
+        );
+        expect(element.type).toBe('div');
+        expect(element.props.className).toBe('dynamic');
+        expect(element.props.children).toEqual(['text', expect.any(Object)]);
+      });
+    });
+
+    describe('useClassList hook', () => {
+      it('should return empty string for no inputs', () => {
+        const { result } = renderHook(() => useClassList(null));
+        expect(result.current).toBe('');
+      });
+
+      it('should handle classList input only', () => {
+        const { result } = renderHook(() => useClassList('dynamic-class'));
+        expect(result.current).toBe('dynamic-class');
+      });
+
+      it('should handle baseClassName only', () => {
+        const { result } = renderHook(() => useClassList(null, 'base-class'));
+        expect(result.current).toBe('base-class');
+      });
+
+      it('should merge classList and baseClassName', () => {
+        const { result } = renderHook(() => useClassList('dynamic', 'base'));
+        expect(result.current).toBe('base dynamic');
+      });
+
+      it('should handle object classList', () => {
+        const { result } = renderHook(() => useClassList(
+          { 'active': true, 'disabled': false },
+          'base'
+        ));
+        expect(result.current).toBe('base active');
+      });
+
+      it('should handle array classList', () => {
+        const { result } = renderHook(() => useClassList(
+          ['utility', 'responsive'],
+          'base'
+        ));
+        expect(result.current).toBe('base utility responsive');
+      });
+
+      it('should handle function classList', () => {
+        const { result } = renderHook(() => useClassList(
+          () => 'dynamic-result',
+          'base'
+        ));
+        expect(result.current).toBe('base dynamic-result');
+      });
+
+      it('should deduplicate classes', () => {
+        const { result } = renderHook(() => useClassList(
+          ['base', 'unique'],
+          'base'
+        ));
+        expect(result.current).toBe('base unique');
+      });
+
+      it('should update when inputs change', () => {
+        const { result, rerender } = renderHook(
+          ({ classList, base }) => useClassList(classList, base),
+          { initialProps: { classList: 'initial', base: 'base' } }
+        );
+        
+        expect(result.current).toBe('base initial');
+        
+        rerender({ classList: 'updated', base: 'base' });
+        expect(result.current).toBe('base updated');
+      });
+
+      it('should handle complex mixed inputs', () => {
+        const { result } = renderHook(() => useClassList([
+          'string-class',
+          { 'conditional': true, 'disabled': false },
+          () => 'function-result',
+          ['nested', 'array']
+        ], 'base'));
+        
+        expect(result.current).toBe('base string-class conditional function-result nested array');
+      });
+    });
+
+    describe('Real-world JSX usage patterns', () => {
+      it('should work in a rendered component', () => {
+        const TestComponent: FunctionComponent<{ isActive: boolean }> = ({ isActive }) => {
+          return h('div', {
+            className: 'component',
+            classList: {
+              'component--active': isActive,
+              'component--inactive': !isActive
+            }
+          }, 'Test content');
+        };
+
+        const { container } = render(h(TestComponent, { isActive: true }));
+        const element = container.firstChild as HTMLElement;
+        
+        expect(element.className).toBe('component component--active');
+        expect(element.textContent).toBe('Test content');
+      });
+
+      it('should handle conditional rendering patterns', () => {
+        const isLoading = true;
+        const isError = false;
+        
+        const element = h('div', {
+          className: 'status',
+          classList: {
+            'status--loading': isLoading,
+            'status--error': isError,
+            'status--ready': !isLoading && !isError
+          }
+        });
+        
+        expect(element.props.className).toBe('status status--loading');
+      });
+
+      it('should work with form elements', () => {
+        const element = h('input', {
+          type: 'text',
+          className: 'form-control',
+          classList: ['input-lg', { 'is-invalid': false, 'is-valid': true }],
+          placeholder: 'Enter text'
+        });
+        
+        expect(element.props.className).toBe('form-control input-lg is-valid');
+        expect(element.props.type).toBe('text');
+        expect(element.props.placeholder).toBe('Enter text');
+      });
+
+      it('should handle nested components with classList', () => {
+        const Button: FunctionComponent<{ variant: string; size: string }> = ({ variant, size }) => {
+          return h('button', {
+            className: 'btn',
+            classList: [`btn--${variant}`, `btn--${size}`]
+          }, 'Click me');
+        };
+
+        // Test the component directly instead of the h() wrapper
+        const buttonElement = Button({ variant: 'primary', size: 'large' });
+        expect(buttonElement.type).toBe('button');
+        expect(buttonElement.props.className).toBe('btn btn--primary btn--large');
+        
+        // Test that h() correctly passes props to component
+        const element = h(Button, { variant: 'primary', size: 'large' });
+        expect(element.type).toBe(Button);
+        expect(element.props.variant).toBe('primary');
+        expect(element.props.size).toBe('large');
+      });
+    });
+
+    describe('Performance and edge cases', () => {
+      it('should handle very long class lists efficiently', () => {
+        const manyClasses = Array.from({ length: 100 }, (_, i) => `class-${i}`);
+        const element = h('div', {
+          className: 'base',
+          classList: manyClasses
+        });
+        
+        const expectedLength = 101; // base + 100 classes
+        const actualClasses = element.props.className.split(' ');
+        expect(actualClasses).toHaveLength(expectedLength);
+        expect(actualClasses[0]).toBe('base');
+        expect(actualClasses[100]).toBe('class-99');
+      });
+
+      it('should handle deeply nested function calls', () => {
+        const deepFunction = () => () => () => 'deep-result';
+        const element = h('div', {
+          classList: deepFunction
+        });
+        
+        expect(element.props.className).toBe('deep-result');
+      });
+
+      it('should handle circular references gracefully', () => {
+        const obj: any = { active: true };
+        obj.self = obj; // Create circular reference
+        
+        // Should not throw an error
+        expect(() => {
+          h('div', { classList: obj });
+        }).not.toThrow();
+      });
+
+      it('should handle undefined/null classList values', () => {
+        const element = h('div', {
+          className: 'base',
+          classList: [undefined, null, '', false, 0, 'valid']
+        });
+        
+        expect(element.props.className).toBe('base valid');
       });
     });
   });

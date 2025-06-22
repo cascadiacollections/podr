@@ -516,7 +516,9 @@ function resolveClassNamesOptimized(input: ClassNameInput): string[] {
   // Handle strings - most common case, optimized path
   if (typeof input === 'string') {
     const trimmed = input.trim();
-    return trimmed ? [trimmed] : [];
+    if (!trimmed) return [];
+    // Split by whitespace to handle multiple classes in one string
+    return trimmed.split(/\s+/).filter(Boolean);
   }
   
   // Handle numbers - convert directly
@@ -1653,4 +1655,231 @@ export function useOptimizedClassList(
     renderWithClasses: memoizeElements ? useMemo(() => renderWithClasses, [renderWithClasses]) : renderWithClasses,
     baseClassName
   };
+}
+
+// ========================================================================================
+// Enhanced JSX Props with Custom Pragma
+// ========================================================================================
+
+/**
+ * Enhanced props interface that includes classList alongside standard JSX props
+ * This extends the standard JSX props to include our custom classList property
+ */
+interface EnhancedJSXProps extends JSX.HTMLAttributes<any> {
+  /**
+   * Dynamic class list input using the same flexible patterns as useClassNames
+   * Can accept strings, objects, arrays, functions, or any combination
+   */
+  classList?: ClassNameInput;
+}
+
+/**
+ * Custom JSX factory function that automatically handles classList prop merging
+ * 
+ * This function creates a custom JSX pragma that enhances the standard JSX
+ * experience by automatically merging className and classList props using the
+ * same optimized logic as useClassNames.
+ * 
+ * Features:
+ * - 🎯 Seamless integration with existing className prop
+ * - ⚡ Uses optimized useClassNames logic for consistency and performance
+ * - 🔄 Supports all ClassNameInput patterns (strings, objects, arrays, functions)
+ * - 📦 Zero runtime overhead when classList is not used
+ * - 🛡️ Type-safe with full TypeScript support
+ * - 🧹 Automatic prop cleanup to prevent invalid HTML attributes
+ * 
+ * @param type - The JSX element type (string for HTML elements, function for components)
+ * @param props - The element props, potentially including classList
+ * @param children - Child elements
+ * @returns JSX element with merged className
+ * 
+ * @example
+ * ```tsx
+ * // Configure the custom pragma in your component file
+ * /** @jsx h *\/
+ * import { h } from './utils/hooks';
+ * 
+ * function MyComponent({ isActive, isDisabled }: ComponentProps) {
+ *   return (
+ *     <div 
+ *       className="base-button"
+ *       classList={{
+ *         'button--active': isActive,
+ *         'button--disabled': isDisabled,
+ *         'button--primary': !isDisabled
+ *       }}
+ *     >
+ *       Click me
+ *     </div>
+ *   );
+ * }
+ * 
+ * // Alternative: Mixed usage patterns
+ * <button
+ *   classList={[
+ *     'utility-class',
+ *     { 'conditional': someCondition },
+ *     () => dynamicClass()
+ *   ]}
+ *   className="base-class"
+ * >
+ *   Mixed patterns
+ * </button>
+ * ```
+ */
+export function h(
+  type: string | ComponentType<any>,
+  props: EnhancedJSXProps | null,
+  ...children: any[]
+): JSX.Element {
+  // Handle null/undefined props
+  if (!props) {
+    return createElement(type, props, ...children);
+  }
+  
+  // Fast path: no classList prop present
+  if (!('classList' in props)) {
+    return createElement(type, props, ...children);
+  }
+  
+  // Extract classList and className, keeping other props intact
+  const { classList, className, ...restProps } = props;
+  
+  // Handle empty classList
+  if (!classList) {
+    return createElement(type, { ...restProps, className }, ...children);
+  }
+  
+  // Build array of all class inputs for unified processing
+  const allInputs: ClassNameInput[] = [];
+  if (className) allInputs.push(className);
+  if (classList) allInputs.push(classList);
+  
+  // Use the same logic as useClassNames for consistency
+  const allClasses: string[] = [];
+  for (const input of allInputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    allClasses.push(...resolved);
+  }
+  
+  // Deduplicate and create final className
+  const finalClassName = allClasses.length > 0 
+    ? [...new Set(allClasses.filter(Boolean))].join(' ')
+    : undefined;
+  
+  // Create element with merged className
+  return createElement(
+    type,
+    { ...restProps, className: finalClassName },
+    ...children
+  );
+}
+
+/**
+ * Alternative export for explicit pragma configuration
+ * Use this when you want to be explicit about using the enhanced JSX factory
+ * 
+ * @example
+ * ```tsx
+ * import { enhancedJSX as h } from './utils/hooks';
+ * // @jsx h
+ * ```
+ */
+export const enhancedJSX = h;
+
+/**
+ * Type definitions for enhanced JSX elements to support classList prop
+ * This module declaration extends the JSX namespace to include our classList prop
+ */
+declare module 'preact' {
+  namespace JSX {
+    interface HTMLAttributes<RefType extends EventTarget = EventTarget> {
+      /**
+       * Enhanced classList prop that accepts the same flexible input patterns as useClassNames
+       * Automatically merged with className prop when using the custom JSX pragma
+       */
+      classList?: ClassNameInput;
+    }
+  }
+}
+
+/**
+ * Utility function to create enhanced JSX elements programmatically
+ * This provides a functional API for creating elements with classList support
+ * without requiring the JSX pragma configuration
+ * 
+ * @param type - Element type
+ * @param props - Props including optional classList
+ * @param children - Child elements
+ * @returns Enhanced JSX element
+ * 
+ * @example
+ * ```tsx
+ * import { createEnhancedElement } from './utils/hooks';
+ * 
+ * function DynamicComponent() {
+ *   return createEnhancedElement(
+ *     'div',
+ *     {
+ *       className: 'base',
+ *       classList: { 'active': isActive }
+ *     },
+ *     'Content'
+ *   );
+ * }
+ * ```
+ */
+export function createEnhancedElement(
+  type: string | ComponentType<any>,
+  props: EnhancedJSXProps | null = null,
+  ...children: any[]
+): JSX.Element {
+  return h(type, props, ...children);
+}
+
+/**
+ * Hook for dynamic classList management that returns a className string
+ * This hook provides a bridge between the classList concept and traditional className usage
+ * 
+ * @param classList - ClassList input using the same patterns as useClassNames
+ * @param baseClassName - Optional base className to merge with
+ * @returns Computed className string
+ * 
+ * @example
+ * ```tsx
+ * function Component({ isActive, isDisabled }: ComponentProps) {
+ *   const className = useClassList(
+ *     {
+ *       'component--active': isActive,
+ *       'component--disabled': isDisabled
+ *     },
+ *     'base-component'
+ *   );
+ *   
+ *   return <div className={className}>Content</div>;
+ * }
+ * ```
+ */
+export function useClassList(
+  classList: ClassNameInput,
+  baseClassName?: string
+): string {
+  return useMemo(() => {
+    if (!classList && !baseClassName) return '';
+    
+    const inputs: ClassNameInput[] = [];
+    if (baseClassName) inputs.push(baseClassName);
+    if (classList) inputs.push(classList);
+    
+    if (inputs.length === 0) return '';
+    
+    const allClasses: string[] = [];
+    for (const input of inputs) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, [classList, baseClassName]);
 }

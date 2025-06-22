@@ -1,10 +1,10 @@
 # classList API
 
-An optimized library API for setting, unsetting, and toggling CSS classes on DOM element(s), featuring both **imperative** and **Preact idiomatic declarative** APIs. Built using the same flexible input patterns as the [`useClassNames` hook](./useClassNames.md).
+An optimized library API for setting, unsetting, and toggling CSS classes on DOM element(s), featuring **imperative**, **Preact idiomatic declarative**, and **enhanced JSX pragma** APIs. Built using the same flexible input patterns as the [`useClassNames` hook](./useClassNames.md).
 
 ## Overview
 
-The classList API provides three complementary approaches for CSS class management:
+The classList API provides four complementary approaches for CSS class management:
 
 ### Imperative APIs
 Direct DOM manipulation functions for immediate control:
@@ -26,6 +26,13 @@ High-performance JSX components and patterns for optimal rendering:
 - `OptimizedClassList` - Component that merges and optimizes multiple elements
 - `useOptimizedClassList()` - Hook that returns optimized render functions
 
+### Enhanced JSX Props with Custom Pragma ⭐ **NEW**
+JSX-native API for seamless classList integration:
+- `h()` - Custom JSX factory that automatically merges `className` and `classList` props
+- `enhancedJSX()` - Alternative export for explicit pragma configuration
+- `createEnhancedElement()` - Programmatic element creation with classList support
+- `useClassList()` - Hook for dynamic classList management returning className string
+
 All functions and hooks use the same flexible input types as `useClassNames` for consistency.
 
 ## Key Features
@@ -33,6 +40,7 @@ All functions and hooks use the same flexible input types as `useClassNames` for
 - 🎯 **Direct DOM Manipulation**: Imperative functions for immediate control
 - ⚛️ **Preact Integration**: Declarative hooks with lifecycle management
 - 🚀 **JSX HOC Patterns**: Higher-Order Components and render props for optimized rendering
+- ✨ **JSX-Native API**: Custom pragma for seamless `classList` prop support
 - ⚡ **Performance Optimized**: Intelligent createElement reduction and node merging
 - 🔄 **Flexible Input Types**: Same input patterns as useClassNames (strings, objects, arrays, functions)
 - 📦 **Multi-Element Support**: Works with single elements, arrays, NodeList, HTMLCollection
@@ -867,6 +875,238 @@ const OptimizedTable = ({ rows, columns }) => {
   );
 };
 ```
+
+## Enhanced JSX Props with Custom Pragma
+
+### `h(type, props, ...children)` ⭐ **NEW**
+
+Custom JSX factory function that automatically handles `classList` prop merging.
+
+**Features:**
+- 🎯 Seamless integration with existing `className` prop
+- ⚡ Uses optimized useClassNames logic for consistency and performance
+- 🔄 Supports all ClassNameInput patterns (strings, objects, arrays, functions)
+- 📦 Zero runtime overhead when `classList` is not used
+- 🛡️ Type-safe with full TypeScript support
+- 🧹 Automatic prop cleanup to prevent invalid HTML attributes
+
+**Parameters:**
+- `type` - The JSX element type (string for HTML elements, function for components)
+- `props` - The element props, potentially including `classList`
+- `children` - Child elements
+
+**Returns:** JSX element with merged className
+
+**Usage:**
+```tsx
+/** @jsx h */
+import { h } from './utils/hooks';
+
+function MyComponent({ isActive, isDisabled }: ComponentProps) {
+  return (
+    <div 
+      className="base-button"
+      classList={{
+        'button--active': isActive,
+        'button--disabled': isDisabled,
+        'button--primary': !isDisabled
+      }}
+    >
+      Click me
+    </div>
+  );
+}
+```
+
+### `enhancedJSX(type, props, ...children)`
+
+Alternative export for explicit pragma configuration. Identical to `h()`.
+
+**Usage:**
+```tsx
+import { enhancedJSX as h } from './utils/hooks';
+/** @jsx h */
+```
+
+### `createEnhancedElement(type, props, ...children)`
+
+Utility function to create enhanced JSX elements programmatically without requiring the JSX pragma configuration.
+
+**Parameters:**
+- `type` - Element type
+- `props` - Props including optional `classList`
+- `children` - Child elements
+
+**Returns:** Enhanced JSX element
+
+**Usage:**
+```tsx
+import { createEnhancedElement } from './utils/hooks';
+
+function DynamicComponent() {
+  return createEnhancedElement(
+    'div',
+    {
+      className: 'base',
+      classList: { 'active': isActive }
+    },
+    'Content'
+  );
+}
+```
+
+### `useClassList(classList, baseClassName?)`
+
+Hook for dynamic classList management that returns a className string. Provides a bridge between the classList concept and traditional className usage.
+
+**Parameters:**
+- `classList` - ClassList input using the same patterns as useClassNames
+- `baseClassName` - Optional base className to merge with
+
+**Returns:** Computed className string
+
+**Usage:**
+```tsx
+function Component({ isActive, isDisabled }: ComponentProps) {
+  const className = useClassList(
+    {
+      'component--active': isActive,
+      'component--disabled': isDisabled
+    },
+    'base-component'
+  );
+  
+  return <div className={className}>Content</div>;
+}
+```
+
+## JSX Pragma Examples
+
+### Basic Setup
+
+```tsx
+/** @jsx h */
+import { h } from './utils/hooks';
+
+function MyComponent() {
+  return (
+    <div 
+      className="base-component"
+      classList={{
+        'component--active': isActive,
+        'component--loading': isLoading
+      }}
+    >
+      Content
+    </div>
+  );
+}
+```
+
+### Real-World Modal Example
+
+```tsx
+/** @jsx h */
+import { h } from './utils/hooks';
+import { useState, useEffect } from 'preact/hooks';
+
+function Modal({ isOpen, size = 'medium', onClose }: ModalProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  useEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      document.body.classList.add('no-scroll');
+    }
+    return () => document.body.classList.remove('no-scroll');
+  }, [isOpen]);
+  
+  return (
+    <div 
+      className="modal-overlay"
+      classList={{
+        'modal-overlay--open': isOpen,
+        'modal-overlay--animating': isAnimating
+      }}
+      onClick={onClose}
+    >
+      <div 
+        className="modal"
+        classList={[
+          `modal--${size}`,
+          {
+            'modal--open': isOpen,
+            'modal--animating': isAnimating
+          }
+        ]}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal__content">
+          Modal content here
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### Form Input with Validation
+
+```tsx
+/** @jsx h */
+import { h } from './utils/hooks';
+
+function FormInput({ label, type = 'text', required, validator }: InputProps) {
+  const [value, setValue] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const isValid = !error && touched;
+  const isInvalid = !!error && touched;
+  
+  return (
+    <div className="form-group">
+      <label 
+        className="form-label"
+        classList={{
+          'form-label--required': required,
+          'form-label--error': isInvalid
+        }}
+      >
+        {label}
+      </label>
+      
+      <input
+        type={type}
+        className="form-control"
+        classList={{
+          'form-control--valid': isValid,
+          'form-control--invalid': isInvalid,
+          'form-control--touched': touched
+        }}
+        value={value}
+        onInput={(e) => {
+          const newValue = (e.target as HTMLInputElement).value;
+          setValue(newValue);
+          setError(validateInput(newValue));
+        }}
+        onBlur={() => setTouched(true)}
+      />
+      
+      {error && (
+        <div 
+          className="form-error"
+          classList="form-error--visible"
+        >
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+For more comprehensive examples and usage patterns, see [JSX Pragma Examples](./jsx-pragma-examples.md).
 
 ---
 
