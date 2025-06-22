@@ -2,6 +2,10 @@ temp
 lib
 lib-commonjs
 
+# Demo files (not for production)
+*-demo.ts
+*-demo.js
+
 # Logs
 logs
 *.log
