@@ -1,8 +1,8 @@
 import { FunctionComponent, h } from "preact";
-import { memo, useMemo } from "preact/compat";
+import { memo, useMemo, useRef } from "preact/compat";
 import { IFeedItem } from "./Result";
 import { Result } from "./Result";
-import { useClassNames } from "../utils/hooks";
+import { useConditionalClassList } from "../utils/hooks";
 
 /**
  * Props for the List component with enhanced type safety
@@ -46,19 +46,19 @@ export const List: FunctionComponent<IListProps> = memo(
     emptyMessage = LIST_CONFIG.DEFAULT_EMPTY_MESSAGE 
   }: IListProps) => {
     
+    const containerRef = useRef<HTMLElement>(null);
+    
+    // Use the new conditional classList hook for dynamic container states
+    useConditionalClassList(containerRef, {
+      [LIST_CONFIG.CSS_CLASSES.CONTAINER]: true,
+      [LIST_CONFIG.CSS_CLASSES.LOADING]: isLoading,
+      [LIST_CONFIG.CSS_CLASSES.EMPTY]: results.length === 0
+    });
+    
     // Memoize the empty state message based on loading status
     const emptyStateMessage = useMemo(() => {
       return isLoading ? LIST_CONFIG.LOADING_MESSAGE : emptyMessage;
     }, [isLoading, emptyMessage]);
-    
-    // Memoize container CSS classes using the main performant hook
-    const containerClassName = useClassNames(
-      LIST_CONFIG.CSS_CLASSES.CONTAINER,
-      {
-        [LIST_CONFIG.CSS_CLASSES.LOADING]: isLoading,
-        [LIST_CONFIG.CSS_CLASSES.EMPTY]: results.length === 0
-      }
-    );
     
     // Memoize rendered results for performance when results array is stable
     const renderedResults = useMemo(() => {
@@ -72,7 +72,7 @@ export const List: FunctionComponent<IListProps> = memo(
     }, [results, onClick]);
 
     return (
-      <section className={containerClassName}>
+      <section ref={containerRef}>
         <table className={LIST_CONFIG.CSS_CLASSES.TABLE}>
           <caption>{LIST_CONFIG.TABLE_CAPTION}</caption>
           <thead>
