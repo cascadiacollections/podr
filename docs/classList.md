@@ -1,24 +1,36 @@
 # classList API
 
-An optimized library API for setting, unsetting, and toggling CSS classes on DOM element(s), built using the same flexible input patterns as the [`useClassNames` hook](./useClassNames.md).
+An optimized library API for setting, unsetting, and toggling CSS classes on DOM element(s), featuring both **imperative** and **Preact idiomatic declarative** APIs. Built using the same flexible input patterns as the [`useClassNames` hook](./useClassNames.md).
 
 ## Overview
 
-The classList API provides three main functions for direct DOM manipulation:
+The classList API provides two complementary approaches for CSS class management:
+
+### Imperative APIs
+Direct DOM manipulation functions for immediate control:
 - `setClassList()` - Adds classes to element(s)
 - `unsetClassList()` - Removes classes from element(s)  
 - `toggleClassList()` - Toggles classes on element(s)
 
-All functions use the same flexible input types as `useClassNames` for consistency and accept both single elements and collections of elements.
+### Preact Idiomatic Declarative APIs
+Hooks that integrate with Preact's component lifecycle:
+- `useClassListSelector()` - Manage classes via CSS selectors
+- `useElementClassList()` - Manage classes on ref'd elements
+- `useConditionalClassList()` - Fine-grained conditional class management
+- `useToggleClassListSelector()` - Declarative toggling via selectors
+
+All functions and hooks use the same flexible input types as `useClassNames` for consistency.
 
 ## Key Features
 
-- 🎯 **Direct DOM Manipulation**: Directly modifies element classList properties
+- 🎯 **Direct DOM Manipulation**: Imperative functions for immediate control
+- ⚛️ **Preact Integration**: Declarative hooks with lifecycle management
 - 🔄 **Flexible Input Types**: Same input patterns as useClassNames (strings, objects, arrays, functions)
 - 📦 **Multi-Element Support**: Works with single elements, arrays, NodeList, HTMLCollection
 - ⚡ **Performance Optimized**: Reuses optimized resolution logic from useClassNames
 - 🛡️ **Error Resilient**: Graceful handling of invalid inputs and edge cases
 - 🧩 **Consistent API**: Follows the same patterns and conventions as useClassNames
+- 🔄 **Automatic Cleanup**: Declarative hooks handle cleanup on unmount
 
 ## API Reference
 
@@ -374,8 +386,207 @@ The classList API uses standard DOM APIs:
 
 These are supported in all modern browsers and IE10+.
 
+## Preact Idiomatic Declarative APIs
+
+In addition to the imperative functions above, the classList API provides Preact-specific hooks that integrate seamlessly with component lifecycle management.
+
+### `useClassListSelector(selector, inputs, container?)`
+
+Declaratively manages CSS classes on elements matching a CSS selector.
+
+**Parameters:**
+- `selector: string` - CSS selector string (e.g., '.button', '#modal', '[data-active]')
+- `inputs: ClassNameInput[]` - Array of class name inputs (same as useClassNames)
+- `container?: Element | Document` - Optional container to scope the selector (defaults to document)
+
+**Example:**
+```tsx
+function NavComponent({ activeIndex }: { activeIndex: number }) {
+  // Reset all nav items
+  useClassListSelector('.nav-item', [{ 'nav-item--active': false }]);
+  
+  // Set active item
+  useClassListSelector(`[data-nav-index="${activeIndex}"]`, ['nav-item--active']);
+  
+  // Apply loading state to all buttons
+  useClassListSelector('.btn', [{ 'btn--loading': isLoading }]);
+  
+  return <nav>...</nav>;
+}
+```
+
+### `useElementClassList(elementRef, inputs)`
+
+Declaratively manages CSS classes on a single element accessed via Preact ref.
+
+**Parameters:**
+- `elementRef: RefObject<Element>` - Preact ref to the target element
+- `inputs: ClassNameInput[]` - Array of class name inputs
+
+**Example:**
+```tsx
+function ButtonComponent({ isLoading, variant }: ButtonProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Declaratively manage button classes based on props
+  useElementClassList(buttonRef, [
+    'btn',
+    `btn--${variant}`,
+    { 'btn--loading': isLoading, 'btn--disabled': isLoading }
+  ]);
+  
+  return <button ref={buttonRef}>Click me</button>;
+}
+```
+
+### `useConditionalClassList(elementRef, conditions)`
+
+Provides fine-grained conditional management of individual CSS classes.
+
+**Parameters:**
+- `elementRef: RefObject<Element>` - Preact ref to the target element
+- `conditions: Record<string, boolean>` - Object mapping class names to boolean conditions
+
+**Example:**
+```tsx
+function ModalComponent({ isOpen, isLoading }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Conditionally manage specific classes
+  useConditionalClassList(modalRef, {
+    'modal--open': isOpen,
+    'modal--loading': isLoading,
+    'modal--has-backdrop': isOpen && !isLoading
+  });
+  
+  return <div ref={modalRef} className="modal">...</div>;
+}
+```
+
+### `useToggleClassListSelector(selector, inputs, container?, trigger?)`
+
+Declaratively toggles classes on elements matching a selector when trigger changes.
+
+**Parameters:**
+- `selector: string` - CSS selector string
+- `inputs: ClassNameInput[]` - Array of class name inputs to toggle
+- `container?: Element | Document` - Optional container to scope the selector
+- `trigger?: unknown` - Dependency that triggers the toggle
+
+**Example:**
+```tsx
+function ThemeToggle({ isDark }: { isDark: boolean }) {
+  // Toggle dark theme classes on all theme-aware elements
+  useToggleClassListSelector('.theme-aware', ['dark-mode'], document.body, isDark);
+  
+  return <button>Toggle Theme</button>;
+}
+```
+
+## Preact Integration Examples
+
+### Real-World Modal Management
+```tsx
+function Modal({ isOpen, isLoading, children }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Manage modal state
+  useConditionalClassList(modalRef, {
+    'modal--open': isOpen,
+    'modal--loading': isLoading,
+    'modal--ready': isOpen && !isLoading
+  });
+  
+  // Manage body scroll when modal is open
+  useClassListSelector('body', [{ 'no-scroll': isOpen }]);
+  
+  return (
+    <div ref={modalRef} className="modal">
+      {children}
+    </div>
+  );
+}
+```
+
+### Navigation with Dynamic Active States
+```tsx
+function Navigation({ items, activeIndex }: NavigationProps) {
+  // Reset all items first
+  useClassListSelector('.nav-item', [{ 'nav-item--active': false }]);
+  
+  // Set active item
+  useClassListSelector(`[data-index="${activeIndex}"]`, ['nav-item--active']);
+  
+  return (
+    <nav>
+      {items.map((item, index) => (
+        <a key={item.id} className="nav-item" data-index={index}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+```
+
+### Form Field Validation
+```tsx
+function FormField({ value, error, isValidating }: FormFieldProps) {
+  const fieldRef = useRef<HTMLInputElement>(null);
+  
+  useConditionalClassList(fieldRef, {
+    'field--valid': !error && value,
+    'field--error': !!error,
+    'field--validating': isValidating,
+    'field--empty': !value
+  });
+  
+  return (
+    <div>
+      <input ref={fieldRef} className="form-field" value={value} />
+      {error && <span className="error">{error}</span>}
+    </div>
+  );
+}
+```
+
+## Hook Benefits
+
+### Automatic Lifecycle Management
+- **Mount**: Classes are applied when component mounts
+- **Update**: Classes update when dependencies change
+- **Unmount**: Classes are automatically cleaned up
+
+### Performance Optimized
+- **Minimal Re-renders**: Efficient dependency tracking
+- **Batch Updates**: Multiple class changes in single DOM operations
+- **Memory Efficient**: Automatic cleanup prevents memory leaks
+
+### Type Safety
+- **Full TypeScript Support**: All hooks are fully typed
+- **Ref Safety**: Handles null refs gracefully
+- **Input Validation**: Same robust input handling as useClassNames
+
 ## Best Practices
 
+1. **Choose the Right Hook**: 
+   - Use `useElementClassList` for single elements with complex class logic
+   - Use `useConditionalClassList` for fine-grained control over individual classes
+   - Use `useClassListSelector` for managing multiple elements via selectors
+   - Use `useToggleClassListSelector` for simple toggle behaviors
+
+2. **Dependency Management**:
+   - Hooks automatically track changes to inputs
+   - Avoid creating new objects/arrays on every render
+   - Use useMemo for complex computed class inputs
+
+3. **Cleanup**: Hooks handle cleanup automatically, but be mindful of selector scope
+
+4. **Performance**: Prefer object-based conditionals over multiple hook calls
+
+## Best Practices
+
+### Imperative API
 1. **Batch Operations**: Combine multiple class changes into single function calls
 2. **Use Object Syntax**: Prefer object conditionals for readable state management
 3. **Element Collections**: Leverage multi-element support for efficiency
@@ -383,6 +594,22 @@ These are supported in all modern browsers and IE10+.
 5. **Performance**: Use the API for dynamic class manipulation, not static class assignment
 6. **Consistency**: Use the same input patterns as `useClassNames` for codebase consistency
 
+### Declarative Hooks
+1. **Choose the Right Hook**: 
+   - Use `useElementClassList` for single elements with complex class logic
+   - Use `useConditionalClassList` for fine-grained control over individual classes
+   - Use `useClassListSelector` for managing multiple elements via selectors
+   - Use `useToggleClassListSelector` for simple toggle behaviors
+
+2. **Dependency Management**:
+   - Hooks automatically track changes to inputs
+   - Avoid creating new objects/arrays on every render
+   - Use useMemo for complex computed class inputs
+
+3. **Cleanup**: Hooks handle cleanup automatically, but be mindful of selector scope
+
+4. **Performance**: Prefer object-based conditionals over multiple hook calls
+
 ---
 
-The classList API provides a powerful, flexible, and performant way to manipulate DOM element classes while maintaining consistency with the existing `useClassNames` hook patterns.
+The classList API provides both **imperative functions for direct control** and **Preact idiomatic hooks for declarative component integration**, offering a comprehensive solution for CSS class manipulation while maintaining consistency with the existing `useClassNames` hook patterns.

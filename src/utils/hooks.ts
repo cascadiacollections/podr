@@ -940,3 +940,278 @@ export function toggleClassList(elements: ElementCollection, ...inputs: ClassNam
     }
   }
 }
+
+// Preact Idiomatic Declarative APIs for classList Management
+
+/**
+ * Preact hook for declaratively managing CSS classes on elements via CSS selectors
+ * 
+ * This hook provides a Preact-idiomatic declarative API that automatically manages
+ * CSS classes on DOM elements matching the provided selector. It uses the optimized
+ * classList functions as the foundation and integrates seamlessly with Preact's
+ * component lifecycle.
+ * 
+ * @param selector - CSS selector string (e.g., '.button', '#modal', '[data-active]')
+ * @param inputs - Variable arguments of class name inputs (same as useClassNames)
+ * @param container - Optional container element to scope the selector (defaults to document)
+ * 
+ * @example
+ * ```tsx
+ * function NavComponent({ activeIndex }: { activeIndex: number }) {
+ *   // Declaratively manage active state on all nav items
+ *   useClassListSelector('.nav-item', [{ 'nav-item--active': false }]); // Reset all
+ *   useClassListSelector(`[data-nav-index="${activeIndex}"]`, ['nav-item--active']);
+ *   
+ *   // Apply loading state to all buttons when loading
+ *   useClassListSelector('.btn', [{ 'btn--loading': isLoading }]);
+ *   
+ *   return <nav>...</nav>;
+ * }
+ * ```
+ */
+export function useClassListSelector(
+  selector: string,
+  inputs: ClassNameInput[],
+  container: Element | Document = document
+): void {
+  const inputsRef = useRef<ClassNameInput[]>([]);
+  const inputsStringified = JSON.stringify(inputs);
+  
+  useEffect(() => {
+    if (!selector || inputs.length === 0) return;
+    
+    try {
+      const elements = container.querySelectorAll(selector);
+      if (elements.length > 0) {
+        // Remove previous classes
+        if (inputsRef.current.length > 0) {
+          unsetClassList(elements, ...inputsRef.current);
+        }
+        
+        // Add new classes
+        setClassList(elements, ...inputs);
+        inputsRef.current = [...inputs];
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`useClassListSelector: Invalid selector "${selector}"`, error);
+      }
+    }
+    
+    // Cleanup function to remove classes when component unmounts or inputs change
+    return () => {
+      try {
+        const elements = container.querySelectorAll(selector);
+        if (elements.length > 0 && inputsRef.current.length > 0) {
+          unsetClassList(elements, ...inputsRef.current);
+        }
+      } catch (error) {
+        // Silent cleanup failure
+      }
+    };
+  }, [selector, inputsStringified, container]);
+}
+
+/**
+ * Preact hook for declaratively managing CSS classes on a ref'd element
+ * 
+ * This hook provides declarative class management for single elements accessed
+ * via Preact refs. It automatically applies and cleans up classes based on
+ * the component lifecycle and dependency changes.
+ * 
+ * @param elementRef - Preact ref to the target element
+ * @param inputs - Variable arguments of class name inputs (same as useClassNames)
+ * 
+ * @example
+ * ```tsx
+ * function ButtonComponent({ isLoading, variant }: ButtonProps) {
+ *   const buttonRef = useRef<HTMLButtonElement>(null);
+ *   
+ *   // Declaratively manage button classes based on props
+ *   useElementClassList(buttonRef, [
+ *     'btn',
+ *     `btn--${variant}`,
+ *     { 'btn--loading': isLoading, 'btn--disabled': isLoading }
+ *   ]);
+ *   
+ *   return <button ref={buttonRef}>Click me</button>;
+ * }
+ * ```
+ */
+export function useElementClassList<T extends Element>(
+  elementRef: { readonly current: T | null },
+  inputs: ClassNameInput[]
+): void {
+  const previousInputsRef = useRef<ClassNameInput[]>([]);
+  const inputsStringified = JSON.stringify(inputs);
+  
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    
+    // Remove previous classes if they exist
+    if (previousInputsRef.current.length > 0) {
+      unsetClassList(element, ...previousInputsRef.current);
+    }
+    
+    // Apply new classes
+    if (inputs.length > 0) {
+      setClassList(element, ...inputs);
+      previousInputsRef.current = [...inputs];
+    }
+    
+    // Cleanup function
+    return () => {
+      if (element && previousInputsRef.current.length > 0) {
+        unsetClassList(element, ...previousInputsRef.current);
+      }
+    };
+  }, [elementRef, inputsStringified]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const element = elementRef.current;
+      if (element && previousInputsRef.current.length > 0) {
+        unsetClassList(element, ...previousInputsRef.current);
+        previousInputsRef.current = [];
+      }
+    };
+  }, [elementRef]);
+}
+
+/**
+ * Preact hook for conditional CSS class management with fine-grained control
+ * 
+ * This hook provides declarative management of individual CSS classes based on
+ * boolean conditions. Unlike useElementClassList which manages the entire class
+ * set, this hook allows for granular control over specific classes.
+ * 
+ * @param elementRef - Preact ref to the target element
+ * @param conditions - Object mapping class names to boolean conditions
+ * 
+ * @example
+ * ```tsx
+ * function ModalComponent({ isOpen, isLoading }: ModalProps) {
+ *   const modalRef = useRef<HTMLDivElement>(null);
+ *   
+ *   // Conditionally manage specific classes
+ *   useConditionalClassList(modalRef, {
+ *     'modal--open': isOpen,
+ *     'modal--loading': isLoading,
+ *     'modal--has-backdrop': isOpen && !isLoading
+ *   });
+ *   
+ *   return <div ref={modalRef} className="modal">...</div>;
+ * }
+ * ```
+ */
+export function useConditionalClassList<T extends Element>(
+  elementRef: { readonly current: T | null },
+  conditions: Record<string, boolean>
+): void {
+  const previousConditionsRef = useRef<Record<string, boolean>>({});
+  
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    
+    const currentConditions = { ...conditions };
+    const previousConditions = previousConditionsRef.current;
+    
+    // Process each condition
+    for (const [className, shouldHaveClass] of Object.entries(currentConditions)) {
+      const hadClass = previousConditions[className] || false;
+      
+      if (shouldHaveClass && !hadClass) {
+        // Add class directly
+        element.classList.add(className);
+      } else if (!shouldHaveClass && hadClass) {
+        // Remove class directly
+        element.classList.remove(className);
+      }
+    }
+    
+    // Handle removed conditions (classes that are no longer being managed)
+    for (const [className, hadClass] of Object.entries(previousConditions)) {
+      if (!(className in currentConditions) && hadClass) {
+        element.classList.remove(className);
+      }
+    }
+    
+    previousConditionsRef.current = currentConditions;
+    
+    // Cleanup function
+    return () => {
+      if (element) {
+        for (const [className, hasClass] of Object.entries(previousConditionsRef.current)) {
+          if (hasClass) {
+            element.classList.remove(className);
+          }
+        }
+      }
+    };
+  }, [conditions]); // Depend on the conditions object directly
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const element = elementRef.current;
+      if (element) {
+        for (const [className, hasClass] of Object.entries(previousConditionsRef.current)) {
+          if (hasClass) {
+            element.classList.remove(className);
+          }
+        }
+        previousConditionsRef.current = {};
+      }
+    };
+  }, []);
+}
+
+/**
+ * Preact hook for toggling CSS classes on elements via CSS selectors
+ * 
+ * This hook provides a declarative API for toggling classes on multiple elements
+ * that match a given selector. Useful for implementing toggle behaviors across
+ * multiple elements simultaneously.
+ * 
+ * @param selector - CSS selector string to target elements
+ * @param inputs - Variable arguments of class name inputs to toggle
+ * @param container - Optional container element to scope the selector
+ * @param trigger - Dependency that triggers the toggle (changes cause toggle)
+ * 
+ * @example
+ * ```tsx
+ * function ThemeToggle({ isDark }: { isDark: boolean }) {
+ *   // Toggle dark theme classes on all theme-aware elements
+ *   useToggleClassListSelector('.theme-aware', ['dark-mode'], document.body, isDark);
+ *   
+ *   // Toggle active state on navigation items
+ *   useToggleClassListSelector('.nav-item', 'nav-item--highlighted', document, activeItem);
+ *   
+ *   return <button>Toggle Theme</button>;
+ * }
+ * ```
+ */
+export function useToggleClassListSelector(
+  selector: string,
+  inputs: ClassNameInput[],
+  container: Element | Document = document,
+  trigger?: unknown
+): void {
+  useEffect(() => {
+    if (!selector) return;
+    
+    try {
+      const elements = container.querySelectorAll(selector);
+      if (elements.length > 0) {
+        toggleClassList(elements, ...inputs);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`useToggleClassListSelector: Invalid selector "${selector}"`, error);
+      }
+    }
+  }, [selector, container, trigger, ...inputs]);
+}
