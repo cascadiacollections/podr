@@ -1,5 +1,11 @@
-import { h, createContext } from 'preact';
+/**
+ * Shared stable empty array for all signal defaults and empty values
+ *
+ * Using readonly never[] allows assignment to any readonly array type without assertion.
+ */
+export const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
 import { Signal, signal } from '@preact/signals';
+import { createContext } from 'preact';
 import { IFeedItem } from '../ui/Result';
 
 /**
@@ -81,9 +87,9 @@ function createDefaultContext(): AppContextType {
   return {
     query: signal(''),
     favorited: signal<ReadonlySet<IFeed>>(new Set()),
-    results: signal<ReadonlyArray<IFeedItem>>([]),
-    searchResults: signal<ReadonlyArray<IFeed>>([]),
-    topResults: signal<ReadonlyArray<ITopPodcast>>([]),
+    results: signal<ReadonlyArray<IFeedItem>>(EMPTY_ARRAY),
+    searchResults: signal<ReadonlyArray<IFeed>>(EMPTY_ARRAY),
+    topResults: signal<ReadonlyArray<ITopPodcast>>(EMPTY_ARRAY),
   } as const;
 }
 

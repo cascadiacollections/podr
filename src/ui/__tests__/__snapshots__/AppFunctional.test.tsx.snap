@@ -2,9 +2,7 @@
 
 exports[`App component loads top podcasts on mount 1`] = `
 <div>
-  <div
-    class=""
-  >
+  <div>
     <h1>
       <a
         href="/"
@@ -125,9 +123,7 @@ exports[`App component loads top podcasts on mount 1`] = `
 
 exports[`App component renders without crashing 1`] = `
 <div>
-  <div
-    class=""
-  >
+  <div>
     <h1>
       <a
         href="/"
