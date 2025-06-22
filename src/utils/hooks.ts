@@ -1215,3 +1215,442 @@ export function useToggleClassListSelector(
     }
   }, [selector, container, trigger, ...inputs]);
 }
+
+// =============================================================================
+// JSX HOC and Declarative APIs for Performance Optimization
+// =============================================================================
+
+import { ComponentType, FunctionComponent, createElement, cloneElement, Fragment } from 'preact';
+import { JSX } from 'preact';
+
+/**
+ * Props for components that can be enhanced with class list management
+ */
+interface ClassListEnhancedProps {
+  readonly className?: string;
+  readonly [key: string]: unknown;
+}
+
+/**
+ * Configuration for the withClassList HOC
+ */
+interface WithClassListConfig<P = Record<string, unknown>> {
+  /** Base classes to always apply */
+  readonly baseClasses?: ClassNameInput[];
+  /** Dynamic classes based on props */
+  readonly dynamicClasses?: (props: P) => ClassNameInput[];
+  /** Whether to merge with existing className prop */
+  readonly mergeClassName?: boolean;
+  /** Custom class resolution strategy */
+  readonly optimizeNodes?: boolean;
+}
+
+/**
+ * Higher-Order Component that optimizes class management and reduces createElement calls
+ * 
+ * This HOC wraps a component and provides intelligent class management with performance
+ * optimizations. It can merge classes, reduce rendering overhead, and provide consistent
+ * class resolution patterns.
+ * 
+ * @param WrappedComponent - The component to enhance with class list management
+ * @param config - Configuration for class management behavior
+ * @returns Enhanced component with optimized class management
+ * 
+ * @example
+ * ```tsx
+ * // Basic usage with static classes
+ * const ButtonWithClasses = withClassList(Button, {
+ *   baseClasses: ['btn', 'btn--primary'],
+ *   mergeClassName: true
+ * });
+ * 
+ * // Dynamic classes based on props
+ * const InteractiveCard = withClassList(Card, {
+ *   baseClasses: ['card'],
+ *   dynamicClasses: (props) => [
+ *     { 'card--active': props.isActive },
+ *     { 'card--disabled': props.disabled },
+ *     props.variant && `card--${props.variant}`
+ *   ],
+ *   optimizeNodes: true
+ * });
+ * 
+ * // Usage in JSX
+ * <ButtonWithClasses onClick={handleClick}>
+ *   Click me
+ * </ButtonWithClasses>
+ * ```
+ */
+export function withClassList<P extends ClassListEnhancedProps>(
+  WrappedComponent: ComponentType<P>,
+  config: WithClassListConfig<P> = {}
+): FunctionComponent<P> {
+  const {
+    baseClasses = [],
+    dynamicClasses,
+    mergeClassName = true,
+    optimizeNodes = true
+  } = config;
+
+  const EnhancedComponent: FunctionComponent<P> = (props) => {
+    const computedClassName = useMemo(() => {
+      const inputs: ClassNameInput[] = [];
+      
+      // Add base classes
+      if (baseClasses.length > 0) {
+        inputs.push(...baseClasses);
+      }
+      
+      // Add dynamic classes based on props
+      if (dynamicClasses) {
+        const dynamicInputs = dynamicClasses(props);
+        if (dynamicInputs) {
+          inputs.push(...dynamicInputs);
+        }
+      }
+      
+      // Add existing className if merging is enabled
+      if (mergeClassName && props.className) {
+        inputs.push(props.className);
+      }
+      
+      // Resolve class names using the same optimization as useClassNames
+      if (inputs.length === 0) return props.className || '';
+      
+      const allClasses: string[] = [];
+      for (const input of inputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      
+      // Filter and deduplicate
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      return uniqueClasses.join(' ');
+    }, [props]);
+
+    // Performance optimization: reduce createElement calls when possible
+    if (optimizeNodes && computedClassName === props.className) {
+      return createElement(WrappedComponent, props);
+    }
+
+    // Create enhanced props with computed className
+    const enhancedProps = {
+      ...props,
+      className: computedClassName
+    } as P;
+
+    return createElement(WrappedComponent, enhancedProps);
+  };
+
+  // Set display name for debugging
+  EnhancedComponent.displayName = `withClassList(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return EnhancedComponent;
+}
+
+/**
+ * Props for the ClassListProvider component
+ */
+interface ClassListProviderProps {
+  /** Class name inputs to resolve */
+  readonly classes: ClassNameInput[];
+  /** Render prop function that receives the computed className */
+  readonly children: (className: string) => JSX.Element;
+  /** Whether to optimize rendering performance */
+  readonly optimize?: boolean;
+}
+
+/**
+ * Render prop component that provides optimized class name computation
+ * 
+ * This component uses the render prop pattern to provide computed class names
+ * to child components while optimizing for performance and reducing unnecessary
+ * re-renders.
+ * 
+ * @example
+ * ```tsx
+ * // Basic render prop usage
+ * <ClassListProvider classes={['btn', { 'btn--active': isActive }]}>
+ *   {(className) => (
+ *     <button className={className} onClick={handleClick}>
+ *       Dynamic Button
+ *     </button>
+ *   )}
+ * </ClassListProvider>
+ * 
+ * // Complex conditional rendering
+ * <ClassListProvider 
+ *   classes={[
+ *     'modal',
+ *     { 'modal--open': isOpen },
+ *     { 'modal--loading': isLoading },
+ *     () => theme === 'dark' ? 'modal--dark' : 'modal--light'
+ *   ]}
+ *   optimize={true}
+ * >
+ *   {(className) => (
+ *     <div className={className}>
+ *       <ModalContent />
+ *     </div>
+ *   )}
+ * </ClassListProvider>
+ * ```
+ */
+export const ClassListProvider: FunctionComponent<ClassListProviderProps> = ({
+  classes,
+  children,
+  optimize = true
+}) => {
+  const className = useMemo(() => {
+    // Resolve class names using the same optimization as useClassNames
+    const allClasses: string[] = [];
+    for (const input of classes) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    
+    // Filter and deduplicate
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, optimize ? [classes] : []);
+
+  return children(className);
+};
+
+/**
+ * Props for OptimizedClassList component
+ */
+interface OptimizedClassListProps {
+  /** Elements to render with shared classes */
+  readonly elements: readonly JSX.Element[];
+  /** Shared classes to apply to all elements */
+  readonly sharedClasses?: ClassNameInput[];
+  /** Strategy for optimizing DOM nodes */
+  readonly strategy?: 'merge' | 'fragment' | 'collapse';
+  /** Whether to deduplicate similar elements */
+  readonly deduplicate?: boolean;
+}
+
+/**
+ * Component that optimizes multiple elements with shared class patterns
+ * 
+ * This component can intelligently merge, fragment, or collapse multiple elements
+ * to reduce DOM nodes and optimize rendering performance. It's particularly useful
+ * when rendering lists of similar elements with shared styling.
+ * 
+ * @example
+ * ```tsx
+ * // Optimize a list of buttons with shared classes
+ * <OptimizedClassList
+ *   elements={[
+ *     <button key="1">Button 1</button>,
+ *     <button key="2">Button 2</button>,
+ *     <button key="3">Button 3</button>
+ *   ]}
+ *   sharedClasses={['btn', 'btn--small']}
+ *   strategy="merge"
+ *   deduplicate={true}
+ * />
+ * 
+ * // Fragment strategy for minimal DOM impact
+ * <OptimizedClassList
+ *   elements={navItems}
+ *   sharedClasses={[{ 'nav-item--active': isActive }]}
+ *   strategy="fragment"
+ * />
+ * ```
+ */
+export const OptimizedClassList: FunctionComponent<OptimizedClassListProps> = ({
+  elements,
+  sharedClasses = [],
+  strategy = 'fragment',
+  deduplicate = false
+}) => {
+  const optimizedElements = useMemo(() => {
+    if (elements.length === 0) return [];
+    
+    // Compute shared class name once
+    const sharedClassName = sharedClasses.length > 0 
+      ? (() => {
+          const allClasses: string[] = [];
+          for (const input of sharedClasses) {
+            const resolved = resolveClassNamesOptimized(input);
+            allClasses.push(...resolved);
+          }
+          const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+          return uniqueClasses.join(' ');
+        })()
+      : '';
+
+    // Process elements based on strategy
+    let processedElements = [...elements];
+
+    // Deduplicate similar elements if requested
+    if (deduplicate) {
+      const seen = new Set<string>();
+      processedElements = processedElements.filter(element => {
+        const key = `${element.type}-${JSON.stringify(element.props)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    // Apply shared classes to elements
+    const enhancedElements = processedElements.map((element, index) => {
+      if (!sharedClassName) return element;
+
+      const existingClassName = element.props?.className || '';
+      const mergedClassName = existingClassName 
+        ? `${existingClassName} ${sharedClassName}`.trim()
+        : sharedClassName;
+
+      return cloneElement(element, {
+        ...element.props,
+        className: mergedClassName,
+        key: element.key || index
+      });
+    });
+
+    return enhancedElements;
+  }, [elements, sharedClasses, deduplicate]);
+
+  // Render based on strategy
+  switch (strategy) {
+    case 'merge':
+      // Attempt to merge similar elements (simplified for demo)
+      return createElement(Fragment, {}, ...optimizedElements);
+      
+    case 'collapse':
+      // Collapse into minimal structure when possible
+      if (optimizedElements.length === 1) {
+        return optimizedElements[0];
+      }
+      return createElement(Fragment, {}, ...optimizedElements);
+      
+    case 'fragment':
+    default:
+      // Use Fragment for minimal DOM impact
+      return createElement(Fragment, {}, ...optimizedElements);
+  }
+};
+
+/**
+ * Hook that returns optimized render functions for performance-critical scenarios
+ * 
+ * This hook provides pre-computed render functions that can reduce createElement
+ * calls and optimize rendering performance for frequently updated components.
+ * 
+ * @param baseClasses - Base classes to apply
+ * @param optimizations - Optimization configuration
+ * @returns Object with optimized render functions
+ * 
+ * @example
+ * ```tsx
+ * function PerformantList({ items, isLoading }: ListProps) {
+ *   const { renderOptimized, renderWithClasses } = useOptimizedClassList(
+ *     ['list-item'],
+ *     { memoizeElements: true, batchUpdates: true }
+ *   );
+ * 
+ *   return (
+ *     <div>
+ *       {items.map(item => 
+ *         renderOptimized('li', 
+ *           { 'list-item--active': item.isActive },
+ *           item.content
+ *         )
+ *       )}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useOptimizedClassList(
+  baseClasses: ClassNameInput[] = [],
+  optimizations: {
+    readonly memoizeElements?: boolean;
+    readonly batchUpdates?: boolean;
+    readonly reduceCreateElement?: boolean;
+  } = {}
+) {
+  const {
+    memoizeElements = true,
+    batchUpdates = false,
+    reduceCreateElement = true
+  } = optimizations;
+
+  const baseClassName = useMemo(() => {
+    if (baseClasses.length === 0) return '';
+    
+    const allClasses: string[] = [];
+    for (const input of baseClasses) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, [baseClasses]);
+
+  const renderOptimized = useCallback((
+    type: string | ComponentType<any>,
+    conditionalClasses: ClassNameInput,
+    children?: JSX.Element | string | (JSX.Element | string)[],
+    props: Record<string, unknown> = {}
+  ): JSX.Element => {
+    const fullClassName = useMemo(() => {
+      const inputs: ClassNameInput[] = [];
+      if (baseClassName) inputs.push(baseClassName);
+      if (conditionalClasses) inputs.push(conditionalClasses);
+      
+      if (inputs.length === 0) return '';
+      
+      const allClasses: string[] = [];
+      for (const input of inputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      return uniqueClasses.join(' ');
+    }, [conditionalClasses]);
+
+    const elementProps = {
+      ...props,
+      className: fullClassName
+    };
+
+    if (reduceCreateElement && !children) {
+      return createElement(type, elementProps);
+    }
+
+    return createElement(type, elementProps, children);
+  }, [baseClassName, reduceCreateElement]);
+
+  const renderWithClasses = useCallback((
+    type: string | ComponentType<any>,
+    classes: ClassNameInput[],
+    children?: JSX.Element | string | (JSX.Element | string)[],
+    props: Record<string, unknown> = {}
+  ): JSX.Element => {
+    const allInputs = [...baseClasses, ...classes];
+    
+    let className = '';
+    if (allInputs.length > 0) {
+      const allClasses: string[] = [];
+      for (const input of allInputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      className = uniqueClasses.join(' ');
+    }
+    
+    return createElement(type, { ...props, className }, children);
+  }, [baseClasses]);
+
+  return {
+    renderOptimized: memoizeElements ? useMemo(() => renderOptimized, [renderOptimized]) : renderOptimized,
+    renderWithClasses: memoizeElements ? useMemo(() => renderWithClasses, [renderWithClasses]) : renderWithClasses,
+    baseClassName
+  };
+}

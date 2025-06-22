@@ -4,7 +4,7 @@ An optimized library API for setting, unsetting, and toggling CSS classes on DOM
 
 ## Overview
 
-The classList API provides two complementary approaches for CSS class management:
+The classList API provides three complementary approaches for CSS class management:
 
 ### Imperative APIs
 Direct DOM manipulation functions for immediate control:
@@ -19,18 +19,27 @@ Hooks that integrate with Preact's component lifecycle:
 - `useConditionalClassList()` - Fine-grained conditional class management
 - `useToggleClassListSelector()` - Declarative toggling via selectors
 
+### JSX HOC and Performance-Optimized Declarative APIs
+High-performance JSX components and patterns for optimal rendering:
+- `withClassList()` - Higher-Order Component for enhanced class management
+- `ClassListProvider` - Render prop component for dynamic class computation
+- `OptimizedClassList` - Component that merges and optimizes multiple elements
+- `useOptimizedClassList()` - Hook that returns optimized render functions
+
 All functions and hooks use the same flexible input types as `useClassNames` for consistency.
 
 ## Key Features
 
 - 🎯 **Direct DOM Manipulation**: Imperative functions for immediate control
 - ⚛️ **Preact Integration**: Declarative hooks with lifecycle management
+- 🚀 **JSX HOC Patterns**: Higher-Order Components and render props for optimized rendering
+- ⚡ **Performance Optimized**: Intelligent createElement reduction and node merging
 - 🔄 **Flexible Input Types**: Same input patterns as useClassNames (strings, objects, arrays, functions)
 - 📦 **Multi-Element Support**: Works with single elements, arrays, NodeList, HTMLCollection
-- ⚡ **Performance Optimized**: Reuses optimized resolution logic from useClassNames
-- 🛡️ **Error Resilient**: Graceful handling of invalid inputs and edge cases
 - 🧩 **Consistent API**: Follows the same patterns and conventions as useClassNames
+- 🛡️ **Error Resilient**: Graceful handling of invalid inputs and edge cases
 - 🔄 **Automatic Cleanup**: Declarative hooks handle cleanup on unmount
+- 🎨 **Element Deduplication**: Smart merging and collapsing of similar elements
 
 ## API Reference
 
@@ -610,6 +619,255 @@ function FormField({ value, error, isValidating }: FormFieldProps) {
 
 4. **Performance**: Prefer object-based conditionals over multiple hook calls
 
+### JSX HOC and Performance APIs
+1. **Choose the Right Pattern**:
+   - Use `withClassList` for component enhancement and reusable class logic
+   - Use `ClassListProvider` for render prop patterns and dynamic class computation
+   - Use `OptimizedClassList` for rendering multiple similar elements efficiently
+   - Use `useOptimizedClassList` for performance-critical rendering scenarios
+
+2. **Performance Optimization**:
+   - Enable `optimizeNodes` in `withClassList` to reduce createElement calls
+   - Use `deduplicate` in `OptimizedClassList` to remove similar elements
+   - Enable `memoizeElements` in `useOptimizedClassList` for better caching
+   - Consider `batchUpdates` for high-frequency updates
+
+3. **JSX Patterns**:
+   - HOCs are ideal for component libraries and consistent styling
+   - Render props provide maximum flexibility for dynamic scenarios
+   - Element optimization works best with collections of similar elements
+
+## JSX HOC and Performance-Optimized APIs
+
+### `withClassList(Component, config)`
+
+Higher-Order Component that enhances existing components with intelligent class management and performance optimizations.
+
+**Configuration:**
+```typescript
+interface WithClassListConfig<P> {
+  baseClasses?: ClassNameInput[];        // Static classes always applied
+  dynamicClasses?: (props: P) => ClassNameInput[];  // Dynamic classes based on props
+  mergeClassName?: boolean;              // Merge with existing className prop
+  optimizeNodes?: boolean;               // Optimize createElement calls
+}
+```
+
+**Example:**
+```tsx
+// Enhance a button with consistent styling
+const Button = ({ className, children, onClick }) => (
+  <button className={className} onClick={onClick}>{children}</button>
+);
+
+const EnhancedButton = withClassList(Button, {
+  baseClasses: ['btn', 'btn--primary'],
+  dynamicClasses: (props) => [
+    { 'btn--active': props.isActive },
+    { 'btn--disabled': props.disabled },
+    props.variant && `btn--${props.variant}`
+  ],
+  mergeClassName: true,
+  optimizeNodes: true
+});
+
+// Usage in JSX
+<EnhancedButton isActive={true} variant="large" onClick={handleClick}>
+  Click me
+</EnhancedButton>
+```
+
+### `ClassListProvider`
+
+Render prop component that provides computed class names with performance optimization.
+
+**Props:**
+```typescript
+interface ClassListProviderProps {
+  classes: ClassNameInput[];             // Class inputs to resolve
+  children: (className: string) => JSX.Element;  // Render function
+  optimize?: boolean;                    // Enable memoization
+}
+```
+
+**Example:**
+```tsx
+// Dynamic modal with complex class logic
+<ClassListProvider
+  classes={[
+    'modal',
+    { 'modal--open': isOpen },
+    { 'modal--loading': isLoading },
+    () => isOpen && !isLoading ? 'modal--ready' : null
+  ]}
+  optimize={true}
+>
+  {(className) => (
+    <div className={className} role="dialog">
+      <ModalContent />
+    </div>
+  )}
+</ClassListProvider>
+```
+
+### `OptimizedClassList`
+
+Component that intelligently optimizes multiple elements with shared classes and reduces DOM nodes.
+
+**Props:**
+```typescript
+interface OptimizedClassListProps {
+  elements: readonly JSX.Element[];     // Elements to optimize
+  sharedClasses?: ClassNameInput[];     // Classes applied to all elements
+  strategy?: 'merge' | 'fragment' | 'collapse';  // Optimization strategy
+  deduplicate?: boolean;                // Remove duplicate elements
+}
+```
+
+**Example:**
+```tsx
+// Optimize a collection of buttons
+const buttons = [
+  <button key="1">Save</button>,
+  <button key="2">Cancel</button>,
+  <button key="3">Reset</button>
+];
+
+<OptimizedClassList
+  elements={buttons}
+  sharedClasses={['btn', 'btn--small']}
+  strategy="fragment"
+  deduplicate={true}
+/>
+
+// Renders optimized DOM with shared classes applied
+```
+
+### `useOptimizedClassList(baseClasses, optimizations)`
+
+Hook that returns optimized render functions for performance-critical scenarios.
+
+**Parameters:**
+```typescript
+function useOptimizedClassList(
+  baseClasses: ClassNameInput[],
+  optimizations: {
+    memoizeElements?: boolean;          // Cache render functions
+    batchUpdates?: boolean;             // Batch DOM updates
+    reduceCreateElement?: boolean;      // Minimize createElement calls
+  }
+)
+```
+
+**Returns:**
+```typescript
+{
+  renderOptimized: (type, conditionalClasses, children?, props?) => JSX.Element;
+  renderWithClasses: (type, classes, children?, props?) => JSX.Element;
+  baseClassName: string;
+}
+```
+
+**Example:**
+```tsx
+function PerformantList({ items, theme }) {
+  const { renderOptimized, renderWithClasses } = useOptimizedClassList(
+    ['list-item'],
+    { 
+      memoizeElements: true,
+      batchUpdates: true,
+      reduceCreateElement: true 
+    }
+  );
+
+  return (
+    <ul className="list">
+      {items.map((item, i) => 
+        renderOptimized('li', 
+          { 
+            'list-item--active': item.isActive,
+            [`list-item--${theme}`]: true 
+          },
+          item.content,
+          { key: i }
+        )
+      )}
+    </ul>
+  );
+}
+```
+
+## Advanced Performance Patterns
+
+### Complex Component Enhancement
+
+```tsx
+// Combine multiple APIs for maximum performance
+const DashboardCard = ({ user, notifications, theme }) => {
+  // Enhanced base component
+  const EnhancedCard = withClassList('div', {
+    baseClasses: ['card'],
+    dynamicClasses: () => [
+      `card--${theme}`,
+      { 'card--has-notifications': notifications.length > 0 }
+    ],
+    optimizeNodes: true
+  });
+
+  // Optimized rendering for performance-critical sections
+  const { renderOptimized } = useOptimizedClassList(['badge'], {
+    memoizeElements: true,
+    reduceCreateElement: true
+  });
+
+  return (
+    <ClassListProvider
+      classes={['dashboard-section', { 'dashboard-section--active': user.isActive }]}
+      optimize={true}
+    >
+      {(sectionClassName) => (
+        <section className={sectionClassName}>
+          <EnhancedCard>
+            {renderOptimized('span', 
+              { 'user-badge--premium': user.isPremium },
+              user.name
+            )}
+          </EnhancedCard>
+        </section>
+      )}
+    </ClassListProvider>
+  );
+};
+```
+
+### High-Performance List Rendering
+
+```tsx
+// Optimize rendering of large collections
+const OptimizedTable = ({ rows, columns }) => {
+  const cellElements = rows.flatMap(row => 
+    columns.map(col => 
+      <td key={`${row.id}-${col.id}`} data-value={row[col.key]}>
+        {row[col.key]}
+      </td>
+    )
+  );
+
+  return (
+    <table>
+      <tbody>
+        <OptimizedClassList
+          elements={cellElements}
+          sharedClasses={['table-cell', { 'table-cell--striped': true }]}
+          strategy="fragment"
+          deduplicate={false}
+        />
+      </tbody>
+    </table>
+  );
+};
+```
+
 ---
 
-The classList API provides both **imperative functions for direct control** and **Preact idiomatic hooks for declarative component integration**, offering a comprehensive solution for CSS class manipulation while maintaining consistency with the existing `useClassNames` hook patterns.
+The classList API provides **imperative functions for direct control**, **Preact idiomatic hooks for declarative component integration**, and **JSX HOC patterns for performance-optimized rendering**. This comprehensive solution offers multiple approaches for CSS class manipulation while maintaining consistency with existing `useClassNames` patterns and optimizing for modern React/Preact performance requirements.

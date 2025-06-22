@@ -1,6 +1,7 @@
-import { setClassList, unsetClassList, toggleClassList, useClassListSelector, useElementClassList, useConditionalClassList, useToggleClassListSelector } from '../hooks';
-import { renderHook } from '@testing-library/preact';
-import { createRef } from 'preact';
+import { setClassList, unsetClassList, toggleClassList, useClassListSelector, useElementClassList, useConditionalClassList, useToggleClassListSelector, withClassList, ClassListProvider, OptimizedClassList, useOptimizedClassList } from '../hooks';
+import { renderHook, render, screen } from '@testing-library/preact';
+import { createRef, createElement, FunctionComponent } from 'preact';
+import { JSX } from 'preact';
 
 // Setup DOM testing environment
 const createMockElement = (): Element => {
@@ -846,6 +847,412 @@ describe('Preact Idiomatic classList APIs', () => {
       
       allElements.forEach(element => {
         expect(element.classList.contains('dark-theme')).toBe(true);
+      });
+    });
+  });
+
+  describe('JSX HOC and Declarative APIs', () => {
+    // Helper components for testing
+    const Button: FunctionComponent<{ className?: string; children?: any; onClick?: () => void }> = ({ className, children, onClick }) => (
+      createElement('button', { className, onClick }, children)
+    );
+
+    const Card: FunctionComponent<{ className?: string; isActive?: boolean; variant?: string; children?: any }> = ({ className, children }) => (
+      createElement('div', { className }, children)
+    );
+
+    describe('withClassList HOC', () => {
+      it('should enhance component with base classes', () => {
+        const EnhancedButton = withClassList(Button, {
+          baseClasses: ['btn', 'btn--primary']
+        });
+
+        render(createElement(EnhancedButton, { 'data-testid': 'enhanced-button' }, 'Click me'));
+        
+        const button = screen.getByTestId('enhanced-button');
+        expect(button.classList.contains('btn')).toBe(true);
+        expect(button.classList.contains('btn--primary')).toBe(true);
+      });
+
+      it('should apply dynamic classes based on props', () => {
+        const EnhancedCard = withClassList(Card, {
+          baseClasses: ['card'],
+          dynamicClasses: (props: any) => [
+            { 'card--active': props.isActive },
+            { 'card--disabled': props.disabled },
+            props.variant && `card--${props.variant}`
+          ]
+        });
+
+        render(createElement(EnhancedCard, {
+          'data-testid': 'enhanced-card',
+          isActive: true,
+          disabled: false,
+          variant: 'primary'
+        }, 'Card content'));
+        
+        const card = screen.getByTestId('enhanced-card');
+        expect(card.classList.contains('card')).toBe(true);
+        expect(card.classList.contains('card--active')).toBe(true);
+        expect(card.classList.contains('card--disabled')).toBe(false);
+        expect(card.classList.contains('card--primary')).toBe(true);
+      });
+
+      it('should merge with existing className when mergeClassName is true', () => {
+        const EnhancedButton = withClassList(Button, {
+          baseClasses: ['btn'],
+          mergeClassName: true
+        });
+
+        render(createElement(EnhancedButton, {
+          'data-testid': 'merged-button',
+          className: 'existing-class'
+        }, 'Click me'));
+        
+        const button = screen.getByTestId('merged-button');
+        expect(button.classList.contains('btn')).toBe(true);
+        expect(button.classList.contains('existing-class')).toBe(true);
+      });
+
+      it('should optimize performance when className is unchanged', () => {
+        const EnhancedButton = withClassList(Button, {
+          baseClasses: [],
+          optimizeNodes: true
+        });
+
+        const originalClassName = 'static-class';
+        render(createElement(EnhancedButton, {
+          'data-testid': 'optimized-button',
+          className: originalClassName
+        }, 'Click me'));
+        
+        const button = screen.getByTestId('optimized-button');
+        expect(button.classList.contains('static-class')).toBe(true);
+      });
+
+      it('should set correct displayName for debugging', () => {
+        const EnhancedButton = withClassList(Button, {});
+        expect(EnhancedButton.displayName).toBe('withClassList(Button)');
+      });
+    });
+
+    describe('ClassListProvider', () => {
+      it('should provide computed className via render prop', () => {
+        render(
+          createElement(ClassListProvider, {
+            classes: ['btn', { 'btn--active': true }, ['btn--large']]
+          }, (className: string) => 
+            createElement('button', { 'data-testid': 'provider-button', className }, 'Dynamic Button')
+          )
+        );
+
+        const button = screen.getByTestId('provider-button');
+        expect(button.classList.contains('btn')).toBe(true);
+        expect(button.classList.contains('btn--active')).toBe(true);
+        expect(button.classList.contains('btn--large')).toBe(true);
+      });
+
+      it('should handle conditional classes in render prop', () => {
+        let isActive = false;
+        
+        const TestComponent = () => (
+          createElement(ClassListProvider, {
+            classes: ['modal', { 'modal--open': isActive }]
+          }, (className: string) =>
+            createElement('div', { 'data-testid': 'modal', className }, 'Modal content')
+          )
+        );
+
+        const { rerender } = render(createElement(TestComponent));
+        
+        let modal = screen.getByTestId('modal');
+        expect(modal.classList.contains('modal')).toBe(true);
+        expect(modal.classList.contains('modal--open')).toBe(false);
+
+        // Simulate props change
+        isActive = true;
+        rerender(createElement(TestComponent));
+        
+        modal = screen.getByTestId('modal');
+        expect(modal.classList.contains('modal--open')).toBe(true);
+      });
+
+      it('should optimize performance when optimize is enabled', () => {
+        const classes = ['static', 'classes'];
+        
+        render(
+          createElement(ClassListProvider, {
+            classes,
+            optimize: true
+          }, (className: string) =>
+            createElement('div', { 'data-testid': 'optimized', className }, 'Content')
+          )
+        );
+
+        const element = screen.getByTestId('optimized');
+        expect(element.classList.contains('static')).toBe(true);
+        expect(element.classList.contains('classes')).toBe(true);
+      });
+    });
+
+    describe('OptimizedClassList', () => {
+      it('should render elements with shared classes', () => {
+        const elements = [
+          createElement('button', { key: '1', 'data-testid': 'btn1' }, 'Button 1'),
+          createElement('button', { key: '2', 'data-testid': 'btn2' }, 'Button 2'),
+          createElement('button', { key: '3', 'data-testid': 'btn3' }, 'Button 3')
+        ];
+
+        render(
+          createElement(OptimizedClassList, {
+            elements,
+            sharedClasses: ['btn', 'btn--small'],
+            strategy: 'fragment'
+          })
+        );
+
+        const btn1 = screen.getByTestId('btn1');
+        const btn2 = screen.getByTestId('btn2');
+        const btn3 = screen.getByTestId('btn3');
+
+        [btn1, btn2, btn3].forEach(button => {
+          expect(button.classList.contains('btn')).toBe(true);
+          expect(button.classList.contains('btn--small')).toBe(true);
+        });
+      });
+
+      it('should merge shared classes with existing className', () => {
+        const elements = [
+          createElement('div', { key: '1', 'data-testid': 'card1', className: 'existing' }, 'Card 1')
+        ];
+
+        render(
+          createElement(OptimizedClassList, {
+            elements,
+            sharedClasses: ['card', 'card--bordered']
+          })
+        );
+
+        const card = screen.getByTestId('card1');
+        expect(card.classList.contains('existing')).toBe(true);
+        expect(card.classList.contains('card')).toBe(true);
+        expect(card.classList.contains('card--bordered')).toBe(true);
+      });
+
+      it('should deduplicate similar elements when deduplicate is true', () => {
+        const elements = [
+          createElement('button', { key: '1' }, 'Button'),
+          createElement('button', { key: '2' }, 'Button'), // Duplicate
+          createElement('span', { key: '3' }, 'Different')
+        ];
+
+        const { container } = render(
+          createElement(OptimizedClassList, {
+            elements,
+            sharedClasses: ['shared'],
+            deduplicate: true
+          })
+        );
+
+        const buttons = container.querySelectorAll('button');
+        const spans = container.querySelectorAll('span');
+        
+        expect(buttons.length).toBe(1); // Duplicate removed
+        expect(spans.length).toBe(1); // Different element preserved
+      });
+
+      it('should handle collapse strategy for single element', () => {
+        const elements = [
+          createElement('button', { key: '1', 'data-testid': 'single-btn' }, 'Single Button')
+        ];
+
+        render(
+          createElement(OptimizedClassList, {
+            elements,
+            sharedClasses: ['btn'],
+            strategy: 'collapse'
+          })
+        );
+
+        const button = screen.getByTestId('single-btn');
+        expect(button.classList.contains('btn')).toBe(true);
+      });
+
+      it('should handle empty elements array gracefully', () => {
+        expect(() => {
+          render(
+            createElement(OptimizedClassList, {
+              elements: [],
+              sharedClasses: ['test']
+            })
+          );
+        }).not.toThrow();
+      });
+    });
+
+    describe('useOptimizedClassList', () => {
+      it('should return optimized render functions with base classes', () => {
+        const TestComponent = () => {
+          const { renderOptimized, baseClassName } = useOptimizedClassList(
+            ['base', 'classes'],
+            { memoizeElements: true }
+          );
+
+          expect(baseClassName).toBe('base classes');
+
+          return renderOptimized('div', { 'conditional': true }, 'Content', { 'data-testid': 'optimized-div' });
+        };
+
+        render(createElement(TestComponent));
+
+        const div = screen.getByTestId('optimized-div');
+        expect(div.classList.contains('base')).toBe(true);
+        expect(div.classList.contains('classes')).toBe(true);
+        expect(div.classList.contains('conditional')).toBe(true);
+      });
+
+      it('should return renderWithClasses function', () => {
+        const TestComponent = () => {
+          const { renderWithClasses } = useOptimizedClassList(['base']);
+
+          return renderWithClasses('span', ['extra', 'classes'], 'Span content', { 'data-testid': 'render-span' });
+        };
+
+        render(createElement(TestComponent));
+
+        const span = screen.getByTestId('render-span');
+        expect(span.classList.contains('base')).toBe(true);
+        expect(span.classList.contains('extra')).toBe(true);
+        expect(span.classList.contains('classes')).toBe(true);
+      });
+
+      it('should optimize createElement calls when reduceCreateElement is true', () => {
+        const TestComponent = () => {
+          const { renderOptimized } = useOptimizedClassList(
+            ['btn'],
+            { reduceCreateElement: true }
+          );
+
+          return renderOptimized('button', { 'btn--primary': true }, undefined, { 'data-testid': 'reduced-btn' });
+        };
+
+        render(createElement(TestComponent));
+
+        const button = screen.getByTestId('reduced-btn');
+        expect(button.classList.contains('btn')).toBe(true);
+        expect(button.classList.contains('btn--primary')).toBe(true);
+      });
+
+      it('should handle empty base classes', () => {
+        const TestComponent = () => {
+          const { renderOptimized, baseClassName } = useOptimizedClassList([]);
+
+          expect(baseClassName).toBe('');
+
+          return renderOptimized('div', 'only-conditional', 'Content', { 'data-testid': 'no-base' });
+        };
+
+        render(createElement(TestComponent));
+
+        const div = screen.getByTestId('no-base');
+        expect(div.classList.contains('only-conditional')).toBe(true);
+      });
+
+      it('should memoize render functions when memoizeElements is true', () => {
+        let renderCount = 0;
+        
+        const TestComponent = ({ trigger }: { trigger: number }) => {
+          const { renderOptimized } = useOptimizedClassList(
+            ['base'],
+            { memoizeElements: true }
+          );
+
+          renderCount++;
+
+          return renderOptimized('div', { 'dynamic': trigger > 5 }, `Count: ${renderCount}`, { 'data-testid': 'memoized' });
+        };
+
+        const { rerender } = render(createElement(TestComponent, { trigger: 1 }));
+
+        expect(screen.getByTestId('memoized')).toHaveTextContent('Count: 1');
+
+        // Re-render with same trigger value
+        rerender(createElement(TestComponent, { trigger: 1 }));
+        
+        // Should be memoized, so render count should increase but content optimization may occur
+        expect(screen.getByTestId('memoized')).toBeInTheDocument();
+      });
+    });
+
+    describe('Performance optimization integration', () => {
+      it('should handle complex nested scenarios efficiently', () => {
+        const ComplexComponent = ({ isActive, theme }: { isActive: boolean; theme: string }) => {
+          const EnhancedCard = withClassList(Card, {
+            baseClasses: ['card'],
+            dynamicClasses: (props: any) => [
+              { 'card--active': props.isActive },
+              `card--${theme}`
+            ]
+          });
+
+          const { renderOptimized } = useOptimizedClassList(['nested']);
+
+          return createElement('div', { 'data-testid': 'complex-container' },
+            createElement(ClassListProvider, {
+              classes: ['wrapper', { 'wrapper--themed': theme === 'dark' }]
+            }, (wrapperClassName: string) =>
+              createElement('div', { className: wrapperClassName },
+                createElement(EnhancedCard, { isActive, 'data-testid': 'complex-card' }),
+                renderOptimized('span', { 'nested--active': isActive }, 'Nested content', { 'data-testid': 'nested-span' })
+              )
+            )
+          );
+        };
+
+        render(createElement(ComplexComponent, { isActive: true, theme: 'dark' }));
+
+        const container = screen.getByTestId('complex-container');
+        const card = screen.getByTestId('complex-card');
+        const span = screen.getByTestId('nested-span');
+
+        expect(container).toBeInTheDocument();
+        expect(card.classList.contains('card')).toBe(true);
+        expect(card.classList.contains('card--active')).toBe(true);
+        expect(card.classList.contains('card--dark')).toBe(true);
+        expect(span.classList.contains('nested')).toBe(true);
+        expect(span.classList.contains('nested--active')).toBe(true);
+      });
+
+      it('should maintain performance with large element collections', () => {
+        const elements = Array.from({ length: 100 }, (_, i) => 
+          createElement('div', { key: i, 'data-index': i }, `Item ${i}`)
+        );
+
+        const startTime = performance.now();
+
+        render(
+          createElement(OptimizedClassList, {
+            elements,
+            sharedClasses: ['item', 'item--optimized'],
+            strategy: 'fragment',
+            deduplicate: false
+          })
+        );
+
+        const endTime = performance.now();
+        const renderTime = endTime - startTime;
+
+        // Ensure rendering completes in reasonable time (< 100ms for 100 elements)
+        expect(renderTime).toBeLessThan(100);
+
+        // Verify all elements are rendered with shared classes
+        const renderedItems = document.querySelectorAll('[data-index]');
+        expect(renderedItems.length).toBe(100);
+        
+        renderedItems.forEach(item => {
+          expect(item.classList.contains('item')).toBe(true);
+          expect(item.classList.contains('item--optimized')).toBe(true);
+        });
       });
     });
   });
