@@ -530,12 +530,16 @@ function resolveClassNamesOptimized(input: ClassNameInput): readonly string[] {
     return Object.freeze([String(input)]);
   }
 
-  // Handle Preact signals - extract value efficiently
-  if (input && typeof input === 'object' && 'value' in input && typeof (input as any).value !== 'undefined') {
-    try {
-      return resolveClassNamesOptimized((input as Signal<ClassNameInput>).value);
-    } catch {
-      return Object.freeze([]); // Silent failure for performance in production
+  // Handle Preact signals - extract value efficiently with proper type guards
+  if (input && typeof input === 'object' && 'value' in input) {
+    // Type guard for Signal-like objects
+    const potentialSignal = input as { value: unknown };
+    if (typeof potentialSignal.value !== 'undefined') {
+      try {
+        return resolveClassNamesOptimized(potentialSignal.value as ClassNameInput);
+      } catch {
+        return Object.freeze([]); // Silent failure for performance in production
+      }
     }
   }
 
@@ -1242,17 +1246,17 @@ export function useToggleClassListSelector(
 
 /**
  * Props for components that can be enhanced with class list management
- * Made more flexible to work with any component props including data attributes
+ * Generic type preserves the original component's prop structure
  */
-interface ClassListEnhancedProps {
+interface ClassListEnhancedProps<T extends Record<string, unknown> = Record<string, unknown>> extends T {
   readonly className?: string;
-  readonly [key: string]: any;
 }
 
 /**
  * Configuration for the withClassList HOC
+ * Generic type preserves component prop types
  */
-interface WithClassListConfig<P = Record<string, unknown>> {
+interface WithClassListConfig<P extends Record<string, unknown> = Record<string, unknown>> {
   /** Base classes to always apply */
   readonly baseClasses?: ClassNameInput[];
   /** Dynamic classes based on props */
@@ -1616,10 +1620,10 @@ export function useOptimizedClassList(
   }, [baseClasses]);
 
   const renderOptimized = useCallback((
-    type: string | ComponentType<any>,
+    type: string | ComponentType<Record<string, unknown>>,
     conditionalClasses: ClassNameInput,
     children?: JSX.Element | string | readonly (JSX.Element | string)[],
-    props: Readonly<Record<string, unknown>> = {}
+    props: Record<string, unknown> = {}
   ): JSX.Element => {
     const fullClassName = useMemo(() => {
       const inputs: ClassNameInput[] = [];
@@ -1637,23 +1641,23 @@ export function useOptimizedClassList(
       return uniqueClasses.join(' ');
     }, [conditionalClasses]);
 
-    const elementProps: Readonly<Record<string, unknown>> = {
+    const elementProps = {
       ...props,
       className: fullClassName
-    } as const;
+    };
 
     if (reduceCreateElement && !children) {
-      return createElement(type as any, elementProps);
+      return createElement(type, elementProps);
     }
 
-    return createElement(type as any, elementProps, children);
+    return createElement(type, elementProps, children);
   }, [baseClassName, reduceCreateElement]);
 
   const renderWithClasses = useCallback((
-    type: string | ComponentType<any>,
+    type: string | ComponentType<Record<string, unknown>>,
     classes: readonly ClassNameInput[],
     children?: JSX.Element | string | readonly (JSX.Element | string)[],
-    props: Readonly<Record<string, unknown>> = {}
+    props: Record<string, unknown> = {}
   ): JSX.Element => {
     const allInputs = [...baseClasses, ...classes] as const;
     
@@ -1668,7 +1672,7 @@ export function useOptimizedClassList(
       className = uniqueClasses.join(' ');
     }
     
-    return createElement(type as any, { ...props, className } as const, children);
+    return createElement(type, { ...props, className }, children);
   }, [baseClasses]);
 
   return {
@@ -1687,7 +1691,7 @@ export function useOptimizedClassList(
  * This extends the standard JSX props to include our custom classList property
  * Uses readonly for immutability and proper typing for better performance
  */
-interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<any>> {
+interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<EventTarget>> {
   /**
    * Dynamic class list input using the same flexible patterns as useClassNames
    * Can accept strings, objects, arrays, functions, or any combination
@@ -1698,13 +1702,9 @@ interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<any>> {
    */
   readonly className?: string;
   /**
-   * Children elements - made more specific than JSX.Element
+   * Children elements - more specific typing than the default
    */
-  readonly children?: JSX.Element | JSX.Element[] | string | string[];
-  /**
-   * Allow any additional props for maximum flexibility
-   */
-  readonly [key: string]: any;
+  readonly children?: JSX.Element | JSX.Element[] | string | number | (JSX.Element | string | number)[];
 }
 
 /**
@@ -1761,19 +1761,29 @@ interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<any>> {
  * </button>
  * ```
  */
+export function h<T extends keyof JSX.IntrinsicElements>(
+  type: T,
+  props: (JSX.IntrinsicElements[T] & { classList?: ClassNameInput }) | null,
+  ...children: readonly unknown[]
+): JSX.Element;
+export function h<P extends Record<string, unknown>>(
+  type: ComponentType<P>,
+  props: (P & { classList?: ClassNameInput; className?: string }) | null,
+  ...children: readonly unknown[]
+): JSX.Element;
 export function h(
-  type: string | ComponentType<any>,
+  type: string | ComponentType<Record<string, unknown>>,
   props: EnhancedJSXProps | null,
-  ...children: readonly any[]
+  ...children: readonly unknown[]
 ): JSX.Element {
   // Handle null/undefined props - performance fast path
   if (!props) {
-    return createElement(type as any, null, ...children);
+    return createElement(type, null, ...children);
   }
   
   // Fast path: no classList prop present - avoid object destructuring overhead
   if (!('classList' in props)) {
-    return createElement(type as any, props, ...children);
+    return createElement(type, props, ...children);
   }
   
   // Extract classList and className, keeping other props immutable
@@ -1781,7 +1791,7 @@ export function h(
   
   // Handle empty classList - another fast path
   if (!classList) {
-    return createElement(type as any, { ...restProps, className } as const, ...children);
+    return createElement(type, { ...restProps, className }, ...children);
   }
   
   // Build array of all class inputs for unified processing
@@ -1792,7 +1802,7 @@ export function h(
   
   // Early return for empty inputs
   if (allInputs.length === 0) {
-    return createElement(type as any, restProps, ...children);
+    return createElement(type, restProps, ...children);
   }
   
   // Use the same optimized logic as useClassNames for consistency
@@ -1811,9 +1821,9 @@ export function h(
   const finalProps = {
     ...restProps,
     ...(finalClassName && { className: finalClassName })
-  } as const;
+  };
   
-  return createElement(type as any, finalProps, ...children);
+  return createElement(type, finalProps, ...children);
 }
 
 /**
@@ -1871,9 +1881,9 @@ declare module 'preact' {
  * ```
  */
 export function createEnhancedElement(
-  type: string | ComponentType<any>,
+  type: string | ComponentType<Record<string, unknown>>,
   props: EnhancedJSXProps | null = null,
-  ...children: readonly any[]
+  ...children: readonly unknown[]
 ): JSX.Element {
   return h(type, props, ...children);
 }
