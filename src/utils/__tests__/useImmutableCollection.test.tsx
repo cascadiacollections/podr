@@ -9,7 +9,7 @@ import {
 } from '../useImmutableCollection';
 
 describe('stableCollectionSignal', () => {
-  it('returns EMPTY_ARRAY for empty or undefined initial', () => {
+  it('returns EMPTY_ARRAY for empty initial value', () => {
     const [sig] = stableCollectionSignal();
     expect(sig.value).toBe(EMPTY_ARRAY);
     const [sig2] = stableCollectionSignal([]);
@@ -38,67 +38,87 @@ describe('stableCollectionSignal', () => {
 });
 
 describe('useStableCollectionState', () => {
-  function TestComponent({ initial, onState }: any) {
-    const [state, setState] = useStableCollectionState(initial);
+  // Generic test helper for stateful hooks
+  function StateTestComponent<T>({ initial, onState }: { initial: readonly T[] | null | undefined, onState: (state: readonly T[], setState: (v: readonly T[] | ((prev: readonly T[]) => readonly T[])) => void) => void }) {
+    const [state, setState] = useStableCollectionState<T>(initial);
     useEffect(() => {
       onState(state, setState);
-    }, [state]);
+    }, [state, setState, onState]);
     return null;
   }
-  it('returns EMPTY_ARRAY for empty or undefined initial', () => {
-    let observed: any;
-    render(<TestComponent initial={undefined} onState={(s: any) => (observed = s)} />);
-    expect(observed).toBe(EMPTY_ARRAY);
-    render(<TestComponent initial={[]} onState={(s: any) => (observed = s)} />);
-    expect(observed).toBe(EMPTY_ARRAY);
+
+  it('returns EMPTY_ARRAY for empty initial value', () => {
+    let observed: readonly number[];
+    render(<StateTestComponent<number> initial={undefined} onState={(s) => (observed = s)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
+    render(<StateTestComponent<number> initial={[]} onState={(s) => (observed = s)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
   });
+
+  it('returns EMPTY_ARRAY for null initial value', () => {
+    let observed: readonly number[];
+    render(<StateTestComponent<number> initial={null} onState={(s) => (observed = s)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
+  });
+
   it('freezes non-empty arrays and preserves referential stability for EMPTY_ARRAY', () => {
-    let state: any, setState: any;
-    const { rerender } = render(<TestComponent initial={[1, 2]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    expect(state).toEqual([1, 2]);
-    expect(Object.isFrozen(state)).toBe(true);
+    // Note: rerender is required after act to ensure the test variable is updated (React/Preact test quirk)
+    let state: readonly number[], setState: (v: readonly number[] | ((prev: readonly number[]) => readonly number[])) => void;
+    const { rerender } = render(<StateTestComponent<number> initial={[1, 2]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    expect(state!).toEqual([1, 2]);
+    expect(Object.isFrozen(state!)).toBe(true);
     act(() => setState([]));
-    rerender(<TestComponent initial={[]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    expect(state).toBe(EMPTY_ARRAY);
+    rerender(<StateTestComponent<number> initial={[]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    expect(state!).toBe(EMPTY_ARRAY);
     act(() => setState([3]));
-    rerender(<TestComponent initial={[3]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    expect(state).toEqual([3]);
-    expect(Object.isFrozen(state)).toBe(true);
+    rerender(<StateTestComponent<number> initial={[3]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    expect(state!).toEqual([3]);
+    expect(Object.isFrozen(state!)).toBe(true);
     act(() => setState([]));
-    rerender(<TestComponent initial={[]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    expect(state).toBe(EMPTY_ARRAY);
+    rerender(<StateTestComponent<number> initial={[]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    expect(state!).toBe(EMPTY_ARRAY);
   });
+
   it('supports functional updates', () => {
-    let state: any, setState: any;
-    const { rerender } = render(<TestComponent initial={[1]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    act(() => setState((prev: any) => prev.concat(2)));
-    rerender(<TestComponent initial={[1,2]} onState={(_s: any, _set: any) => { state = _s; setState = _set; }} />);
-    expect(state).toEqual([1, 2]);
-    expect(Object.isFrozen(state)).toBe(true);
+    let state: readonly number[], setState: (v: readonly number[] | ((prev: readonly number[]) => readonly number[])) => void;
+    const { rerender } = render(<StateTestComponent<number> initial={[1]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    act(() => setState((prev) => prev.concat(2)));
+    rerender(<StateTestComponent<number> initial={[1,2]} onState={(_s, _set) => { state = _s; setState = _set; }} />);
+    expect(state!).toEqual([1, 2]);
+    expect(Object.isFrozen(state!)).toBe(true);
   });
 });
 
 describe('useImmutableCollection', () => {
-  function TestComponent({ input, onResult }: any) {
-    const result = useImmutableCollection(input);
+  // Generic test helper for immutable hooks
+  function ImmutableTestComponent<T>({ input, onResult }: { input: readonly T[] | null | undefined, onResult: (result: readonly T[]) => void }) {
+    const result = useImmutableCollection<T>(input);
     useEffect(() => {
       onResult(result);
-    }, [result]);
+    }, [result, onResult]);
     return null;
   }
+
   it('returns EMPTY_ARRAY for empty or undefined input', () => {
-    let observed: any;
-    render(<TestComponent input={undefined} onResult={(r: any) => (observed = r)} />);
-    expect(observed).toBe(EMPTY_ARRAY);
-    render(<TestComponent input={[]} onResult={(r: any) => (observed = r)} />);
-    expect(observed).toBe(EMPTY_ARRAY);
+    let observed: readonly number[];
+    render(<ImmutableTestComponent<number> input={undefined} onResult={(r) => (observed = r)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
+    render(<ImmutableTestComponent<number> input={[]} onResult={(r) => (observed = r)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
   });
+
+  it('returns EMPTY_ARRAY for null input', () => {
+    let observed: readonly number[];
+    render(<ImmutableTestComponent<number> input={null} onResult={(r) => (observed = r)} />);
+    expect(observed!).toBe(EMPTY_ARRAY);
+  });
+
   it('freezes non-empty arrays and preserves referential stability for EMPTY_ARRAY', () => {
-    let result: any;
-    render(<TestComponent input={[1, 2]} onResult={(r: any) => (result = r)} />);
-    expect(result).toEqual([1, 2]);
-    expect(Object.isFrozen(result)).toBe(true);
-    render(<TestComponent input={[]} onResult={(r: any) => (result = r)} />);
-    expect(result).toBe(EMPTY_ARRAY);
+    let result: readonly number[];
+    render(<ImmutableTestComponent<number> input={[1, 2]} onResult={(r) => (result = r)} />);
+    expect(result!).toEqual([1, 2]);
+    expect(Object.isFrozen(result!)).toBe(true);
+    render(<ImmutableTestComponent<number> input={[]} onResult={(r) => (result = r)} />);
+    expect(result!).toBe(EMPTY_ARRAY);
   });
 });
