@@ -1,50 +1,52 @@
-import { h, JSX, Fragment } from 'preact';
-import { useEffect, useCallback, useRef } from 'preact/hooks';
-import { signal, computed, effect, Signal } from '@preact/signals';
+import { computed, effect, signal, Signal } from '@preact/signals';
+import { Fragment, h, JSX } from 'preact';
+import { useCallback, useEffect, useRef } from 'preact/hooks';
 
-import { IFeedItem } from './Result';
-import { List } from './List';
-import { getFeedUrl, getSecureUrl, toArray } from '../utils/helpers';
-import { Search } from './Search';
 import { APP_CONFIG, IFeed, ITopPodcast } from '../utils/AppContext';
-import { useElementClassList, useConditionalClassList, setClassList, unsetClassList, toggleClassList } from '../utils/hooks';
+import { getFeedUrl, getSecureUrl } from '../utils/helpers';
+import { List } from './List';
+import { IFeedItem } from './Result';
+import { Search } from './Search';
 
 declare global {
-  interface Window { 
+  interface Window {
     gtag: (command: string, action: string, params?: Record<string, unknown>) => void;
     PODR_TOP_PODCASTS?: { feed: { entry: ReadonlyArray<ITopPodcast> } };
   }
 }
 
-// Create signals for state
-const query = signal('');
+
+// Single stable empty array for all empty signal defaults
+const EMPTY_ARRAY: readonly unknown[] = Object.freeze([]);
+
+const query = signal<string>('');
 const favorited = signal<ReadonlySet<IFeed>>(new Set());
-const results = signal<ReadonlyArray<IFeedItem>>(
-  JSON.parse(localStorage.getItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY) || '[]')
+const results = signal<readonly IFeedItem[]>(
+  (() => {
+    const raw = localStorage.getItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY);
+    try {
+      return raw ? JSON.parse(raw) : EMPTY_ARRAY as readonly IFeedItem[];
+    } catch {
+      return EMPTY_ARRAY as readonly IFeedItem[];
+    }
+  })()
 );
-const searchResults = signal<ReadonlyArray<IFeed>>([]);
-const topResults = signal<ReadonlyArray<ITopPodcast>>([]);
+const searchResults = signal<readonly IFeed[]>(EMPTY_ARRAY as readonly IFeed[]);
+const topResults = signal<readonly ITopPodcast[]>(EMPTY_ARRAY as readonly ITopPodcast[]);
 
 // Computed values
-const feeds = computed(() => toArray(favorited.value.values()));
+const feeds = computed(() => Array.from(favorited.value.values()));
 
 // Custom hook for localStorage persistence
-const useLocalStorage = <T,>(key: string, value: Signal<T>) => {
-  // Load from localStorage on mount
+const useLocalStorage = <T,>(key: string, value: Signal<T>): Signal<T> => {
   useEffect(() => {
     const savedValue = localStorage.getItem(key);
     if (savedValue) {
       try {
-        const parsedValue = JSON.parse(savedValue);
         if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
-          // Handle special case for Set
-          const feedSet = new Set<IFeed>();
-          parsedValue.forEach((feed: IFeed) => {
-            feedSet.add(feed);
-          });
-          favorited.value = feedSet;
+          favorited.value = new Set(JSON.parse(savedValue));
         } else {
-          value.value = parsedValue;
+          value.value = JSON.parse(savedValue);
         }
       } catch (e) {
         console.error(`Error parsing localStorage for ${key}:`, e);
@@ -52,15 +54,13 @@ const useLocalStorage = <T,>(key: string, value: Signal<T>) => {
     }
   }, [key]);
 
-  // Save to localStorage on change
   effect(() => {
     if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
-      localStorage.setItem(key, JSON.stringify(toArray(favorited.value.values())));
+      localStorage.setItem(key, JSON.stringify(Array.from(favorited.value.values())));
     } else {
       localStorage.setItem(key, JSON.stringify(value.value));
     }
   });
-
   return value;
 };
 
@@ -99,30 +99,15 @@ const useFetch = <T,>(url: string, options?: RequestInit): { data: T | null; err
   return { data: data.value, error: error.value, isLoading: isLoading.value };
 };
 
+const BACKGROUND_REFRESH_TIMEOUT = 5000;
 export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
-  
-  // Use the new conditional classList hook for main container states
-  useConditionalClassList(mainContainerRef, {
-    'app-container': true,
-    'has-search-results': searchResults.value.length > 0,
-    'has-favorites': feeds.value.length > 0,
-    'has-episodes': results.value.length > 0
-  });
-  
-  // Dynamic styling for search results section
-  useConditionalClassList(searchResultsRef, {
-    'search-results-section': true,
-    'results-loading': false, // Could be connected to a loading state
-    'has-multiple-results': searchResults.value.length > 1
-  });
-  
-  // Initialize localStorage
-  useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds as any);
+
+  useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds);
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results);
-  
+
   // Fetch top podcasts - uses inlined window variable or static file for initial render, then optionally updates from API
   useEffect(() => {
     // First check for window variable (inlined at build time)
@@ -150,7 +135,7 @@ export const App = (): JSX.Element => {
     if (ENABLE_BACKGROUND_REFRESH) {
       setTimeout(() => {
         fetchTopPodcastsFromAPI();
-      }, 5000); // Wait 5 seconds before refreshing data
+      }, BACKGROUND_REFRESH_TIMEOUT);
     }
   }, []);
 
@@ -210,7 +195,7 @@ export const App = (): JSX.Element => {
     }
 
     const queryParams: URLSearchParams = new URLSearchParams([
-      ['q', searchQuery], 
+      ['q', searchQuery],
       ['limit', limit.toString()]
     ]);
 
@@ -244,67 +229,81 @@ export const App = (): JSX.Element => {
     }
   }, []);
 
-  const pinFeedUrl = useCallback((feed: IFeed | string) => {
-    const newFavorited = new Set(favorited.value);
-    
+const pinFeedUrl = useCallback((feed: IFeed | string): void => {
+  favorited.value = (() => {
     if (typeof feed === 'string') {
-      // Create a simple feed object for string URLs
       const simpleFeed: IFeed = {
         collectionName: feed,
         feedUrl: feed,
         artworkUrl100: '',
         artworkUrl600: ''
       };
-      newFavorited.add(simpleFeed);
-      
       window.gtag('event', 'Feed', {
         eventAction: 'favorite',
         eventLabel: feed,
         transport: 'beacon'
       });
+      return new Set([...favorited.value, simpleFeed]);
     } else {
-      newFavorited.add(feed);
-      
       window.gtag('event', 'Feed', {
         eventAction: 'favorite',
         eventLabel: feed.feedUrl,
         transport: 'beacon'
       });
+      return new Set([...favorited.value, feed]);
     }
-    
-    favorited.value = newFavorited;
-  }, []);
+  })();
+}, []);
 
-  const unpinFeedUrl = useCallback((feed: IFeed) => {
-    const newFavorited = new Set(favorited.value);
-    newFavorited.delete(feed);
-    favorited.value = newFavorited;
+const unpinFeedUrl = useCallback((feed: IFeed): void => {
+  favorited.value = new Set(Array.from(favorited.value).filter(f => f.feedUrl !== feed.feedUrl));
+  window.gtag('event', 'Feed', {
+    eventAction: 'unfavorite',
+    eventLabel: feed.feedUrl,
+    transport: 'beacon'
+  });
+}, []);
 
-    window.gtag('event', 'Feed', {
-      eventAction: 'unfavorite',
-      eventLabel: feed.feedUrl,
-      transport: 'beacon'
+  // Hoisted handlers for JSX to avoid inline arrow functions
+  const handleSearchResultClick = useCallback((feedUrl: string) => {
+    tryFetchFeed(feedUrl);
+  }, [tryFetchFeed]);
+
+  const handleSearchResultDblClick = useCallback((feed: IFeed) => {
+    pinFeedUrl(feed);
+  }, [pinFeedUrl]);
+
+  const handleTopPodcastClick = useCallback(async (itunesId: string) => {
+    const feedResults = await fetch(`${APP_CONFIG.API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return await response.json();
+    }).catch((err: Error) => {
+      window.gtag('event', 'exception', {
+        description: `fetch_podcast_${itunesId}_${err.message}`,
+        fatal: false
+      });
+      return { results: [] };
     });
-  }, []);
 
-  // Example of programmatic classList manipulation with the new APIs
-  const handleImageHover = useCallback((event: MouseEvent, isEntering: boolean) => {
-    const target = event.target as HTMLImageElement;
-    if (isEntering) {
-      setClassList(target, 'hover-effect', 'scale-animation');
-    } else {
-      unsetClassList(target, 'hover-effect', 'scale-animation');
+    if (feedResults?.results?.length > 0) {
+      const feedUrl = feedResults.results[0].feedUrl;
+      tryFetchFeed(feedUrl);
     }
-  }, []);
+  }, [tryFetchFeed]);
 
-  const handleImageClick = useCallback((event: MouseEvent) => {
-    const target = event.target as HTMLImageElement;
-    // Temporarily add a click effect
-    setClassList(target, 'click-effect');
-    setTimeout(() => {
-      unsetClassList(target, 'click-effect');
-    }, 200);
-  }, []);
+  const handleTopPodcastDblClick = useCallback((feedId: string) => {
+    pinFeedUrl(feedId);
+  }, [pinFeedUrl]);
+
+  const handleFavoriteClick = useCallback((feedUrl: string) => {
+    tryFetchFeed(feedUrl);
+  }, [tryFetchFeed]);
+
+  const handleFavoriteDblClick = useCallback((feed: IFeed) => {
+    unpinFeedUrl(feed);
+  }, [unpinFeedUrl]);
 
   return (
     <div ref={mainContainerRef}>
@@ -324,13 +323,8 @@ export const App = (): JSX.Element => {
                 width={100}
                 className='img-fluid rounded-3'
                 alt={result.collectionName}
-                onMouseEnter={(e) => handleImageHover(e as any, true)}
-                onMouseLeave={(e) => handleImageHover(e as any, false)}
-                onClick={(e) => {
-                  handleImageClick(e as any);
-                  tryFetchFeed(result.feedUrl);
-                }}
-                onDblClick={() => pinFeedUrl(result)}
+                onClick={() => handleSearchResultClick(result.feedUrl)}
+                onDblClick={() => handleSearchResultDblClick(result)}
                 aria-label={`Favorite ${result.collectionName}`} />
             ))}
           </div>
@@ -347,27 +341,8 @@ export const App = (): JSX.Element => {
               width={100}
               className='img-fluid rounded-3'
               alt={result.title.label}
-              onClick={async () => {
-                const itunesId = result.id.attributes['im:id'];
-                const feedResults = await fetch(`${APP_CONFIG.API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
-                  if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                  }
-                  return await response.json();
-                }).catch((err: Error) => {
-                  window.gtag('event', 'exception', {
-                    description: `fetch_podcast_${itunesId}_${err.message}`,
-                    fatal: false
-                  });
-                  return { results: [] };
-                });
-                
-                if (feedResults?.results?.length > 0) {
-                  const feedUrl = feedResults.results[0].feedUrl;
-                  tryFetchFeed(feedUrl);
-                }
-              }}
-              onDblClick={() => pinFeedUrl(result.id.label)}
+              onClick={() => handleTopPodcastClick(result.id.attributes['im:id'])}
+              onDblClick={() => handleTopPodcastDblClick(result.id.label)}
               aria-label={`Favorite ${result.title.label}`} />
           ))}
         </div>
@@ -382,18 +357,20 @@ export const App = (): JSX.Element => {
           width={100}
           className='img-fluid rounded-3'
           alt={result.collectionName}
-          onClick={() => tryFetchFeed(result.feedUrl)}
-          onDblClick={() => unpinFeedUrl(result)} />
+          onClick={() => handleFavoriteClick(result.feedUrl)}
+          onDblClick={() => handleFavoriteDblClick(result)}
+          draggable={false}
+        />
       ))}
       </div>
       <h2 className="section-header">Episodes</h2>
       <List results={results.value} onClick={onClick} />
-      <audio 
-        ref={audioRef} 
-        autoPlay 
-        controls 
+      <audio
+        ref={audioRef}
+        autoPlay
+        controls
         preload='auto'
-        aria-label="Podcast episode player" 
+        aria-label="Podcast episode player"
       />
     </div>
   );
