@@ -7,6 +7,7 @@ import { List } from './List';
 import { getFeedUrl, getSecureUrl, toArray } from '../utils/helpers';
 import { Search } from './Search';
 import { APP_CONFIG, IFeed, ITopPodcast } from '../utils/AppContext';
+import { useElementClassList, useConditionalClassList, setClassList, unsetClassList, toggleClassList } from '../utils/hooks';
 
 declare global {
   interface Window { 
@@ -100,6 +101,23 @@ const useFetch = <T,>(url: string, options?: RequestInit): { data: T | null; err
 
 export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const mainContainerRef = useRef<HTMLDivElement>(null);
+  const searchResultsRef = useRef<HTMLDivElement>(null);
+  
+  // Use the new conditional classList hook for main container states
+  useConditionalClassList(mainContainerRef, {
+    'app-container': true,
+    'has-search-results': searchResults.value.length > 0,
+    'has-favorites': feeds.value.length > 0,
+    'has-episodes': results.value.length > 0
+  });
+  
+  // Dynamic styling for search results section
+  useConditionalClassList(searchResultsRef, {
+    'search-results-section': true,
+    'results-loading': false, // Could be connected to a loading state
+    'has-multiple-results': searchResults.value.length > 1
+  });
   
   // Initialize localStorage
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds as any);
@@ -269,14 +287,33 @@ export const App = (): JSX.Element => {
     });
   }, []);
 
+  // Example of programmatic classList manipulation with the new APIs
+  const handleImageHover = useCallback((event: MouseEvent, isEntering: boolean) => {
+    const target = event.target as HTMLImageElement;
+    if (isEntering) {
+      setClassList(target, 'hover-effect', 'scale-animation');
+    } else {
+      unsetClassList(target, 'hover-effect', 'scale-animation');
+    }
+  }, []);
+
+  const handleImageClick = useCallback((event: MouseEvent) => {
+    const target = event.target as HTMLImageElement;
+    // Temporarily add a click effect
+    setClassList(target, 'click-effect');
+    setTimeout(() => {
+      unsetClassList(target, 'click-effect');
+    }, 200);
+  }, []);
+
   return (
-    <Fragment>
+    <div ref={mainContainerRef}>
       <h1>
         <a href='/'>Podr</a>
       </h1>
       <Search onSearch={onSearch} />
       { searchResults.value.length > 0 ?
-        <Fragment>
+        <div ref={searchResultsRef}>
           <h2 className="section-header">Results for "{query.value}"</h2>
           <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
             {searchResults.value.map((result: IFeed) => (
@@ -287,12 +324,17 @@ export const App = (): JSX.Element => {
                 width={100}
                 className='img-fluid rounded-3'
                 alt={result.collectionName}
-                onClick={() => tryFetchFeed(result.feedUrl)}
+                onMouseEnter={(e) => handleImageHover(e as any, true)}
+                onMouseLeave={(e) => handleImageHover(e as any, false)}
+                onClick={(e) => {
+                  handleImageClick(e as any);
+                  tryFetchFeed(result.feedUrl);
+                }}
                 onDblClick={() => pinFeedUrl(result)}
                 aria-label={`Favorite ${result.collectionName}`} />
             ))}
           </div>
-        </Fragment> : null
+        </div> : null
       }
       <Fragment>
         <h2 className="section-header">Top podcasts</h2>
@@ -353,6 +395,6 @@ export const App = (): JSX.Element => {
         preload='auto'
         aria-label="Podcast episode player" 
       />
-    </Fragment>
+    </div>
   );
 };
