@@ -2,229 +2,237 @@
 
 exports[`App component loads top podcasts on mount 1`] = `
 <div>
-  <h1>
-    <a
-      href="/"
-    >
-      Podr
-    </a>
-  </h1>
-  <form
-    class="search-form"
-    role="search"
+  <div
+    class=""
   >
-    <div
-      class="search-input-container"
+    <h1>
+      <a
+        href="/"
+      >
+        Podr
+      </a>
+    </h1>
+    <form
+      class="search-form"
+      role="search"
     >
-      <input
-        aria-label="Search podcasts"
-        autocomplete="off"
-        class="form-control"
-        placeholder="Search podcasts"
-        type="search"
+      <div
+        class="search-input-container"
+      >
+        <input
+          aria-label="Search podcasts"
+          autocomplete="off"
+          class="form-control"
+          placeholder="Search podcasts"
+          type="search"
+        />
+      </div>
+      <button
+        aria-label="Search"
+        class="search-button"
+        type="submit"
+      >
+        Search
+      </button>
+    </form>
+    <h2
+      class="section-header"
+    >
+      Top podcasts
+    </h2>
+    <div
+      class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
+    >
+      <img
+        alt="Test Podcast"
+        aria-label="Favorite Test Podcast"
+        class="img-fluid rounded-3"
+        height="100"
+        src="test-image-url-large"
+        width="100"
       />
     </div>
-    <button
-      aria-label="Search"
-      class="search-button"
-      type="submit"
+    <h2
+      class="section-header"
     >
-      Search
-    </button>
-  </form>
-  <h2
-    class="section-header"
-  >
-    Top podcasts
-  </h2>
-  <div
-    class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
-  >
-    <img
-      alt="Test Podcast"
-      aria-label="Favorite Test Podcast"
-      class="img-fluid rounded-3"
-      height="100"
-      src="test-image-url-large"
-      width="100"
+      Favorites
+    </h2>
+    <div
+      class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
+    />
+    <h2
+      class="section-header"
+    >
+      Episodes
+    </h2>
+    <section
+      class="episodes-container empty-state"
+    >
+      <table
+        class="episodes-table"
+      >
+        <caption>
+          Podcast Episodes
+        </caption>
+        <thead>
+          <tr>
+            <th
+              scope="col"
+            >
+              Episode
+            </th>
+            <th
+              class="date-column"
+              scope="col"
+            >
+              Date
+            </th>
+            <th
+              class="duration-column"
+              scope="col"
+            >
+              Duration
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            class="empty-row"
+          >
+            <td
+              class="empty-cell"
+              colspan="3"
+            >
+              <div
+                class="empty-message"
+              >
+                No episodes available. Search or select a podcast to see episodes.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <audio
+      aria-label="Podcast episode player"
+      autoplay="true"
+      controls=""
+      preload="auto"
     />
   </div>
-  <h2
-    class="section-header"
-  >
-    Favorites
-  </h2>
-  <div
-    class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
-  />
-  <h2
-    class="section-header"
-  >
-    Episodes
-  </h2>
-  <section
-    class="episodes-container empty-state"
-  >
-    <table
-      class="episodes-table"
-    >
-      <caption>
-        Podcast Episodes
-      </caption>
-      <thead>
-        <tr>
-          <th
-            scope="col"
-          >
-            Episode
-          </th>
-          <th
-            class="date-column"
-            scope="col"
-          >
-            Date
-          </th>
-          <th
-            class="duration-column"
-            scope="col"
-          >
-            Duration
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="empty-row"
-        >
-          <td
-            class="empty-cell"
-            colspan="3"
-          >
-            <div
-              class="empty-message"
-            >
-              No episodes available. Search or select a podcast to see episodes.
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-  <audio
-    aria-label="Podcast episode player"
-    autoplay="true"
-    controls=""
-    preload="auto"
-  />
 </div>
 `;
 
 exports[`App component renders without crashing 1`] = `
 <div>
-  <h1>
-    <a
-      href="/"
-    >
-      Podr
-    </a>
-  </h1>
-  <form
-    class="search-form"
-    role="search"
+  <div
+    class=""
   >
+    <h1>
+      <a
+        href="/"
+      >
+        Podr
+      </a>
+    </h1>
+    <form
+      class="search-form"
+      role="search"
+    >
+      <div
+        class="search-input-container"
+      >
+        <input
+          aria-label="Search podcasts"
+          autocomplete="off"
+          class="form-control"
+          placeholder="Search podcasts"
+          type="search"
+        />
+      </div>
+      <button
+        aria-label="Search"
+        class="search-button"
+        type="submit"
+      >
+        Search
+      </button>
+    </form>
+    <h2
+      class="section-header"
+    >
+      Top podcasts
+    </h2>
     <div
-      class="search-input-container"
+      class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
+    />
+    <h2
+      class="section-header"
     >
-      <input
-        aria-label="Search podcasts"
-        autocomplete="off"
-        class="form-control"
-        placeholder="Search podcasts"
-        type="search"
-      />
-    </div>
-    <button
-      aria-label="Search"
-      class="search-button"
-      type="submit"
+      Favorites
+    </h2>
+    <div
+      class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
+    />
+    <h2
+      class="section-header"
     >
-      Search
-    </button>
-  </form>
-  <h2
-    class="section-header"
-  >
-    Top podcasts
-  </h2>
-  <div
-    class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
-  />
-  <h2
-    class="section-header"
-  >
-    Favorites
-  </h2>
-  <div
-    class="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start"
-  />
-  <h2
-    class="section-header"
-  >
-    Episodes
-  </h2>
-  <section
-    class="episodes-container empty-state"
-  >
-    <table
-      class="episodes-table"
+      Episodes
+    </h2>
+    <section
+      class="episodes-container empty-state"
     >
-      <caption>
-        Podcast Episodes
-      </caption>
-      <thead>
-        <tr>
-          <th
-            scope="col"
-          >
-            Episode
-          </th>
-          <th
-            class="date-column"
-            scope="col"
-          >
-            Date
-          </th>
-          <th
-            class="duration-column"
-            scope="col"
-          >
-            Duration
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="empty-row"
-        >
-          <td
-            class="empty-cell"
-            colspan="3"
-          >
-            <div
-              class="empty-message"
+      <table
+        class="episodes-table"
+      >
+        <caption>
+          Podcast Episodes
+        </caption>
+        <thead>
+          <tr>
+            <th
+              scope="col"
             >
-              No episodes available. Search or select a podcast to see episodes.
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-  <audio
-    aria-label="Podcast episode player"
-    autoplay="true"
-    controls=""
-    preload="auto"
-  />
+              Episode
+            </th>
+            <th
+              class="date-column"
+              scope="col"
+            >
+              Date
+            </th>
+            <th
+              class="duration-column"
+              scope="col"
+            >
+              Duration
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            class="empty-row"
+          >
+            <td
+              class="empty-cell"
+              colspan="3"
+            >
+              <div
+                class="empty-message"
+              >
+                No episodes available. Search or select a podcast to see episodes.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <audio
+      aria-label="Podcast episode player"
+      autoplay="true"
+      controls=""
+      preload="auto"
+    />
+  </div>
 </div>
 `;

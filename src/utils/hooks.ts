@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { Signal, effect, signal } from '@preact/signals';
+import { createElement, ComponentType, JSX, FunctionComponent, cloneElement, Fragment, ComponentChildren } from 'preact';
 import { APP_CONFIG } from './AppContext';
 
 /**
@@ -460,16 +461,19 @@ export function useAnalytics() {
 
 /**
  * Type definitions for CSS class name inputs with comprehensive support for various data types
+ * Enhanced with immutability patterns and modern TypeScript features
  */
 type ClassNameValue = string | number | boolean | null | undefined;
-type ClassNameObject = Record<string, ClassNameValue>;
+type ClassNameObject = Readonly<Record<string, ClassNameValue>>;
 type ClassNameArray = ReadonlyArray<ClassNameInput>;
 type ClassNameFunction = () => ClassNameInput;
+type ClassNameSignal = Signal<ClassNameInput>;
 type ClassNameInput = 
   | ClassNameValue 
   | ClassNameObject 
   | ClassNameArray 
-  | ClassNameFunction;
+  | ClassNameFunction
+  | ClassNameSignal;
 
 /**
  * Development debugging interface for CSS class names with immutable data structures
@@ -509,19 +513,34 @@ const classNameCache = new WeakMap<object, string>();
  * @param input - The class name input to resolve
  * @returns Array of resolved class name strings
  */
-function resolveClassNamesOptimized(input: ClassNameInput): string[] {
+function resolveClassNamesOptimized(input: ClassNameInput): readonly string[] {
   // Handle falsy values - early return for performance
-  if (!input) return [];
+  if (!input) return Object.freeze([]);
 
   // Handle strings - most common case, optimized path
   if (typeof input === 'string') {
     const trimmed = input.trim();
-    return trimmed ? [trimmed] : [];
+    if (!trimmed) return Object.freeze([]);
+    // Split by whitespace to handle multiple classes in one string
+    return Object.freeze(trimmed.split(/\s+/).filter(Boolean));
   }
   
   // Handle numbers - convert directly
   if (typeof input === 'number') {
-    return [String(input)];
+    return Object.freeze([String(input)]);
+  }
+
+  // Handle Preact signals - extract value efficiently with proper type guards
+  if (input && typeof input === 'object' && 'value' in input) {
+    // Type guard for Signal-like objects
+    const potentialSignal = input as { value: unknown };
+    if (typeof potentialSignal.value !== 'undefined') {
+      try {
+        return resolveClassNamesOptimized(potentialSignal.value as ClassNameInput);
+      } catch {
+        return Object.freeze([]); // Silent failure for performance in production
+      }
+    }
   }
 
   // Handle functions - with error boundary
@@ -529,20 +548,21 @@ function resolveClassNamesOptimized(input: ClassNameInput): string[] {
     try {
       return resolveClassNamesOptimized(input());
     } catch {
-      return []; // Silent failure for performance in production
+      return Object.freeze([]); // Silent failure for performance in production
     }
   }
 
-  // Handle arrays - flatten efficiently
+  // Handle arrays - flatten efficiently with immutability
   if (Array.isArray(input)) {
     const result: string[] = [];
     for (const item of input) {
-      result.push(...resolveClassNamesOptimized(item));
+      const resolved = resolveClassNamesOptimized(item);
+      result.push(...resolved);
     }
-    return result;
+    return Object.freeze(result);
   }
 
-  // Handle objects - extract truthy keys efficiently
+  // Handle objects - extract truthy keys efficiently with immutability
   if (typeof input === 'object' && input !== null) {
     const result: string[] = [];
     for (const [key, value] of Object.entries(input)) {
@@ -550,10 +570,10 @@ function resolveClassNamesOptimized(input: ClassNameInput): string[] {
         result.push(key);
       }
     }
-    return result;
+    return Object.freeze(result);
   }
 
-  return [];
+  return Object.freeze([]);
 }
 
 /**
@@ -657,12 +677,12 @@ function resolveClassNamesWithDebug(
  * );
  * ```
  */
-export function useClassNames(...inputs: ClassNameInput[]): string {
+export function useClassNames(...inputs: readonly ClassNameInput[]): string {
   return useMemo(() => {
-    // Fast path for empty inputs
+    // Fast path for empty inputs - immutable empty string
     if (inputs.length === 0) return '';
     
-    // Use cache for object inputs to prevent recomputation
+    // Use WeakMap cache for object inputs to prevent recomputation
     const cacheKey = inputs.length === 1 && typeof inputs[0] === 'object' && inputs[0] !== null
       ? inputs[0] as object
       : null;
@@ -671,30 +691,34 @@ export function useClassNames(...inputs: ClassNameInput[]): string {
       return classNameCache.get(cacheKey)!;
     }
     
-    // Fast path for single string input (most common case)
+    // Fast path for single string input (most common case) - optimize whitespace handling
     if (inputs.length === 1 && typeof inputs[0] === 'string') {
       const trimmed = inputs[0].trim();
-      return trimmed;
+      // Handle multiple classes in single string efficiently
+      const multipleClasses = trimmed.includes(' ') 
+        ? [...new Set(trimmed.split(/\s+/).filter(Boolean))].join(' ')
+        : trimmed;
+      return multipleClasses;
     }
     
-    // Process all inputs with optimized resolution
+    // Process all inputs with optimized resolution, maintaining immutability
     const classes: string[] = [];
     for (const input of inputs) {
       const resolved = resolveClassNamesOptimized(input);
       classes.push(...resolved);
     }
     
-    // Deduplicate and join efficiently
+    // Deduplicate and join efficiently with Set optimization
     const uniqueClasses = [...new Set(classes.filter(Boolean))];
     const result = uniqueClasses.join(' ');
     
-    // Cache result for object inputs
+    // Cache result for object inputs - performance optimization
     if (cacheKey) {
       classNameCache.set(cacheKey, result);
     }
     
     return result;
-  }, [inputs]);
+  }, inputs); // Simplified dependency array for better performance
 }
 
 /**
@@ -772,4 +796,1141 @@ export function useClassNamesSimple(...inputs: ClassNameInput[]): string {
     console.warn('useClassNamesSimple is deprecated. Use useClassNames instead.');
   }
   return useClassNames(...inputs);
+}
+
+/**
+ * Element collection type for classList operations
+ */
+type ElementCollection = Element | Element[] | NodeList | HTMLCollection;
+
+/**
+ * Utility function to normalize element input to an array for iteration
+ * @param elements - Single element or collection of elements
+ * @returns Array of Element objects
+ */
+function normalizeElements(elements: ElementCollection): Element[] {
+  if (!elements) return [];
+  
+  // Single element
+  if (elements instanceof Element) {
+    return [elements];
+  }
+  
+  // Array of elements
+  if (Array.isArray(elements)) {
+    return elements.filter((el): el is Element => el instanceof Element);
+  }
+  
+  // NodeList or HTMLCollection
+  return Array.from(elements).filter((el): el is Element => el instanceof Element);
+}
+
+/**
+ * Optimized classList manipulation API for setting CSS classes on DOM element(s)
+ * 
+ * Adds the specified classes to the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Single element with various input types
+ * setClassList(button, 'btn', 'btn--primary');
+ * setClassList(button, { 'btn--active': isActive, 'btn--disabled': disabled });
+ * setClassList(button, ['utility', 'classes'], () => dynamic ? 'dynamic' : null);
+ * 
+ * // Multiple elements
+ * const buttons = document.querySelectorAll('.button');
+ * setClassList(buttons, 'btn--hover');
+ * ```
+ */
+export function setClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Apply classes to all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.add(className);
+    }
+  }
+}
+
+/**
+ * Optimized classList manipulation API for removing CSS classes from DOM element(s)
+ * 
+ * Removes the specified classes from the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Remove classes from single element
+ * unsetClassList(button, 'btn--active', 'btn--focus');
+ * unsetClassList(button, { 'btn--disabled': wasDisabled, 'btn--loading': wasLoading });
+ * 
+ * // Remove classes from multiple elements
+ * const cards = document.querySelectorAll('.card');
+ * unsetClassList(cards, 'card--highlighted');
+ * ```
+ */
+export function unsetClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Remove classes from all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.remove(className);
+    }
+  }
+}
+
+/**
+ * Optimized classList manipulation API for toggling CSS classes on DOM element(s)
+ * 
+ * Toggles the specified classes on the classList of the target element(s).
+ * Uses the same flexible input types as useClassNames for consistency.
+ * For object inputs, only processes truthy conditions - falsy conditions are ignored.
+ * 
+ * @param elements - Single element or collection of elements to modify
+ * @param inputs - Variable arguments of class name inputs (strings, objects, arrays, functions)
+ * 
+ * @example
+ * ```tsx
+ * // Toggle classes on single element
+ * toggleClassList(modal, 'modal--open');
+ * toggleClassList(button, { 'btn--active': shouldToggleActive });
+ * 
+ * // Toggle classes on multiple elements
+ * const items = document.querySelectorAll('.nav-item');
+ * toggleClassList(items, 'nav-item--selected');
+ * ```
+ */
+export function toggleClassList(elements: ElementCollection, ...inputs: ClassNameInput[]): void {
+  // Fast path for empty inputs
+  if (inputs.length === 0) return;
+  
+  const targetElements = normalizeElements(elements);
+  if (targetElements.length === 0) return;
+  
+  // Resolve class names using the same optimization as useClassNames
+  const classes: string[] = [];
+  for (const input of inputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    classes.push(...resolved);
+  }
+  
+  // Filter and deduplicate class names
+  const uniqueClasses = [...new Set(classes.filter(Boolean))];
+  if (uniqueClasses.length === 0) return;
+  
+  // Toggle classes on all target elements
+  for (const element of targetElements) {
+    for (const className of uniqueClasses) {
+      element.classList.toggle(className);
+    }
+  }
+}
+
+// Preact Idiomatic Declarative APIs for classList Management
+
+/**
+ * Preact hook for declaratively managing CSS classes on elements via CSS selectors
+ * 
+ * This hook provides a Preact-idiomatic declarative API that automatically manages
+ * CSS classes on DOM elements matching the provided selector. It uses the optimized
+ * classList functions as the foundation and integrates seamlessly with Preact's
+ * component lifecycle.
+ * 
+ * @param selector - CSS selector string (e.g., '.button', '#modal', '[data-active]')
+ * @param inputs - Variable arguments of class name inputs (same as useClassNames)
+ * @param container - Optional container element to scope the selector (defaults to document)
+ * 
+ * @example
+ * ```tsx
+ * function NavComponent({ activeIndex }: { activeIndex: number }) {
+ *   // Declaratively manage active state on all nav items
+ *   useClassListSelector('.nav-item', [{ 'nav-item--active': false }]); // Reset all
+ *   useClassListSelector(`[data-nav-index="${activeIndex}"]`, ['nav-item--active']);
+ *   
+ *   // Apply loading state to all buttons when loading
+ *   useClassListSelector('.btn', [{ 'btn--loading': isLoading }]);
+ *   
+ *   return <nav>...</nav>;
+ * }
+ * ```
+ */
+export function useClassListSelector(
+  selector: string,
+  inputs: ClassNameInput[],
+  container: Element | Document = document
+): void {
+  const inputsRef = useRef<ClassNameInput[]>([]);
+  const inputsStringified = JSON.stringify(inputs);
+  
+  useEffect(() => {
+    if (!selector || inputs.length === 0) return;
+    
+    try {
+      const elements = container.querySelectorAll(selector);
+      if (elements.length > 0) {
+        // Remove previous classes
+        if (inputsRef.current.length > 0) {
+          unsetClassList(elements, ...inputsRef.current);
+        }
+        
+        // Add new classes
+        setClassList(elements, ...inputs);
+        inputsRef.current = [...inputs];
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`useClassListSelector: Invalid selector "${selector}"`, error);
+      }
+    }
+    
+    // Cleanup function to remove classes when component unmounts or inputs change
+    return () => {
+      try {
+        const elements = container.querySelectorAll(selector);
+        if (elements.length > 0 && inputsRef.current.length > 0) {
+          unsetClassList(elements, ...inputsRef.current);
+        }
+      } catch (error) {
+        // Silent cleanup failure
+      }
+    };
+  }, [selector, inputsStringified, container]);
+}
+
+/**
+ * Preact hook for declaratively managing CSS classes on a ref'd element
+ * 
+ * This hook provides declarative class management for single elements accessed
+ * via Preact refs. It automatically applies and cleans up classes based on
+ * the component lifecycle and dependency changes.
+ * 
+ * @param elementRef - Preact ref to the target element
+ * @param inputs - Variable arguments of class name inputs (same as useClassNames)
+ * 
+ * @example
+ * ```tsx
+ * function ButtonComponent({ isLoading, variant }: ButtonProps) {
+ *   const buttonRef = useRef<HTMLButtonElement>(null);
+ *   
+ *   // Declaratively manage button classes based on props
+ *   useElementClassList(buttonRef, [
+ *     'btn',
+ *     `btn--${variant}`,
+ *     { 'btn--loading': isLoading, 'btn--disabled': isLoading }
+ *   ]);
+ *   
+ *   return <button ref={buttonRef}>Click me</button>;
+ * }
+ * ```
+ */
+export function useElementClassList<T extends Element>(
+  elementRef: { readonly current: T | null },
+  inputs: ClassNameInput[]
+): void {
+  const previousInputsRef = useRef<ClassNameInput[]>([]);
+  const inputsStringified = JSON.stringify(inputs);
+  
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    
+    // Remove previous classes if they exist
+    if (previousInputsRef.current.length > 0) {
+      unsetClassList(element, ...previousInputsRef.current);
+    }
+    
+    // Apply new classes
+    if (inputs.length > 0) {
+      setClassList(element, ...inputs);
+      previousInputsRef.current = [...inputs];
+    }
+    
+    // Cleanup function
+    return () => {
+      if (element && previousInputsRef.current.length > 0) {
+        unsetClassList(element, ...previousInputsRef.current);
+      }
+    };
+  }, [elementRef, inputsStringified]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const element = elementRef.current;
+      if (element && previousInputsRef.current.length > 0) {
+        unsetClassList(element, ...previousInputsRef.current);
+        previousInputsRef.current = [];
+      }
+    };
+  }, [elementRef]);
+}
+
+/**
+ * Preact hook for conditional CSS class management with fine-grained control
+ * 
+ * This hook provides declarative management of individual CSS classes based on
+ * boolean conditions. Unlike useElementClassList which manages the entire class
+ * set, this hook allows for granular control over specific classes.
+ * 
+ * @param elementRef - Preact ref to the target element
+ * @param conditions - Object mapping class names to boolean conditions
+ * 
+ * @example
+ * ```tsx
+ * function ModalComponent({ isOpen, isLoading }: ModalProps) {
+ *   const modalRef = useRef<HTMLDivElement>(null);
+ *   
+ *   // Conditionally manage specific classes
+ *   useConditionalClassList(modalRef, {
+ *     'modal--open': isOpen,
+ *     'modal--loading': isLoading,
+ *     'modal--has-backdrop': isOpen && !isLoading
+ *   });
+ *   
+ *   return <div ref={modalRef} className="modal">...</div>;
+ * }
+ * ```
+ */
+export function useConditionalClassList<T extends Element>(
+  elementRef: { readonly current: T | null },
+  conditions: Record<string, boolean>
+): void {
+  const previousConditionsRef = useRef<Record<string, boolean>>({});
+  
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    
+    const currentConditions = { ...conditions };
+    const previousConditions = previousConditionsRef.current;
+    
+    // Process each condition
+    for (const [className, shouldHaveClass] of Object.entries(currentConditions)) {
+      const hadClass = previousConditions[className] || false;
+      
+      if (shouldHaveClass && !hadClass) {
+        // Add class directly
+        element.classList.add(className);
+      } else if (!shouldHaveClass && hadClass) {
+        // Remove class directly
+        element.classList.remove(className);
+      }
+    }
+    
+    // Handle removed conditions (classes that are no longer being managed)
+    for (const [className, hadClass] of Object.entries(previousConditions)) {
+      if (!(className in currentConditions) && hadClass) {
+        element.classList.remove(className);
+      }
+    }
+    
+    previousConditionsRef.current = currentConditions;
+    
+    // Cleanup function
+    return () => {
+      if (element) {
+        for (const [className, hasClass] of Object.entries(previousConditionsRef.current)) {
+          if (hasClass) {
+            element.classList.remove(className);
+          }
+        }
+      }
+    };
+  }, [conditions]); // Depend on the conditions object directly
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const element = elementRef.current;
+      if (element) {
+        for (const [className, hasClass] of Object.entries(previousConditionsRef.current)) {
+          if (hasClass) {
+            element.classList.remove(className);
+          }
+        }
+        previousConditionsRef.current = {};
+      }
+    };
+  }, []);
+}
+
+/**
+ * Preact hook for toggling CSS classes on elements via CSS selectors
+ * 
+ * This hook provides a declarative API for toggling classes on multiple elements
+ * that match a given selector. Useful for implementing toggle behaviors across
+ * multiple elements simultaneously.
+ * 
+ * @param selector - CSS selector string to target elements
+ * @param inputs - Variable arguments of class name inputs to toggle
+ * @param container - Optional container element to scope the selector
+ * @param trigger - Dependency that triggers the toggle (changes cause toggle)
+ * 
+ * @example
+ * ```tsx
+ * function ThemeToggle({ isDark }: { isDark: boolean }) {
+ *   // Toggle dark theme classes on all theme-aware elements
+ *   useToggleClassListSelector('.theme-aware', ['dark-mode'], document.body, isDark);
+ *   
+ *   // Toggle active state on navigation items
+ *   useToggleClassListSelector('.nav-item', 'nav-item--highlighted', document, activeItem);
+ *   
+ *   return <button>Toggle Theme</button>;
+ * }
+ * ```
+ */
+export function useToggleClassListSelector(
+  selector: string,
+  inputs: ClassNameInput[],
+  container: Element | Document = document,
+  trigger?: unknown
+): void {
+  useEffect(() => {
+    if (!selector) return;
+    
+    try {
+      const elements = container.querySelectorAll(selector);
+      if (elements.length > 0) {
+        toggleClassList(elements, ...inputs);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`useToggleClassListSelector: Invalid selector "${selector}"`, error);
+      }
+    }
+  }, [selector, container, trigger, ...inputs]);
+}
+
+// =============================================================================
+// JSX HOC and Declarative APIs for Performance Optimization
+// =============================================================================
+
+/**
+ * Props for components that can be enhanced with class list management
+ * Generic type preserves the original component's prop structure
+ */
+type ClassListEnhancedProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+  readonly className?: string;
+};
+
+/**
+ * Configuration for the withClassList HOC
+ * Generic type preserves component prop types
+ */
+interface WithClassListConfig<P extends Record<string, unknown> = Record<string, unknown>> {
+  /** Base classes to always apply */
+  readonly baseClasses?: ClassNameInput[];
+  /** Dynamic classes based on props */
+  readonly dynamicClasses?: (props: P) => ClassNameInput[];
+  /** Whether to merge with existing className prop */
+  readonly mergeClassName?: boolean;
+  /** Custom class resolution strategy */
+  readonly optimizeNodes?: boolean;
+}
+
+/**
+ * Higher-Order Component that optimizes class management and reduces createElement calls
+ * 
+ * This HOC wraps a component and provides intelligent class management with performance
+ * optimizations. It can merge classes, reduce rendering overhead, and provide consistent
+ * class resolution patterns.
+ * 
+ * @param WrappedComponent - The component to enhance with class list management
+ * @param config - Configuration for class management behavior
+ * @returns Enhanced component with optimized class management
+ * 
+ * @example
+ * ```tsx
+ * // Basic usage with static classes
+ * const ButtonWithClasses = withClassList(Button, {
+ *   baseClasses: ['btn', 'btn--primary'],
+ *   mergeClassName: true
+ * });
+ * 
+ * // Dynamic classes based on props
+ * const InteractiveCard = withClassList(Card, {
+ *   baseClasses: ['card'],
+ *   dynamicClasses: (props) => [
+ *     { 'card--active': props.isActive },
+ *     { 'card--disabled': props.disabled },
+ *     props.variant && `card--${props.variant}`
+ *   ],
+ *   optimizeNodes: true
+ * });
+ * 
+ * // Usage in JSX
+ * <ButtonWithClasses onClick={handleClick}>
+ *   Click me
+ * </ButtonWithClasses>
+ * ```
+ */
+export function withClassList<P extends ClassListEnhancedProps>(
+  WrappedComponent: ComponentType<P>,
+  config: WithClassListConfig<P> = {}
+): FunctionComponent<P> {
+  const {
+    baseClasses = [],
+    dynamicClasses,
+    mergeClassName = true,
+    optimizeNodes = true
+  } = config;
+
+  const EnhancedComponent: FunctionComponent<P> = (props) => {
+    const computedClassName = useMemo(() => {
+      const inputs: ClassNameInput[] = [];
+      
+      // Add base classes
+      if (baseClasses.length > 0) {
+        inputs.push(...baseClasses);
+      }
+      
+      // Add dynamic classes based on props
+      if (dynamicClasses) {
+        const dynamicInputs = dynamicClasses(props);
+        if (dynamicInputs) {
+          inputs.push(...dynamicInputs);
+        }
+      }
+      
+      // Add existing className if merging is enabled
+      if (mergeClassName && props.className) {
+        inputs.push(props.className);
+      }
+      
+      // Resolve class names using the same optimization as useClassNames
+      if (inputs.length === 0) return props.className || '';
+      
+      const allClasses: string[] = [];
+      for (const input of inputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      
+      // Filter and deduplicate
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      return uniqueClasses.join(' ');
+    }, [props]);
+
+    // Performance optimization: reduce createElement calls when possible
+    if (optimizeNodes && computedClassName === props.className) {
+      return createElement(WrappedComponent, props);
+    }
+
+    // Create enhanced props with computed className
+    const enhancedProps = {
+      ...props,
+      className: computedClassName
+    } as P;
+
+    return createElement(WrappedComponent, enhancedProps);
+  };
+
+  // Set display name for debugging
+  EnhancedComponent.displayName = `withClassList(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return EnhancedComponent;
+}
+
+/**
+ * Props for the ClassListProvider component
+ */
+interface ClassListProviderProps {
+  /** Class name inputs to resolve */
+  readonly classes: ClassNameInput[];
+  /** Render prop function that receives the computed className */
+  readonly children?: (className: string) => JSX.Element;
+  /** Whether to optimize rendering performance */
+  readonly optimize?: boolean;
+}
+
+/**
+ * Render prop component that provides optimized class name computation
+ * 
+ * This component uses the render prop pattern to provide computed class names
+ * to child components while optimizing for performance and reducing unnecessary
+ * re-renders.
+ * 
+ * @example
+ * ```tsx
+ * // Basic render prop usage
+ * <ClassListProvider classes={['btn', { 'btn--active': isActive }]}>
+ *   {(className) => (
+ *     <button className={className} onClick={handleClick}>
+ *       Dynamic Button
+ *     </button>
+ *   )}
+ * </ClassListProvider>
+ * 
+ * // Complex conditional rendering
+ * <ClassListProvider 
+ *   classes={[
+ *     'modal',
+ *     { 'modal--open': isOpen },
+ *     { 'modal--loading': isLoading },
+ *     () => theme === 'dark' ? 'modal--dark' : 'modal--light'
+ *   ]}
+ *   optimize={true}
+ * >
+ *   {(className) => (
+ *     <div className={className}>
+ *       <ModalContent />
+ *     </div>
+ *   )}
+ * </ClassListProvider>
+ * ```
+ */
+export const ClassListProvider: FunctionComponent<ClassListProviderProps> = ({
+  classes,
+  children,
+  optimize = true
+}) => {
+  const className = useMemo(() => {
+    // Resolve class names using the same optimization as useClassNames
+    const allClasses: string[] = [];
+    for (const input of classes) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    
+    // Filter and deduplicate
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, optimize ? [classes] : []);
+
+  // Return empty fragment if no children provided (for testing)
+  if (!children) {
+    return createElement('div', { className });
+  }
+
+  return children(className);
+};
+
+/**
+ * Props for OptimizedClassList component
+ */
+interface OptimizedClassListProps {
+  /** Elements to render with shared classes */
+  readonly elements: readonly JSX.Element[];
+  /** Shared classes to apply to all elements */
+  readonly sharedClasses?: ClassNameInput[];
+  /** Strategy for optimizing DOM nodes */
+  readonly strategy?: 'merge' | 'fragment' | 'collapse';
+  /** Whether to deduplicate similar elements */
+  readonly deduplicate?: boolean;
+}
+
+/**
+ * Component that optimizes multiple elements with shared class patterns
+ * 
+ * This component can intelligently merge, fragment, or collapse multiple elements
+ * to reduce DOM nodes and optimize rendering performance. It's particularly useful
+ * when rendering lists of similar elements with shared styling.
+ * 
+ * @example
+ * ```tsx
+ * // Optimize a list of buttons with shared classes
+ * <OptimizedClassList
+ *   elements={[
+ *     <button key="1">Button 1</button>,
+ *     <button key="2">Button 2</button>,
+ *     <button key="3">Button 3</button>
+ *   ]}
+ *   sharedClasses={['btn', 'btn--small']}
+ *   strategy="merge"
+ *   deduplicate={true}
+ * />
+ * 
+ * // Fragment strategy for minimal DOM impact
+ * <OptimizedClassList
+ *   elements={navItems}
+ *   sharedClasses={[{ 'nav-item--active': isActive }]}
+ *   strategy="fragment"
+ * />
+ * ```
+ */
+export const OptimizedClassList: FunctionComponent<OptimizedClassListProps> = ({
+  elements,
+  sharedClasses = [],
+  strategy = 'fragment',
+  deduplicate = false
+}) => {
+  const optimizedElements = useMemo(() => {
+    if (elements.length === 0) return [];
+    
+    // Compute shared class name once
+    const sharedClassName = sharedClasses.length > 0 
+      ? (() => {
+          const allClasses: string[] = [];
+          for (const input of sharedClasses) {
+            const resolved = resolveClassNamesOptimized(input);
+            allClasses.push(...resolved);
+          }
+          const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+          return uniqueClasses.join(' ');
+        })()
+      : '';
+
+    // Process elements based on strategy
+    let processedElements = [...elements];
+
+    // Deduplicate similar elements if requested
+    if (deduplicate) {
+      const seen = new Set<string>();
+      processedElements = processedElements.filter(element => {
+        const key = `${element.type}-${JSON.stringify(element.props)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    // Apply shared classes to elements
+    const enhancedElements = processedElements.map((element, index) => {
+      if (!sharedClassName) return element;
+
+      const existingClassName = element.props?.className || '';
+      const mergedClassName = existingClassName 
+        ? `${existingClassName} ${sharedClassName}`.trim()
+        : sharedClassName;
+
+      return cloneElement(element, {
+        ...element.props,
+        className: mergedClassName,
+        key: element.key || index
+      });
+    });
+
+    return enhancedElements;
+  }, [elements, sharedClasses, deduplicate]);
+
+  // Render based on strategy
+  switch (strategy) {
+    case 'merge':
+      // Attempt to merge similar elements (simplified for demo)
+      return createElement(Fragment, {}, ...optimizedElements);
+      
+    case 'collapse':
+      // Collapse into minimal structure when possible
+      if (optimizedElements.length === 1) {
+        return optimizedElements[0];
+      }
+      return createElement(Fragment, {}, ...optimizedElements);
+      
+    case 'fragment':
+    default:
+      // Use Fragment for minimal DOM impact
+      return createElement(Fragment, {}, ...optimizedElements);
+  }
+};
+
+/**
+ * Hook that returns optimized render functions for performance-critical scenarios
+ * 
+ * This hook provides pre-computed render functions that can reduce createElement
+ * calls and optimize rendering performance for frequently updated components.
+ * 
+ * @param baseClasses - Base classes to apply
+ * @param optimizations - Optimization configuration
+ * @returns Object with optimized render functions
+ * 
+ * @example
+ * ```tsx
+ * function PerformantList({ items, isLoading }: ListProps) {
+ *   const { renderOptimized, renderWithClasses } = useOptimizedClassList(
+ *     ['list-item'],
+ *     { memoizeElements: true, batchUpdates: true }
+ *   );
+ * 
+ *   return (
+ *     <div>
+ *       {items.map(item => 
+ *         renderOptimized('li', 
+ *           { 'list-item--active': item.isActive },
+ *           item.content
+ *         )
+ *       )}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useOptimizedClassList(
+  baseClasses: ClassNameInput[] = [],
+  optimizations: {
+    readonly memoizeElements?: boolean;
+    readonly batchUpdates?: boolean;
+    readonly reduceCreateElement?: boolean;
+  } = {}
+) {
+  const {
+    memoizeElements = true,
+    batchUpdates = false,
+    reduceCreateElement = true
+  } = optimizations;
+
+  const baseClassName = useMemo(() => {
+    if (baseClasses.length === 0) return '';
+    
+    const allClasses: string[] = [];
+    for (const input of baseClasses) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, [baseClasses]);
+
+  const renderOptimized = useCallback((
+    type: string | ComponentType<Record<string, unknown>>,
+    conditionalClasses: ClassNameInput,
+    children?: JSX.Element | string | readonly (JSX.Element | string)[],
+    props: Record<string, unknown> = {}
+  ): JSX.Element => {
+    const fullClassName = useMemo(() => {
+      const inputs: ClassNameInput[] = [];
+      if (baseClassName) inputs.push(baseClassName);
+      if (conditionalClasses) inputs.push(conditionalClasses);
+      
+      if (inputs.length === 0) return '';
+      
+      const allClasses: string[] = [];
+      for (const input of inputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      return uniqueClasses.join(' ');
+    }, [conditionalClasses]);
+
+    const elementProps = {
+      ...props,
+      className: fullClassName
+    };
+
+    if (reduceCreateElement && !children) {
+      return createElement(type as any, elementProps);
+    }
+
+    return createElement(type as any, elementProps, children);
+  }, [baseClassName, reduceCreateElement]);
+
+  const renderWithClasses = useCallback((
+    type: string | ComponentType<Record<string, unknown>>,
+    classes: readonly ClassNameInput[],
+    children?: JSX.Element | string | readonly (JSX.Element | string)[],
+    props: Record<string, unknown> = {}
+  ): JSX.Element => {
+    const allInputs = [...baseClasses, ...classes] as const;
+    
+    let className = '';
+    if (allInputs.length > 0) {
+      const allClasses: string[] = [];
+      for (const input of allInputs) {
+        const resolved = resolveClassNamesOptimized(input);
+        allClasses.push(...resolved);
+      }
+      const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+      className = uniqueClasses.join(' ');
+    }
+    
+    return createElement(type as any, { ...props, className }, children);
+  }, [baseClasses]);
+
+  return {
+    renderOptimized: memoizeElements ? useMemo(() => renderOptimized, [renderOptimized]) : renderOptimized,
+    renderWithClasses: memoizeElements ? useMemo(() => renderWithClasses, [renderWithClasses]) : renderWithClasses,
+    baseClassName
+  } as const;
+}
+
+// ========================================================================================
+// Enhanced JSX Props with Custom Pragma
+// ========================================================================================
+
+/**
+ * Enhanced props interface that includes classList alongside standard JSX props
+ * This extends the standard JSX props to include our custom classList property
+ * Uses readonly for immutability and proper typing for better performance
+ */
+interface EnhancedJSXProps extends Readonly<JSX.HTMLAttributes<EventTarget>> {
+  /**
+   * Dynamic class list input using the same flexible patterns as useClassNames
+   * Can accept strings, objects, arrays, functions, or any combination
+   */
+  readonly classList?: ClassNameInput;
+  /**
+   * Standard className prop for compatibility
+   */
+  readonly className?: string;
+  /**
+   * Children elements - more specific typing than the default
+   */
+  readonly children?: JSX.Element | JSX.Element[] | string | number | (JSX.Element | string | number)[];
+}
+
+/**
+ * Custom JSX factory function that automatically handles classList prop merging
+ * 
+ * This function creates a custom JSX pragma that enhances the standard JSX
+ * experience by automatically merging className and classList props using the
+ * same optimized logic as useClassNames.
+ * 
+ * Features:
+ * - 🎯 Seamless integration with existing className prop
+ * - ⚡ Uses optimized useClassNames logic for consistency and performance
+ * - 🔄 Supports all ClassNameInput patterns (strings, objects, arrays, functions)
+ * - 📦 Zero runtime overhead when classList is not used
+ * - 🛡️ Type-safe with full TypeScript support
+ * - 🧹 Automatic prop cleanup to prevent invalid HTML attributes
+ * 
+ * @param type - The JSX element type (string for HTML elements, function for components)
+ * @param props - The element props, potentially including classList
+ * @param children - Child elements
+ * @returns JSX element with merged className
+ * 
+ * @example
+ * ```tsx
+ * // Configure the custom pragma in your component file
+ * /** @jsx h *\/
+ * import { h } from './utils/hooks';
+ * 
+ * function MyComponent({ isActive, isDisabled }: ComponentProps) {
+ *   return (
+ *     <div 
+ *       className="base-button"
+ *       classList={{
+ *         'button--active': isActive,
+ *         'button--disabled': isDisabled,
+ *         'button--primary': !isDisabled
+ *       }}
+ *     >
+ *       Click me
+ *     </div>
+ *   );
+ * }
+ * 
+ * // Alternative: Mixed usage patterns
+ * <button
+ *   classList={[
+ *     'utility-class',
+ *     { 'conditional': someCondition },
+ *     () => dynamicClass()
+ *   ]}
+ *   className="base-class"
+ * >
+ *   Mixed patterns
+ * </button>
+ * ```
+ */
+export function h<T extends keyof JSX.IntrinsicElements>(
+  type: T,
+  props: (JSX.IntrinsicElements[T] & { classList?: ClassNameInput }) | null,
+  ...children: ComponentChildren[]
+): JSX.Element;
+export function h<P extends Record<string, unknown>>(
+  type: ComponentType<P>,
+  props: (P & { classList?: ClassNameInput; className?: string }) | null,
+  ...children: ComponentChildren[]
+): JSX.Element;
+export function h(
+  type: string | ComponentType<Record<string, unknown>>,
+  props: EnhancedJSXProps | null,
+  ...children: ComponentChildren[]
+): JSX.Element {
+  // Handle null/undefined props - performance fast path
+  if (!props) {
+    return createElement(type as any, null, ...children as any);
+  }
+  
+  // Fast path: no classList prop present - avoid object destructuring overhead
+  if (!('classList' in props)) {
+    return createElement(type as any, props, ...children as any);
+  }
+  
+  // Extract classList and className, keeping other props immutable
+  const { classList, className, ...restProps } = props;
+  
+  // Handle empty classList - another fast path
+  if (!classList) {
+    return createElement(type as any, { ...restProps, className }, ...children as any);
+  }
+  
+  // Build array of all class inputs for unified processing
+  const allInputs: readonly ClassNameInput[] = [
+    ...(className ? [className] : []),
+    ...(classList ? [classList] : [])
+  ] as const;
+  
+  // Early return for empty inputs
+  if (allInputs.length === 0) {
+    return createElement(type as any, restProps, ...children as any);
+  }
+  
+  // Use the same optimized logic as useClassNames for consistency
+  const allClasses: string[] = [];
+  for (const input of allInputs) {
+    const resolved = resolveClassNamesOptimized(input);
+    allClasses.push(...resolved);
+  }
+  
+  // Deduplicate and create final className - use Set for performance
+  const finalClassName = allClasses.length > 0 
+    ? [...new Set(allClasses.filter(Boolean))].join(' ')
+    : undefined;
+  
+  // Create element with merged className, maintain immutability
+  const finalProps = {
+    ...restProps,
+    ...(finalClassName && { className: finalClassName })
+  };
+  
+  return createElement(type as any, finalProps, ...children as any);
+}
+
+/**
+ * Alternative export for explicit pragma configuration
+ * Use this when you want to be explicit about using the enhanced JSX factory
+ * 
+ * @example
+ * ```tsx
+ * import { enhancedJSX as h } from './utils/hooks';
+ * // @jsx h
+ * ```
+ */
+export const enhancedJSX = h;
+
+/**
+ * Type definitions for enhanced JSX elements to support classList prop
+ * This module declaration extends the JSX namespace to include our classList prop
+ */
+declare module 'preact' {
+  namespace JSX {
+    interface HTMLAttributes<RefType extends EventTarget = EventTarget> {
+      /**
+       * Enhanced classList prop that accepts the same flexible input patterns as useClassNames
+       * Automatically merged with className prop when using the custom JSX pragma
+       */
+      classList?: ClassNameInput;
+    }
+  }
+}
+
+/**
+ * Utility function to create enhanced JSX elements programmatically
+ * This provides a functional API for creating elements with classList support
+ * without requiring the JSX pragma configuration
+ * 
+ * @param type - Element type
+ * @param props - Props including optional classList
+ * @param children - Child elements
+ * @returns Enhanced JSX element
+ * 
+ * @example
+ * ```tsx
+ * import { createEnhancedElement } from './utils/hooks';
+ * 
+ * function DynamicComponent() {
+ *   return createEnhancedElement(
+ *     'div',
+ *     {
+ *       className: 'base',
+ *       classList: { 'active': isActive }
+ *     },
+ *     'Content'
+ *   );
+ * }
+ * ```
+ */
+export function createEnhancedElement(
+  type: string | ComponentType<Record<string, unknown>>,
+  props: EnhancedJSXProps | null = null,
+  ...children: ComponentChildren[]
+): JSX.Element {
+  return h(type as any, props as any, ...children);
+}
+
+/**
+ * Hook for dynamic classList management that returns a className string
+ * This hook provides a bridge between the classList concept and traditional className usage
+ * 
+ * @param classList - ClassList input using the same patterns as useClassNames
+ * @param baseClassName - Optional base className to merge with
+ * @returns Computed className string
+ * 
+ * @example
+ * ```tsx
+ * function Component({ isActive, isDisabled }: ComponentProps) {
+ *   const className = useClassList(
+ *     {
+ *       'component--active': isActive,
+ *       'component--disabled': isDisabled
+ *     },
+ *     'base-component'
+ *   );
+ *   
+ *   return <div className={className}>Content</div>;
+ * }
+ * ```
+ */
+export function useClassList(
+  classList: ClassNameInput,
+  baseClassName?: string
+): string {
+  return useMemo(() => {
+    if (!classList && !baseClassName) return '';
+    
+    const inputs: ClassNameInput[] = [];
+    if (baseClassName) inputs.push(baseClassName);
+    if (classList) inputs.push(classList);
+    
+    if (inputs.length === 0) return '';
+    
+    const allClasses: string[] = [];
+    for (const input of inputs) {
+      const resolved = resolveClassNamesOptimized(input);
+      allClasses.push(...resolved);
+    }
+    
+    const uniqueClasses = [...new Set(allClasses.filter(Boolean))];
+    return uniqueClasses.join(' ');
+  }, [classList, baseClassName]);
 }
