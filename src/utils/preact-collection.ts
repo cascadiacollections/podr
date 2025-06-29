@@ -1,6 +1,6 @@
 /**
  * @fileoverview Advanced collection management hook for Preact applications
- * 
+ *
  * This module provides a comprehensive collection management solution with:
  * - Immutable collections with type safety
  * - Rich mutation and query operations
@@ -8,17 +8,17 @@
  * - Performance optimizations with memoization
  * - Preact-specific integrations (Context, Signals)
  * - External API synchronization
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * const todos = useCollection<Todo>([
  *   { id: 1, text: 'Learn Preact', completed: false }
  * ]);
- * 
+ *
  * // Add items
  * todos.add({ id: 2, text: 'Build app', completed: false });
- * 
+ *
  * // Filter and transform
  * const completed = todos.filter(todo => todo.completed);
  * const priorities = todos.groupBy(todo => todo.priority);
@@ -131,7 +131,7 @@ export interface UseCollectionOptions<T> {
    * @default Object.is
    */
   readonly equalityFn?: EqualityFn<T>;
-  
+
   /**
    * Callback invoked before any change is applied.
    * Can prevent the change by returning false.
@@ -143,7 +143,7 @@ export interface UseCollectionOptions<T> {
     prevItems: Collection<T>,
     newItems: Collection<T>
   ) => boolean | void;
-  
+
   /**
    * Callback invoked after a change has been applied.
    * @param prevItems - The previous collection state
@@ -159,24 +159,24 @@ export interface UseCollectionOptions<T> {
  * Return type of the useCollection hook providing comprehensive collection operations.
  * All mutation operations return boolean indicating if the collection was modified.
  * Query operations are read-only and don't trigger re-renders.
- * 
+ *
  * @template T - The type of items in the collection
- * 
+ *
  * @example
  * ```tsx
  * const collection = useCollection<string>(['a', 'b', 'c']);
- * 
+ *
  * // Mutation operations
  * collection.add('d');           // Append item
  * collection.add(1, 'x');        // Insert at index
  * collection.remove('b');        // Remove by value
  * collection.removeAt(0);        // Remove by index
- * 
+ *
  * // Query operations
  * const item = collection.get(0);      // Get by index
  * const hasItem = collection.contains('a'); // Check existence
  * const filtered = collection.filter(item => item > 'b'); // Transform
- * 
+ *
  * // Functional operations
  * const mapped = collection.map(item => item.toUpperCase());
  * const grouped = collection.groupBy(item => item.charAt(0));
@@ -184,37 +184,37 @@ export interface UseCollectionOptions<T> {
  */
 export interface UseCollectionReturn<T> {
   // Core properties
-  
-  /** 
+
+  /**
    * Immutable collection of items. Safe to pass as props without causing re-renders.
    * @readonly
    */
   readonly items: Collection<T>;
-  
-  /** 
+
+  /**
    * Number of items in the collection.
    * @readonly
    */
   readonly size: number;
-  
-  /** 
+
+  /**
    * True if the collection contains no items.
    * @readonly
    */
   readonly isEmpty: boolean;
 
   // Mutation operations
-  
+
   /**
    * Add an item to the collection.
    * @param item - Item to add to the end of the collection
    * @returns True if the collection was modified
-   * 
+   *
    * @overload
    * @param index - Position to insert the item
    * @param item - Item to insert
    * @returns True if the collection was modified
-   * 
+   *
    * @example
    * ```tsx
    * collection.add('new item');        // Append to end
@@ -222,17 +222,17 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly add: AddMethod<T>;
-  
+
   /**
    * Add multiple items to the collection.
    * @param items - Items to add to the end of the collection
    * @returns True if the collection was modified
-   * 
+   *
    * @overload
    * @param index - Position to insert the items
    * @param items - Items to insert
    * @returns True if the collection was modified
-   * 
+   *
    * @example
    * ```tsx
    * collection.addAll(['a', 'b', 'c']);    // Append to end
@@ -240,72 +240,72 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly addAll: AddAllMethod<T>;
-  
+
   /**
    * Remove the first occurrence of an item from the collection.
    * @param item - Item to remove (uses equality function for comparison)
    * @returns True if an item was removed
-   * 
+   *
    * @example
    * ```tsx
    * const removed = collection.remove('target'); // true if found and removed
    * ```
    */
   readonly remove: (item: T) => boolean;
-  
+
   /**
    * Remove the item at the specified index.
    * @param index - Index of the item to remove
    * @returns The removed item, or undefined if index is invalid
-   * 
+   *
    * @example
    * ```tsx
    * const removed = collection.removeAt(2); // Remove item at index 2
    * ```
    */
   readonly removeAt: (index: number) => T | undefined;
-  
+
   /**
    * Remove all occurrences of the specified items from the collection.
    * @param items - Items to remove
    * @returns True if any items were removed
-   * 
+   *
    * @example
    * ```tsx
    * collection.removeAll(['a', 'b']); // Remove all 'a' and 'b' items
    * ```
    */
   readonly removeAll: (items: readonly T[]) => boolean;
-  
+
   /**
    * Remove all items that match the predicate.
    * @param predicate - Function to test each item
    * @returns True if any items were removed
-   * 
+   *
    * @example
    * ```tsx
    * collection.removeIf(item => item.startsWith('temp')); // Remove temp items
    * ```
    */
   readonly removeIf: (predicate: Predicate<T>) => boolean;
-  
+
   /**
    * Replace the item at the specified index.
    * @param index - Index of the item to replace
    * @param item - New item to set
    * @returns The previous item, or undefined if index is invalid
-   * 
+   *
    * @example
    * ```tsx
    * const previous = collection.set(1, 'new value'); // Replace item at index 1
    * ```
    */
   readonly set: (index: number, item: T) => T | undefined;
-  
+
   /**
    * Remove all items from the collection.
    * @returns True if the collection was not already empty
-   * 
+   *
    * @example
    * ```tsx
    * collection.clear(); // Empty the collection
@@ -314,7 +314,7 @@ export interface UseCollectionReturn<T> {
   /**
    * Remove all items from the collection.
    * @returns True if the collection was not already empty
-   * 
+   *
    * @example
    * ```tsx
    * collection.clear(); // Empty the collection
@@ -323,13 +323,13 @@ export interface UseCollectionReturn<T> {
   readonly clear: () => boolean;
 
   // Transformation operations
-  
+
   /**
    * Create a new array with items that pass the predicate test.
    * Supports type narrowing with type guard predicates.
    * @param predicate - Function to test each item
    * @returns New array with filtered items
-   * 
+   *
    * @example
    * ```tsx
    * const numbers = collection.filter(item => typeof item === 'number');
@@ -340,12 +340,12 @@ export interface UseCollectionReturn<T> {
     <U extends T>(predicate: TypeGuardPredicate<T, U>): U[];
     (predicate: Predicate<T>): T[];
   };
-  
+
   /**
    * Create a new array with the results of calling a mapper function on every item.
    * @param mapper - Function to transform each item
    * @returns New array with transformed items
-   * 
+   *
    * @example
    * ```tsx
    * const names = collection.map(user => user.name);
@@ -353,12 +353,12 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly map: <U>(mapper: Mapper<T, U>) => U[];
-  
+
   /**
    * Create a new array with sub-array elements concatenated into it recursively.
    * @param mapper - Function that returns an array for each item
    * @returns Flattened array
-   * 
+   *
    * @example
    * ```tsx
    * const tags = collection.flatMap(item => item.tags);
@@ -366,13 +366,13 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly flatMap: <U>(mapper: Mapper<T, readonly U[]>) => U[];
-  
+
   /**
    * Execute a reducer function on each item, resulting in a single output value.
    * @param reducer - Function to execute on each item
    * @param initialValue - Initial value for the accumulator
    * @returns The final accumulator value
-   * 
+   *
    * @example
    * ```tsx
    * const sum = collection.reduce((acc, num) => acc + num, 0);
@@ -382,12 +382,12 @@ export interface UseCollectionReturn<T> {
   readonly reduce: <U>(reducer: Reducer<T, U>, initialValue: U) => U;
 
   // Query operations
-  
+
   /**
    * Get the item at the specified index.
    * @param index - Index of the item to retrieve
    * @returns The item at the index, or undefined if index is invalid
-   * 
+   *
    * @example
    * ```tsx
    * const first = collection.get(0);
@@ -395,48 +395,48 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly get: (index: number) => T | undefined;
-  
+
   /**
    * Find the first index of the specified item.
    * @param item - Item to search for (uses equality function)
    * @returns Index of the item, or -1 if not found
-   * 
+   *
    * @example
    * ```tsx
    * const index = collection.indexOf('target');
    * ```
    */
   readonly indexOf: (item: T) => number;
-  
+
   /**
    * Find the last index of the specified item.
    * @param item - Item to search for (uses equality function)
    * @returns Last index of the item, or -1 if not found
-   * 
+   *
    * @example
    * ```tsx
    * const lastIndex = collection.lastIndexOf('duplicate');
    * ```
    */
   readonly lastIndexOf: (item: T) => number;
-  
+
   /**
    * Check if the collection contains the specified item.
    * @param item - Item to search for (uses equality function)
    * @returns True if the item is found
-   * 
+   *
    * @example
    * ```tsx
    * const hasItem = collection.contains('target');
    * ```
    */
   readonly contains: (item: T) => boolean;
-  
+
   /**
    * Check if the collection contains all of the specified items.
    * @param items - Items to search for
    * @returns True if all items are found
-   * 
+   *
    * @example
    * ```tsx
    * const hasAll = collection.containsAll(['a', 'b', 'c']);
@@ -445,12 +445,12 @@ export interface UseCollectionReturn<T> {
   readonly containsAll: (items: readonly T[]) => boolean;
 
   // Bulk operations
-  
+
   /**
    * Remove all items except those in the specified array.
    * @param items - Items to keep in the collection
    * @returns True if any items were removed
-   * 
+   *
    * @example
    * ```tsx
    * collection.retainAll(['keep1', 'keep2']); // Remove everything else
@@ -459,13 +459,13 @@ export interface UseCollectionReturn<T> {
   readonly retainAll: (items: readonly T[]) => boolean;
 
   // List operations
-  
+
   /**
    * Create a shallow copy of a portion of the collection.
    * @param fromIndex - Start index (inclusive)
    * @param toIndex - End index (exclusive)
    * @returns New array containing the selected items
-   * 
+   *
    * @example
    * ```tsx
    * const middle = collection.subList(2, 5); // Items from index 2 to 4
@@ -474,12 +474,12 @@ export interface UseCollectionReturn<T> {
   readonly subList: (fromIndex: number, toIndex: number) => T[];
 
   // Utility operations
-  
+
   /**
    * Sort the collection items in place.
    * @param compareFn - Optional comparison function
    * @returns True if the collection was modified
-   * 
+   *
    * @example
    * ```tsx
    * collection.sort(); // Default sort
@@ -487,22 +487,22 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly sort: (compareFn?: Comparator<T>) => boolean;
-  
+
   /**
    * Reverse the order of items in the collection.
    * @returns True if the collection was modified
-   * 
+   *
    * @example
    * ```tsx
    * collection.reverse(); // Reverse the order
    * ```
    */
   readonly reverse: () => boolean;
-  
+
   /**
    * Randomly shuffle the items in the collection.
    * @returns True if the collection was modified
-   * 
+   *
    * @example
    * ```tsx
    * collection.shuffle(); // Randomize the order
@@ -511,24 +511,24 @@ export interface UseCollectionReturn<T> {
   readonly shuffle: () => boolean;
 
   // Iterator operations
-  
+
   /**
    * Execute a function for each item in the collection.
    * @param action - Function to execute for each item
-   * 
+   *
    * @example
    * ```tsx
    * collection.forEach((item, index) => console.log(`${index}: ${item}`));
    * ```
    */
   readonly forEach: (action: (item: T, index: number) => void) => void;
-  
+
   /**
    * Find the first item that matches the predicate.
    * Supports type narrowing with type guard predicates.
    * @param predicate - Function to test each item
    * @returns The first matching item, or undefined if none found
-   * 
+   *
    * @example
    * ```tsx
    * const user = collection.find(item => item.id === targetId);
@@ -539,36 +539,36 @@ export interface UseCollectionReturn<T> {
     <U extends T>(predicate: TypeGuardPredicate<T, U>): U | undefined;
     (predicate: Predicate<T>): T | undefined;
   };
-  
+
   /**
    * Find the index of the first item that matches the predicate.
    * @param predicate - Function to test each item
    * @returns Index of the first matching item, or -1 if none found
-   * 
+   *
    * @example
    * ```tsx
    * const index = collection.findIndex(item => item.name === 'target');
    * ```
    */
   readonly findIndex: (predicate: Predicate<T>) => number;
-  
+
   /**
    * Test whether at least one item matches the predicate.
    * @param predicate - Function to test each item
    * @returns True if any item matches the predicate
-   * 
+   *
    * @example
    * ```tsx
    * const hasActive = collection.some(item => item.isActive);
    * ```
    */
   readonly some: (predicate: Predicate<T>) => boolean;
-  
+
   /**
    * Test whether all items match the predicate.
    * @param predicate - Function to test each item
    * @returns True if all items match the predicate
-   * 
+   *
    * @example
    * ```tsx
    * const allValid = collection.every(item => item.isValid);
@@ -577,13 +577,13 @@ export interface UseCollectionReturn<T> {
   readonly every: (predicate: Predicate<T>) => boolean;
 
   // Advanced operations
-  
+
   /**
    * Split the collection into two arrays based on a predicate.
    * Supports type narrowing with type guard predicates.
    * @param predicate - Function to test each item
    * @returns Tuple of [matching items, non-matching items]
-   * 
+   *
    * @example
    * ```tsx
    * const [active, inactive] = collection.partition(item => item.isActive);
@@ -594,12 +594,12 @@ export interface UseCollectionReturn<T> {
     <U extends T>(predicate: TypeGuardPredicate<T, U>): readonly [U[], Exclude<T, U>[]];
     (predicate: Predicate<T>): readonly [T[], T[]];
   };
-  
+
   /**
    * Group items by a key selector function.
    * @param keySelector - Function to extract the grouping key
    * @returns Object with keys as groups and values as arrays of items
-   * 
+   *
    * @example
    * ```tsx
    * const byCategory = collection.groupBy(item => item.category);
@@ -607,12 +607,12 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly groupBy: <K extends PropertyKey>(keySelector: (item: T) => K) => Record<K, T[]>;
-  
+
   /**
    * Get unique items from the collection.
    * @param keySelector - Optional function to extract comparison key
    * @returns Array of unique items
-   * 
+   *
    * @example
    * ```tsx
    * const unique = collection.distinct(); // Remove duplicates
@@ -620,60 +620,60 @@ export interface UseCollectionReturn<T> {
    * ```
    */
   readonly distinct: (keySelector?: (item: T) => unknown) => T[];
-  
+
   /**
    * Get unique items from the collection based on a key selector.
    * @param keySelector - Function to extract the uniqueness key
    * @returns Array of unique items
-   * 
+   *
    * @example
    * ```tsx
    * const uniqueUsers = collection.distinctBy(user => user.email);
    * ```
    */
   readonly distinctBy: <K>(keySelector: (item: T) => K) => T[];
-  
+
   /**
    * Split the collection into chunks of the specified size.
    * @param size - Size of each chunk
    * @returns Array of arrays, each containing up to 'size' items
-   * 
+   *
    * @example
    * ```tsx
    * const pages = collection.chunk(10); // Split into pages of 10 items
    * ```
    */
   readonly chunk: (size: number) => T[][];
-  
+
   /**
    * Take items from the beginning while the predicate is true.
    * @param predicate - Function to test each item
    * @returns Array of items taken from the beginning
-   * 
+   *
    * @example
    * ```tsx
    * const leadingZeros = collection.takeWhile(num => num === 0);
    * ```
    */
   readonly takeWhile: (predicate: Predicate<T>) => T[];
-  
+
   /**
    * Skip items from the beginning while the predicate is true.
    * @param predicate - Function to test each item
    * @returns Array of remaining items after skipping
-   * 
+   *
    * @example
    * ```tsx
    * const withoutLeadingZeros = collection.dropWhile(num => num === 0);
    * ```
    */
   readonly dropWhile: (predicate: Predicate<T>) => T[];
-  
+
   /**
    * Combine this collection with another array into pairs.
    * @param other - Array to combine with
    * @returns Array of tuples, limited by the shorter array
-   * 
+   *
    * @example
    * ```tsx
    * const pairs = collection.zip(['a', 'b', 'c']); // [[item1, 'a'], [item2, 'b'], ...]
@@ -682,34 +682,34 @@ export interface UseCollectionReturn<T> {
   readonly zip: <U>(other: readonly U[]) => Array<readonly [T, U]>;
 
   // Conversion operations
-  
+
   /**
    * Convert the collection to a regular array.
    * @returns New array containing all items
-   * 
+   *
    * @example
    * ```tsx
    * const array = collection.toArray();
    * ```
    */
   readonly toArray: () => T[];
-  
+
   /**
    * Convert the collection to a Set.
    * @returns New Set containing all unique items
-   * 
+   *
    * @example
    * ```tsx
    * const uniqueSet = collection.toSet();
    * ```
    */
   readonly toSet: () => Set<T>;
-  
+
   /**
    * Convert the collection to a Map using a key selector.
    * @param keySelector - Function to extract the key for each item
    * @returns New Map with selected keys and items as values
-   * 
+   *
    * @example
    * ```tsx
    * const userMap = collection.toMap(user => user.id);
@@ -720,7 +720,7 @@ export interface UseCollectionReturn<T> {
 
 /**
  * Advanced collection management hook for Preact applications.
- * 
+ *
  * Provides a comprehensive set of operations for managing collections with:
  * - Immutable, type-safe collection state
  * - Rich mutation operations (add, remove, update)
@@ -728,32 +728,32 @@ export interface UseCollectionReturn<T> {
  * - Performance optimizations with change detection
  * - Lifecycle hooks for before/after change events
  * - Custom equality comparison support
- * 
+ *
  * @template T - The type of items in the collection
  * @param initialItems - Initial items to populate the collection
  * @param options - Configuration options for the collection behavior
  * @returns Collection interface with all available operations
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * const todos = useCollection<Todo>([
  *   { id: 1, text: 'Learn Preact', completed: false }
  * ]);
- * 
+ *
  * // Add items
  * todos.add({ id: 2, text: 'Build app', completed: false });
  * todos.addAll([todo3, todo4]);
- * 
+ *
  * // Query and transform
  * const completed = todos.filter(todo => todo.completed);
  * const byPriority = todos.groupBy(todo => todo.priority);
- * 
+ *
  * // Mutation operations
  * todos.removeIf(todo => todo.completed);
  * todos.sort((a, b) => a.priority - b.priority);
  * ```
- * 
+ *
  * @example
  * ```tsx
  * // With custom equality and lifecycle hooks
@@ -1186,19 +1186,19 @@ export interface CollectionProviderProps<T> {
 
 /**
  * Create a collection context for sharing collection state across components.
- * 
+ *
  * This factory function creates a Provider component and a hook for accessing
  * the collection context. Useful for sharing collection state across multiple
  * components without prop drilling.
- * 
+ *
  * @template T - The type of items in the collection
  * @returns Object containing CollectionProvider component and useCollectionContext hook
- * 
+ *
  * @example
  * ```tsx
  * // Create the context
  * const { CollectionProvider, useCollectionContext } = createCollectionContext<Todo>();
- * 
+ *
  * // Use in app root
  * function App() {
  *   return (
@@ -1208,7 +1208,7 @@ export interface CollectionProviderProps<T> {
  *     </CollectionProvider>
  *   );
  * }
- * 
+ *
  * // Access in child components
  * function TodoList() {
  *   const todos = useCollectionContext();
@@ -1220,7 +1220,7 @@ export interface CollectionProviderProps<T> {
  *     </div>
  *   );
  * }
- * 
+ *
  * function TodoStats() {
  *   const todos = useCollectionContext();
  *   return <div>Total: {todos.size}</div>;
@@ -1268,32 +1268,32 @@ export function createCollectionContext<T>() {
 
 /**
  * Integration helper for Preact Signals.
- * 
+ *
  * Synchronizes a collection with a Preact signal, automatically updating
  * the signal whenever the collection changes. Useful for integrating with
  * existing signal-based state management.
- * 
+ *
  * @template T - The type of items in the collection
  * @param signal - Signal object containing the collection data
  * @param setSignal - Function to update the signal value
  * @param options - Additional collection options
  * @returns Collection interface synchronized with the signal
- * 
+ *
  * @example
  * ```tsx
  * import { signal } from '@preact/signals';
- * 
+ *
  * const todosSignal = signal<Todo[]>([]);
- * 
+ *
  * function TodoManager() {
  *   const todos = useCollectionWithSignal(
  *     todosSignal,
  *     (newTodos) => { todosSignal.value = newTodos; }
  *   );
- * 
+ *
  *   // Collection changes automatically update the signal
  *   const addTodo = () => todos.add({ id: Date.now(), text: 'New todo' });
- * 
+ *
  *   return (
  *     <div>
  *       <button onClick={addTodo}>Add Todo</button>
@@ -1319,17 +1319,17 @@ export function useCollectionWithSignal<T>(
 
 /**
  * Collection hook with external API synchronization.
- * 
+ *
  * Provides automatic synchronization with external APIs, databases, or services.
  * Supports debounced sync-on-change and manual sync operations. Useful for
  * collections that need to persist changes to a backend service.
- * 
+ *
  * @template T - The type of items in the collection
  * @param initialItems - Initial items to populate the collection
  * @param syncConfig - Configuration for synchronization behavior
  * @param options - Additional collection options
  * @returns Collection interface with sync capability
- * 
+ *
  * @example
  * ```tsx
  * function TodoApp() {
@@ -1344,12 +1344,12 @@ export function useCollectionWithSignal<T>(
  *     syncOnChange: true,    // Auto-sync when collection changes
  *     debounceMs: 1000      // Debounce sync calls by 1 second
  *   });
- * 
+ *
  *   // Manual sync
  *   const handleManualSync = async () => {
  *     await todos.sync();
  *   };
- * 
+ *
  *   return (
  *     <div>
  *       <button onClick={() => todos.add(newTodo)}>Add Todo</button>
@@ -1358,7 +1358,7 @@ export function useCollectionWithSignal<T>(
  *   );
  * }
  * ```
- * 
+ *
  * @example
  * ```tsx
  * // Sync with localStorage
@@ -1385,7 +1385,7 @@ export function useCollectionWithSync<T>(
     readonly debounceMs?: number;
   } = {},
   options: UseCollectionOptions<T> = {}
-): UseCollectionReturn<T> & { 
+): UseCollectionReturn<T> & {
   /** Manually trigger synchronization with external service */
   readonly sync: () => Promise<void>;
 } {
