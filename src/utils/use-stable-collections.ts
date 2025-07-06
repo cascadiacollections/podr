@@ -154,7 +154,7 @@ export function useStableSignal(collection: any, options: StableOptions = {}): R
   const collectionSignal = useMemo(() => signal(stableCollection), []);
 
   // Update signal when stable collection changes
-  useMemo(() => {
+  useEffect(() => {
     if (collectionSignal.value !== stableCollection) {
       collectionSignal.value = stableCollection;
     }
