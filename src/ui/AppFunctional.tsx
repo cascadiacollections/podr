@@ -2,7 +2,7 @@ import { computed, effect, signal, Signal } from '@preact/signals';
 import { Fragment, h, JSX } from 'preact';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 
-import { APP_CONFIG, IFeed, ITopPodcast } from '../utils/AppContext';
+import { APP_CONFIG, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
 import { getFeedUrl, getSecureUrl } from '../utils/helpers';
 import { List } from './List';
 import { IFeedItem } from './Result';
@@ -17,7 +17,6 @@ declare global {
 
 
 // Single stable empty array for all empty signal defaults
-import { EMPTY_ARRAY } from '../utils/AppContext';
 
 const query = signal<string>('');
 const favorited = signal<ReadonlySet<IFeed>>(new Set());
@@ -169,7 +168,7 @@ export const App = (): JSX.Element => {
         }
         return response.json();
       })
-      .then(({ items: feedResults = [] }) => {
+      .then(({ items: feedResults = EMPTY_ARRAY }) => {
         results.value = feedResults;
         localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
       })
@@ -190,7 +189,7 @@ export const App = (): JSX.Element => {
     query.value = searchQuery;
 
     if (!searchQuery || !searchQuery.length) {
-      searchResults.value = [];
+      searchResults.value = EMPTY_ARRAY;
       return;
     }
 
@@ -284,7 +283,7 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
         description: `fetch_podcast_${itunesId}_${err.message}`,
         fatal: false
       });
-      return { results: [] };
+      return EMPTY_ARRAY;
     });
 
     if (feedResults?.results?.length > 0) {
