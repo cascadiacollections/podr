@@ -219,7 +219,9 @@ export function useCombinedCollections<T extends ReadonlySignal<unknown>[], U>(
       return useStable(combined as any, options) as U;
     }
     return combined;
-  }), [sources, combiner, options]);
+  }, [sources, combiner, options]);
+
+  return useMemo(() => computed(() => stableCombined), [stableCombined]);
 }
 
 /**
