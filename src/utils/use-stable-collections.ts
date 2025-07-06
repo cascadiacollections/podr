@@ -181,14 +181,16 @@ export function useComputedCollection<T, U>(
   transform: (value: T) => U,
   options?: StableOptions
 ): ReadonlySignal<U> {
-  return useMemo(() => computed(() => {
+  const stableTransformed = useMemo(() => {
     const transformed = transform(source.value);
     // Apply stability to the transformed result if it's a collection
     if (Array.isArray(transformed) || transformed instanceof Set || transformed instanceof Map) {
       return useStable(transformed as any, options) as U;
     }
     return transformed;
-  }), [source, transform, options]);
+  }, [source.value, transform, options]);
+
+  return useMemo(() => computed(() => stableTransformed), [stableTransformed]);
 }
 
 /**
