@@ -1,5 +1,5 @@
-import { useMemo, useRef, useCallback } from 'preact/hooks';
-import { signal, computed, Signal, ReadonlySignal } from '@preact/signals';
+import { computed, ReadonlySignal, signal } from '@preact/signals';
+import { useCallback, useMemo, useRef } from 'preact/hooks';
 
 // Shared empty singletons for stable references
 const EMPTY_ARRAY = Object.freeze([]);
@@ -25,11 +25,11 @@ const warn = (message: string) => {
 export const shallowEqual = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
   if (!a || !b) return false;
-  
+
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((item, i) => item === b[i]);
   }
-  
+
   if (a instanceof Set && b instanceof Set) {
     if (a.size !== b.size) return false;
     for (const item of a) {
@@ -37,7 +37,7 @@ export const shallowEqual = (a: unknown, b: unknown): boolean => {
     }
     return true;
   }
-  
+
   if (a instanceof Map && b instanceof Map) {
     if (a.size !== b.size) return false;
     for (const [key, value] of a) {
@@ -45,26 +45,26 @@ export const shallowEqual = (a: unknown, b: unknown): boolean => {
     }
     return true;
   }
-  
+
   return false;
 };
 
 /**
  * Ensures a collection has a stable reference when empty or unchanged.
  * This prevents unnecessary re-renders when collections remain empty or equivalent.
- * 
+ *
  * @param collection - The collection to stabilize
  * @param options - Configuration options
  * @returns A stable reference to the collection
- * 
+ *
  * @example
  * ```tsx
  * // Arrays get stable empty reference
  * const items = useStable(searchResults); // [] -> same reference always
- * 
+ *
  * // Sets get stable empty reference
  * const selectedIds = useStable(new Set(selected));
- * 
+ *
  * // Maps get stable empty reference
  * const itemMap = useStable(new Map(pairs));
  * ```
@@ -75,7 +75,7 @@ export function useStable<K, V>(map: ReadonlyMap<K, V>, options?: StableOptions)
 export function useStable(collection: unknown, options: StableOptions = {}) {
   const { isEqual = shallowEqual, debug = false } = options;
   const previousRef = useRef(collection);
-  
+
   return useMemo(() => {
     // Handle arrays
     if (Array.isArray(collection)) {
@@ -85,15 +85,15 @@ export function useStable(collection: unknown, options: StableOptions = {}) {
         }
         return EMPTY_ARRAY;
       }
-      
+
       if (isEqual(collection, previousRef.current)) {
         return previousRef.current;
       }
-      
+
       previousRef.current = collection;
       return collection;
     }
-    
+
     // Handle Sets
     if (collection instanceof Set) {
       if (collection.size === 0) {
@@ -102,15 +102,15 @@ export function useStable(collection: unknown, options: StableOptions = {}) {
         }
         return EMPTY_SET;
       }
-      
+
       if (isEqual(collection, previousRef.current)) {
         return previousRef.current;
       }
-      
+
       previousRef.current = collection;
       return collection;
     }
-    
+
     // Handle Maps
     if (collection instanceof Map) {
       if (collection.size === 0) {
@@ -119,15 +119,15 @@ export function useStable(collection: unknown, options: StableOptions = {}) {
         }
         return EMPTY_MAP;
       }
-      
+
       if (isEqual(collection, previousRef.current)) {
         return previousRef.current;
       }
-      
+
       previousRef.current = collection;
       return collection;
     }
-    
+
     // Fallback for other types
     return collection;
   }, [collection, isEqual, debug]);
@@ -136,15 +136,15 @@ export function useStable(collection: unknown, options: StableOptions = {}) {
 /**
  * Creates a reactive signal containing a stable collection reference.
  * Combines the benefits of useStable with Preact Signals for reactive updates.
- * 
+ *
  * @param collection - The collection to make reactive
  * @param options - Configuration options
  * @returns A reactive signal containing the stable collection
- * 
+ *
  * @example
  * ```tsx
  * const itemsSignal = useStableSignal(searchResults);
- * 
+ *
  * // Use in computed values
  * const itemCount = computed(() => itemsSignal.value.length);
  * ```
@@ -152,26 +152,26 @@ export function useStable(collection: unknown, options: StableOptions = {}) {
 export function useStableSignal(collection: any, options: StableOptions = {}): ReadonlySignal<any> {
   const stableCollection = useStable(collection as any, options);
   const collectionSignal = useMemo(() => signal(stableCollection), []);
-  
+
   // Update signal when stable collection changes
   useMemo(() => {
     if (collectionSignal.value !== stableCollection) {
       collectionSignal.value = stableCollection;
     }
   }, [stableCollection, collectionSignal]);
-  
+
   return collectionSignal;
 }
 
 /**
  * Creates computed signals that derive from stable collections.
  * Useful for creating reactive transformations of collections.
- * 
+ *
  * @example
  * ```tsx
  * const items = useStableSignal([1, 2, 3]);
- * 
- * const doubled = useComputedCollection(items, (arr) => 
+ *
+ * const doubled = useComputedCollection(items, (arr) =>
  *   arr.map(x => x * 2)
  * );
  * ```
@@ -193,12 +193,12 @@ export function useComputedCollection<T, U>(
 
 /**
  * Combines multiple stable collection signals into a single reactive signal.
- * 
+ *
  * @example
  * ```tsx
  * const items1 = useStableSignal([1, 2]);
  * const items2 = useStableSignal([3, 4]);
- * 
+ *
  * const combined = useCombinedCollections(
  *   [items1, items2],
  *   ([arr1, arr2]) => [...arr1, ...arr2]
@@ -213,7 +213,7 @@ export function useCombinedCollections<T extends ReadonlySignal<unknown>[], U>(
   return useMemo(() => computed(() => {
     const values = sources.map(signal => signal.value) as any;
     const combined = combiner(values);
-    
+
     // Apply stability if result is a collection
     if (Array.isArray(combined) || combined instanceof Set || combined instanceof Map) {
       return useStable(combined as any, options) as U;
@@ -225,14 +225,14 @@ export function useCombinedCollections<T extends ReadonlySignal<unknown>[], U>(
 /**
  * Hook for managing collection state with signals and stability.
  * Provides both imperative updates and reactive access.
- * 
+ *
  * @example
  * ```tsx
  * const [items, setItems] = useStableCollectionState([]);
- * 
+ *
  * // Reactive access
  * const itemCount = computed(() => items.value.length);
- * 
+ *
  * // Imperative updates
  * const addItem = useCallback((item) => {
  *   setItems(prev => [...prev, item]);
@@ -242,23 +242,23 @@ export function useCombinedCollections<T extends ReadonlySignal<unknown>[], U>(
 export function useStableCollectionState(initialValue: any, options: StableOptions = {}): [ReadonlySignal<any>, (updater: any) => void] {
   const stableInitial = useStable(initialValue, options);
   const collectionSignal = useMemo(() => signal(stableInitial), [stableInitial]);
-  
+
   const setCollection = useCallback((updater: any) => {
-    const newValue = typeof updater === 'function' 
+    const newValue = typeof updater === 'function'
       ? updater(collectionSignal.value)
       : updater;
-    
+
     const stableNewValue = useStable(newValue, options);
     collectionSignal.value = stableNewValue;
   }, [collectionSignal, options]);
-  
+
   return [collectionSignal, setCollection];
 }
 
 /**
  * Transform arrays with built-in stable empty reference handling.
  * Provides a fluent API for common array operations.
- * 
+ *
  * @example
  * ```tsx
  * const processedItems = useTransform(items)
@@ -268,11 +268,11 @@ export function useStableCollectionState(initialValue: any, options: StableOptio
  * ```
  */
 export function useTransform<T>(
-  source: readonly T[], 
+  source: readonly T[],
   options?: StableOptions
 ) {
   const stableSource = useStable(source, options);
-  
+
   return useMemo(() => ({
     /**
      * Filter array elements based on predicate
@@ -281,7 +281,7 @@ export function useTransform<T>(
       const result = stableSource.filter(predicate);
       return useStable(result, options);
     },
-    
+
     /**
      * Map array elements to new values
      */
@@ -289,7 +289,7 @@ export function useTransform<T>(
       const result = stableSource.map(mapper);
       return useStable(result, options);
     },
-    
+
     /**
      * Get a slice of the array
      */
@@ -297,7 +297,7 @@ export function useTransform<T>(
       const result = stableSource.slice(start, end);
       return useStable(result, options);
     },
-    
+
     /**
      * Take first n elements
      */
@@ -305,7 +305,7 @@ export function useTransform<T>(
       const result = stableSource.slice(0, n);
       return useStable(result, options);
     },
-    
+
     /**
      * Get unique elements
      */
@@ -313,7 +313,7 @@ export function useTransform<T>(
       const result = [...new Set(stableSource)];
       return useStable(result, options);
     },
-    
+
     /**
      * Sort elements
      */
@@ -325,5 +325,5 @@ export function useTransform<T>(
 }
 
 // Convenience re-exports
-export { signal, computed } from '@preact/signals';
-export type { Signal, ReadonlySignal } from '@preact/signals';
+export { computed, signal } from '@preact/signals';
+export type { ReadonlySignal, Signal } from '@preact/signals';
