@@ -1,12 +1,29 @@
-/**
- * Shared stable empty array for all signal defaults and empty values
- *
- * Using readonly never[] allows assignment to any readonly array type without assertion.
- */
-export const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
 import { Signal, signal } from '@preact/signals';
 import { createContext } from 'preact';
 import { IFeedItem } from '../ui/Result';
+
+/**
+ * Shared stable empty array for all signal defaults and empty values
+ * Using readonly never[] allows assignment to any readonly array type without assertion.
+ */
+export const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
+
+// Stable empty references - prevent unnecessary re-renders
+export const EMPTY_OBJECT = Object.freeze({});
+export const EMPTY_STRING = '' as const;
+
+// Stable error response objects
+export const EMPTY_SEARCH_RESULT = Object.freeze({
+  results: EMPTY_ARRAY
+});
+
+export const EMPTY_FEED_RESULT = Object.freeze({
+  results: EMPTY_ARRAY
+});
+
+// Stable default handlers (for optional props)
+export const NOOP = () => {};
+export const NOOP_ASYNC = async () => {};
 
 /**
  * Represents a podcast feed with essential metadata
