@@ -1,5 +1,5 @@
 import { computed, ReadonlySignal, signal } from '@preact/signals';
-import { useCallback, useMemo, useRef } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
 // Shared empty singletons for stable references
 const EMPTY_ARRAY = Object.freeze([]);
@@ -221,9 +221,7 @@ export function useCombinedCollections<T extends ReadonlySignal<unknown>[], U>(
       return useStable(combined as any, options) as U;
     }
     return combined;
-  }, [sources, combiner, options]);
-
-  return useMemo(() => computed(() => stableCombined), [stableCombined]);
+  }), [sources, combiner, options]);
 }
 
 /**
