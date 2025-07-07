@@ -3,16 +3,16 @@ import { render } from '@testing-library/preact';
 import { FunctionComponent, h } from 'preact';
 import { useState } from 'preact/hooks';
 import {
-  filter,
-  map,
-  sort,
-  unique,
-  useCollection,
-  useCombine,
-  useComputed,
-  useConditional,
-  usePagination,
-  useTransform
+    filter,
+    map,
+    sort,
+    unique,
+    useCollection,
+    useCombine,
+    useComputed,
+    useConditional,
+    usePagination,
+    useTransform
 } from '../use-stable-collections';
 
 describe('Enhanced Stable Collections', () => {
@@ -99,12 +99,12 @@ describe('Enhanced Stable Collections', () => {
 
         return (
           <div>
-            <div data-testid="filtered">{(filtered.value as readonly number[]).length}</div>
-            <div data-testid="mapped">{(mapped.value as readonly number[]).join(',')}</div>
-            <div data-testid="unique">{(uniqueItems.value as readonly number[]).length}</div>
-            <div data-testid="sorted">{(sorted.value as readonly number[]).join(',')}</div>
-            <div data-testid="sliced">{(sliced.value as readonly number[]).join(',')}</div>
-            <div data-testid="taken">{(taken.value as readonly number[]).join(',')}</div>
+            <div data-testid="filtered">{filtered.value.length}</div>
+            <div data-testid="mapped">{mapped.value.join(',')}</div>
+            <div data-testid="unique">{uniqueItems.value.length}</div>
+            <div data-testid="sorted">{sorted.value.join(',')}</div>
+            <div data-testid="sliced">{sliced.value.join(',')}</div>
+            <div data-testid="taken">{taken.value.join(',')}</div>
           </div>
         );
       };
@@ -131,9 +131,9 @@ describe('Enhanced Stable Collections', () => {
 
         return (
           <div>
-            <div data-testid="groups">{(grouped.value as ReadonlyMap<string, readonly any[]>).size}</div>
-            <div data-testid="group-a">{(grouped.value as ReadonlyMap<string, readonly any[]>).get('A')?.length || 0}</div>
-            <div data-testid="group-b">{(grouped.value as ReadonlyMap<string, readonly any[]>).get('B')?.length || 0}</div>
+            <div data-testid="groups">{grouped.value.size}</div>
+            <div data-testid="group-a">{grouped.value.get('A')?.length || 0}</div>
+            <div data-testid="group-b">{grouped.value.get('B')?.length || 0}</div>
           </div>
         );
       };
@@ -274,10 +274,10 @@ describe('Enhanced Stable Collections', () => {
 
         return (
           <div>
-            <div data-testid="filtered">{(filtered.value as readonly number[]).join(',')}</div>
-            <div data-testid="mapped">{(mapped.value as readonly number[]).join(',')}</div>
-            <div data-testid="sorted">{(sorted.value as readonly number[]).join(',')}</div>
-            <div data-testid="unique">{(uniqueItems.value as readonly number[]).join(',')}</div>
+            <div data-testid="filtered">{filtered.value.join(',')}</div>
+            <div data-testid="mapped">{mapped.value.join(',')}</div>
+            <div data-testid="sorted">{sorted.value.join(',')}</div>
+            <div data-testid="unique">{uniqueItems.value.join(',')}</div>
           </div>
         );
       };
