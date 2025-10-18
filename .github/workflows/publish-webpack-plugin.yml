@@ -39,6 +39,8 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1 # Shallow clone for faster checkout
 
     - name: Setup Node
       uses: actions/setup-node@v4
@@ -47,9 +49,19 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'packages/webpack-api-inliner-plugin/package-lock.json'
 
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: packages/webpack-api-inliner-plugin/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('packages/webpack-api-inliner-plugin/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+
     - name: Install dependencies
+      if: steps.npm-cache.outputs.cache-hit != 'true'
       working-directory: packages/webpack-api-inliner-plugin
-      run: npm ci
+      run: npm ci --prefer-offline
 
     - name: Build package
       working-directory: packages/webpack-api-inliner-plugin  
@@ -76,6 +88,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1 # Shallow clone for faster checkout
 
     - name: Setup Node
       uses: actions/setup-node@v4
@@ -86,9 +100,19 @@ jobs:
         registry-url: 'https://npm.pkg.github.com'
         scope: '@cascadiacollections'
 
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: packages/webpack-api-inliner-plugin/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('packages/webpack-api-inliner-plugin/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+
     - name: Install dependencies
+      if: steps.npm-cache.outputs.cache-hit != 'true'
       working-directory: packages/webpack-api-inliner-plugin
-      run: npm ci
+      run: npm ci --prefer-offline
 
     - name: Build package
       working-directory: packages/webpack-api-inliner-plugin
