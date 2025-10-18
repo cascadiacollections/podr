@@ -102,8 +102,8 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 
 | Requirement | Version | Download |
 |-------------|---------|----------|
-| **Node.js** | 20+ (24+ recommended) | [nodejs.org](https://nodejs.org/) |
-| **Yarn** | Latest | [yarnpkg.com](https://yarnpkg.com/) |
+| **Node.js** | 24+ LTS | [nodejs.org](https://nodejs.org/) |
+| **Yarn** | 1.22+ or 4+ | [yarnpkg.com](https://yarnpkg.com/) |
 | **Git** | 2.0+ | [git-scm.com](https://git-scm.com/) |
 
 ### ⚡ Installation

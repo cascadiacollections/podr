@@ -18,6 +18,7 @@ jobs:
     permissions:
       contents: read
       deployments: write
+      security-events: write # For security scanning
     
     steps:
     - name: Checkout repository
@@ -28,7 +29,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     
@@ -37,7 +38,7 @@ jobs:
       run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
     
     - name: Cache Yarn dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: yarn-cache
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -73,7 +74,7 @@ jobs:
         NODE_ENV: production
     
     - name: Cache build output
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ./dist
         key: ${{ runner.os }}-build-${{ github.sha }}
