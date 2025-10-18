@@ -102,8 +102,8 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 
 | Requirement | Version | Download |
 |-------------|---------|----------|
-| **Node.js** | 20+ (24+ recommended) | [nodejs.org](https://nodejs.org/) |
-| **Yarn** | Latest | [yarnpkg.com](https://yarnpkg.com/) |
+| **Node.js** | 24+ LTS | [nodejs.org](https://nodejs.org/) |
+| **Yarn** | 1.22+ or 4+ | [yarnpkg.com](https://yarnpkg.com/) |
 | **Git** | 2.0+ | [git-scm.com](https://git-scm.com/) |
 
 ### ⚡ Installation
@@ -369,7 +369,6 @@ git checkout -b feature/amazing-feature
 
 # 4. ✅ Verify quality
 yarn test                    # Run tests
-yarn lint                    # Check code style
 yarn build                   # Ensure it builds
 
 # 5. 📝 Commit with clear message
@@ -389,6 +388,7 @@ gh pr create --title "Add amazing feature" --body "Description of changes"
 | 📚 **Documentation** | Improve project docs | README updates, code comments |
 | ⚡ **Performance** | Speed improvements | Bundle optimization, caching |
 | 🧹 **Refactoring** | Code quality improvements | TypeScript migration, cleanup |
+| 🔒 **Security** | Security improvements | Vulnerability fixes, updates |
 
 ### 📋 Contribution Guidelines
 
@@ -397,8 +397,16 @@ gh pr create --title "Add amazing feature" --body "Description of changes"
 - ✅ **Update Docs** - Keep README and comments current
 - ✅ **Small PRs** - Focused, reviewable changes
 - ✅ **Clear Commits** - Use conventional commit format
+- ✅ **Security First** - Report vulnerabilities privately (see [SECURITY.md](SECURITY.md))
 
 > 📖 **Detailed guidelines:** See [CONTRIBUTING.md](CONTRIBUTING.md) for complete information
+
+## 🔒 Security
+
+We take security seriously. If you discover a security vulnerability:
+- **DO NOT** open a public issue
+- See [SECURITY.md](SECURITY.md) for responsible disclosure instructions
+- Email: kevintcoughlin@users.noreply.github.com
 
 ## � Project Stats
 
