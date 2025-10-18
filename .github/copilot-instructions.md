@@ -86,24 +86,37 @@ describe('Search Component', () => {
 
 ### Development
 ```bash
-npm run start          # Start dev server with hot reload
-npm run build          # Production build
-npm run build:ci       # CI optimized build
+yarn start             # Start dev server with hot reload
+yarn build             # Production build
+yarn build:ci          # CI optimized build (no prebuild steps)
 ```
 
 ### Testing
 ```bash
-npm test               # Run full test suite
-npm run test:watch     # Watch mode for development
-npm run test:coverage  # Generate coverage reports
+yarn test              # Run full test suite
+yarn test:watch        # Watch mode for development
+yarn test:coverage     # Generate coverage reports
 ```
 
 ### Code Quality
 ```bash
-npm run lint           # ESLint checks
-npm run format         # Prettier formatting
-npm run type-check     # TypeScript validation
+yarn lint              # ESLint checks (via heft)
+yarn format            # Prettier formatting (auto on save in dev container)
+yarn type-check        # TypeScript validation (via heft build)
 ```
+
+## 🌐 Environment & Runtime
+
+### Node.js Version
+- **Required**: Node.js 24+ LTS
+- **Package Manager**: Yarn 1.22+ or Yarn 4+
+- **Dev Container**: Automatically configured with Node.js 24
+
+### Deployment
+- **Platform**: Netlify (automated via GitHub Actions)
+- **Build Command**: `yarn build:ci`
+- **Publish Directory**: `dist/`
+- **Node Version**: 24 (configured in netlify.toml)
 
 ## 🎨 Component Patterns
 
@@ -283,9 +296,41 @@ When generating code for this project:
 ## 📚 Additional Resources
 
 - [Contributing Guidelines](../CONTRIBUTING.md)
-- [Testing Documentation](../docs/TESTING.md)
-- [CI/CD Information](../docs/CI_TESTING.md)
 - [Code of Conduct](../CODE_OF_CONDUCT.md)
+
+## 🔐 Security & Best Practices
+
+### Security Considerations
+- All dependencies are audited via `yarn audit` in CI
+- GitHub Actions workflows have minimal permissions (principle of least privilege)
+- Dependabot configured for automatic security updates
+- CodeQL analysis runs weekly for vulnerability detection
+
+### Modern Enlistment Practices
+- **Consistent Environment**: Dev containers ensure identical setup across contributors
+- **Automated Quality Gates**: All PRs must pass tests, builds, and security checks
+- **Version Pinning**: Use `--frozen-lockfile` to ensure reproducible builds
+- **Fast Feedback**: Tests run in <10 seconds, builds in <10 seconds
+
+### CI/CD Pipeline
+- **GitHub Actions**: Automated testing and deployment
+- **Branch Protection**: Main branch requires PR approval and passing checks
+- **Preview Deployments**: Every PR gets a preview URL on Netlify
+- **Daily Builds**: Fresh API data pulled daily for production
+
+## 🚀 Performance Optimization
+
+### Build Performance
+- **Incremental Compilation**: TypeScript compiles only changed files
+- **Webpack Caching**: Persistent cache for faster rebuilds
+- **Code Splitting**: Vendor and app bundles separated
+- **Tree Shaking**: Dead code elimination enabled
+
+### Runtime Performance
+- **Bundle Size**: Target <100KB gzipped for main bundle
+- **Lazy Loading**: Route-based code splitting where applicable
+- **Preact Signals**: Fine-grained reactivity for optimal re-renders
+- **Service Worker**: Offline support and caching (configured in netlify.toml)
 
 ---
 
