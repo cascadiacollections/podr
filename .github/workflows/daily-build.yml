@@ -33,6 +33,13 @@ jobs:
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     
+    - name: Configure Ubuntu APT
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends apt-transport-https ca-certificates
+        sudo rm -rf /var/lib/apt/lists/*
+      continue-on-error: true
+    
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
@@ -41,13 +48,26 @@ jobs:
       uses: actions/cache@v4
       id: yarn-cache
       with:
-        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        path: |
+          ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          .yarn/cache
+          .yarn/install-state.gz
         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
           ${{ runner.os }}-yarn-
     
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: node-modules-cache
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+    
     - name: Install dependencies
-      run: yarn install --frozen-lockfile --prefer-offline
+      if: steps.node-modules-cache.outputs.cache-hit != 'true'
+      run: yarn install --frozen-lockfile --prefer-offline --network-timeout 100000
       timeout-minutes: 5
     
     - name: Security audit

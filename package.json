@@ -6,6 +6,10 @@
   "description": "Open source podcast web player",
   "typings": "lib/index.d.ts",
   "main": "lib/index.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "yarn": ">=1.22.0"
+  },
   "scripts": {
     "build": "heft build --clean",
     "build:ci": "heft build --clean --production",
