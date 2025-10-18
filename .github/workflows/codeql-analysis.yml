@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4 # Use v4 to get the latest features and improvements
+        with:
+          fetch-depth: 1 # Shallow clone for faster checkout
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3 # Use v3 to get the latest features and improvements
@@ -52,3 +54,5 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3 # Use v3 to get the latest features and improvements
+        with:
+          category: "/language:${{matrix.language}}"

@@ -41,9 +41,17 @@
 			"version": "24"
 		}
 	},
-	"postCreateCommand": "yarn install",
-	"updateContentCommand": "yarn install",
+	"mounts": [
+		"source=/var/lib/apt/lists,target=/var/lib/apt/lists,type=volume",
+		"source=podr-yarn-cache,target=/usr/local/share/.cache/yarn,type=volume"
+	],
+	"postCreateCommand": "yarn install --prefer-offline",
+	"updateContentCommand": "yarn install --prefer-offline",
 	"initializeCommand": "echo '🔧 Initializing Podr development environment...'",
 	"onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
-	"remoteUser": "node"
+	"remoteUser": "node",
+	"containerEnv": {
+		"YARN_CACHE_FOLDER": "/usr/local/share/.cache/yarn",
+		"DEBIAN_FRONTEND": "noninteractive"
+	}
 }
