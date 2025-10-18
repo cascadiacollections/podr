@@ -92,6 +92,24 @@ audio {
 .episode-row {
   cursor: pointer;
   transition: background-color 0.2s ease;
+  background-color: transparent;
+  border: none;
+  color: inherit;
+}
+
+/* Override Pico CSS button styles for table rows */
+.episode-row[role="button"] {
+  background-color: transparent;
+  border: none;
+  color: inherit;
+  display: table-row;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  font-weight: inherit;
+  text-align: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .episode-row:hover {
@@ -101,6 +119,7 @@ audio {
 .episode-row:focus {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
+  background-color: transparent;
 }
 
 /* Episode title cell */
