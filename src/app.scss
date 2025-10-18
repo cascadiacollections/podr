@@ -31,27 +31,125 @@ audio {
   overflow-y: auto;
 }
 
+/* Section headers */
+.section-header {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--muted-border-color);
+  padding-bottom: 0.5rem;
+}
+
 /* Episodes table container */
 .episodes-container {
   height: 340px;
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
+  margin-bottom: 1rem;
 }
 
-.episodes-container table {
+.episodes-table {
   width: 100%;
   table-layout: fixed;
   margin: 0;
+  border-collapse: collapse;
 }
 
-.episodes-container tr {
+.episodes-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: var(--card-background-color);
+  z-index: 1;
+}
+
+.episodes-table tr {
   line-height: 1.2;
 }
 
-.episodes-container td {
-  padding: 0.5rem;
+.episodes-table td,
+.episodes-table th {
+  padding: 0.75rem;
   vertical-align: middle;
+}
+
+/* Column width distribution */
+.episodes-table th:first-child,
+.episodes-table td:first-child {
+  width: 60%;
+}
+
+.date-column {
+  width: 20%;
+  text-align: center;
+}
+
+.duration-column {
+  width: 20%;
+  text-align: center;
+}
+
+/* Episode row styling */
+.episode-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.episode-row:hover {
+  background-color: var(--card-sectionning-background-color);
+}
+
+.episode-row:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* Episode title cell */
+.episode-title-cell a {
+  color: var(--primary);
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.episode-title-cell a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* Empty state styling */
+.empty-row td {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.empty-message {
+  color: var(--muted-color);
+  font-style: italic;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--muted-border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Mobile optimizations */
