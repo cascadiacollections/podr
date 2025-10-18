@@ -1,6 +1,6 @@
 [build]
-  # Netlify automatically runs yarn/npm install before the build command
-  command = "yarn build:ci"
+  # Ensure dependencies are installed before building
+  command = "yarn install --frozen-lockfile && yarn build:ci"
   publish = "dist"
 
 [build.environment]
