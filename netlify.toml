@@ -1,6 +1,6 @@
 [build]
-  # Ensure dependencies are installed before building
-  command = "yarn install --frozen-lockfile && yarn build:ci"
+  # Install dependencies (including devDependencies needed for heft)
+  command = "yarn install --production=false --frozen-lockfile && yarn build:ci"
   publish = "dist"
 
 [build.environment]
