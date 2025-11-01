@@ -2,10 +2,17 @@
  * API Inliner Hooks
  *
  * Provides Preact/React hooks for accessing data inlined by the API Inliner Plugin.
+ * Optimized for performance with proper dependency tracking and cleanup.
  */
 /**
  * Custom hook for accessing data inlined by the API Inliner Plugin.
  * Compatible with Preact hooks and React hooks.
+ *
+ * Optimized for performance:
+ * - Proper dependency tracking to avoid unnecessary re-renders
+ * - Cleanup with AbortController to prevent memory leaks
+ * - Memoized options to avoid creating new references
+ * - Cached hook resolution for better performance
  *
  * @template T - Type of the data (for type safety)
  * @param variableName - The name of the window variable to check

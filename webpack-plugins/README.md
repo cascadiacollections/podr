@@ -9,6 +9,7 @@ A webpack plugin that fetches API data at build time and makes it available to y
 - **Better Reliability**: Fallback to static data when APIs are unavailable.
 - **Performance First**: Eliminates render-blocking API requests in the critical rendering path.
 - **Flexible**: Configure multiple endpoints with different options.
+- **Optimized**: Built with modern patterns including exponential backoff, proper cleanup, and memory leak prevention.
 
 ## Installation
 
@@ -197,11 +198,18 @@ Add the declaration file to your `tsconfig.json`:
 
 ## Hooks for Accessing Inlined Data
 
-The plugin provides hooks for easily accessing the inlined data in your application. These hooks are compatible with both Preact and React.
+The plugin provides optimized hooks for easily accessing the inlined data in your application. These hooks are compatible with both Preact and React.
 
 ### `useApiInliner<T>`
 
-A custom hook for accessing data inlined by the API Inliner Plugin:
+A custom hook for accessing data inlined by the API Inliner Plugin with built-in performance optimizations:
+
+**Performance Features:**
+- Proper dependency tracking to avoid unnecessary re-renders
+- AbortController cleanup to prevent memory leaks
+- Memoized options to avoid creating new references
+- Cached hook resolution for better performance
+- Efficient initial data loading without extra renders
 
 ```typescript
 import { useApiInliner } from '@cascadiacollections/webpack-api-inliner';
@@ -241,6 +249,28 @@ function ProductList() {
 | `data` | `T \| null` | The fetched data, or null if not loaded yet |
 | `isLoading` | `boolean` | Whether the data is currently loading |
 | `error` | `Error \| null` | Error object if the fetch failed, or null if successful |
+
+## Performance Optimizations
+
+This plugin has been optimized for maximum performance and reliability:
+
+### Build-Time Optimizations
+- **Pre-compiled TypeScript**: No runtime TypeScript compilation (removed ts-node dependency)
+- **Parallel endpoint processing**: All API endpoints are fetched concurrently
+- **Immutable data structures**: Prevents unnecessary object mutations and copies
+- **Efficient caching**: Data is cached and reused across webpack compilation phases
+
+### Runtime Optimizations
+- **Exponential backoff**: Smart retry mechanism with exponential delays (up to 5 seconds)
+- **Request timeout**: Configurable timeout to prevent hanging requests
+- **AbortController support**: Proper cleanup to prevent memory leaks
+- **Modern fetch API**: Uses native Node.js fetch for better performance
+
+### Hook Optimizations
+- **Dependency tracking**: Proper dependency arrays prevent infinite re-renders
+- **Memoization**: Options are memoized to avoid unnecessary re-renders
+- **Hook caching**: Hook resolution is cached for better performance
+- **Cleanup handlers**: AbortController ensures fetch is cancelled on unmount
 
 ## Node.js Version Support
 
