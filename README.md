@@ -136,6 +136,8 @@ yarn start
 | `yarn test` | 🧪 Run all tests | Validation |
 | `yarn test:watch` | 👀 Tests in watch mode | Development |
 | `yarn test:coverage` | 📊 Coverage report | Quality check |
+| `yarn lint` | 🔍 Check code quality with ESLint | Pre-commit |
+| `yarn lint:fix` | 🔧 Auto-fix ESLint issues | Cleanup |
 
 ### 🔄 Development Workflow
 
@@ -146,10 +148,14 @@ yarn start              # Launch dev server
 # 2. Make changes
 # Edit files in src/ - hot reload active!
 
-# 3. Test your changes
+# 3. Lint your code
+yarn lint               # Check for issues
+yarn lint:fix           # Auto-fix problems
+
+# 4. Test your changes
 yarn test:watch         # Run tests continuously
 
-# 4. Check code quality
+# 5. Check code quality
 yarn test:coverage      # Ensure coverage targets met
 ```
 
@@ -231,7 +237,10 @@ We maintain **enterprise-grade code quality** through automated tooling:
 <td>
 
 **📏 Linting & Formatting**
-- **ESLint** - Rush Stack configuration
+- **ESLint 9** - Modern flat config with TypeScript support
+- **React Performance Rules** - Prevents unnecessary re-renders
+  - `eslint-plugin-react` - Standard React linting
+  - `eslint-plugin-react-perf` - Performance-focused rules
 - **Prettier** - Consistent code formatting
 - **Import Organization** - Auto-sorted imports
 - **EditorConfig** - Cross-IDE consistency
@@ -251,10 +260,13 @@ We maintain **enterprise-grade code quality** through automated tooling:
 
 ```bash
 # 🔍 Check code quality
-yarn lint               # Run ESLint checks
+yarn lint               # Run ESLint checks (catches re-render issues)
+yarn lint:fix           # Auto-fix ESLint issues
 yarn format             # Format with Prettier
 yarn type-check         # TypeScript validation
 ```
+
+> 💡 **Performance Tip:** ESLint now catches common re-render issues like inline arrow functions and object/array literals in JSX. See [docs/ESLINT.md](docs/ESLINT.md) for details.
 
 ## 🧪 Testing Strategy
 
