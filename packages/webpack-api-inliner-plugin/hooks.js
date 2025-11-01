@@ -6,7 +6,7 @@
  * Optimized for performance with proper dependency tracking and cleanup.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.useApiInliner = void 0;
+exports.useApiInliner = useApiInliner;
 // Cache for hook resolution to avoid repeated lookups
 let cachedHooks = null;
 /**
@@ -133,5 +133,4 @@ function useApiInliner(variableName, jsonPath, options) {
     }, [variableName, jsonPath, stableOptions]); // Removed initialData from dependencies
     return { data, isLoading, error };
 }
-exports.useApiInliner = useApiInliner;
 //# sourceMappingURL=hooks.js.map
