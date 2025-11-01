@@ -8,6 +8,7 @@
 #
 # Skip builds when ONLY these change:
 # - packages/*/package.json (version bumps)
+# - packages/*/package-lock.json (dependency lock file)
 # - packages/*/CHANGELOG.md
 # - packages/*/README.md
 # - .github/workflows/publish-*.yml (publish automation)
@@ -15,9 +16,18 @@
 # Proceed with builds when:
 # - Plugin runtime code changes (*.ts, *.js in packages/) - affects website build
 # - Website source changes (src/, config/, etc.)
+# - Netlify configuration (netlify.toml, scripts/netlify-ignore.sh)
+# - Build configuration (webpack.config.js, tsconfig.json, etc.)
 # - Any other repository files change
 
 set -e
+
+# Validate required Netlify environment variables
+if [ -z "$CACHED_COMMIT_REF" ] || [ -z "$COMMIT_REF" ]; then
+  echo "Error: Required Netlify environment variables not set (CACHED_COMMIT_REF, COMMIT_REF)"
+  echo "Proceeding with build for safety"
+  exit 1
+fi
 
 # Get the list of changed files between commits
 CHANGED_FILES=$(git diff --name-only "$CACHED_COMMIT_REF" "$COMMIT_REF" 2>/dev/null || echo "")
