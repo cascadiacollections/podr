@@ -2,6 +2,8 @@
   # Install dependencies (including devDependencies needed for heft)
   command = "yarn install --production=false --frozen-lockfile && yarn build:ci"
   publish = "dist"
+  # Skip build if only package publishing changes (not affecting website runtime)
+  ignore = "bash -c 'git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . \":(exclude)packages/\" \":(exclude).github/workflows/publish-*.yml\" || exit 1'"
 
 [build.environment]
   # Build optimizations
