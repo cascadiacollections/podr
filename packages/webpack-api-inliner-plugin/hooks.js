@@ -18,15 +18,17 @@ function getHooks() {
     if (cachedHooks) {
         return cachedHooks;
     }
+    // Check window availability once
+    const isWindowAvailable = typeof window !== 'undefined';
     // Try to get hooks from global scope or require
-    const useState = (typeof window !== 'undefined' && ((_a = window.preactHooks) === null || _a === void 0 ? void 0 : _a.useState)) ||
-        (typeof window !== 'undefined' && ((_b = window.React) === null || _b === void 0 ? void 0 : _b.useState)) ||
+    const useState = (isWindowAvailable && ((_a = window.preactHooks) === null || _a === void 0 ? void 0 : _a.useState)) ||
+        (isWindowAvailable && ((_b = window.React) === null || _b === void 0 ? void 0 : _b.useState)) ||
         require('preact/hooks').useState;
-    const useEffect = (typeof window !== 'undefined' && ((_c = window.preactHooks) === null || _c === void 0 ? void 0 : _c.useEffect)) ||
-        (typeof window !== 'undefined' && ((_d = window.React) === null || _d === void 0 ? void 0 : _d.useEffect)) ||
+    const useEffect = (isWindowAvailable && ((_c = window.preactHooks) === null || _c === void 0 ? void 0 : _c.useEffect)) ||
+        (isWindowAvailable && ((_d = window.React) === null || _d === void 0 ? void 0 : _d.useEffect)) ||
         require('preact/hooks').useEffect;
-    const useMemo = (typeof window !== 'undefined' && ((_e = window.preactHooks) === null || _e === void 0 ? void 0 : _e.useMemo)) ||
-        (typeof window !== 'undefined' && ((_f = window.React) === null || _f === void 0 ? void 0 : _f.useMemo)) ||
+    const useMemo = (isWindowAvailable && ((_e = window.preactHooks) === null || _e === void 0 ? void 0 : _e.useMemo)) ||
+        (isWindowAvailable && ((_f = window.React) === null || _f === void 0 ? void 0 : _f.useMemo)) ||
         require('preact/hooks').useMemo;
     cachedHooks = { useState, useEffect, useMemo };
     return cachedHooks;
@@ -65,14 +67,15 @@ function useApiInliner(variableName, jsonPath, options) {
             return window[variableName];
         }
         return null;
-    }, []); // Empty deps - only compute once on mount
+    }, [variableName]); // Include variableName to handle dynamic variable names
     const [data, setData] = useState(initialData);
     const [isLoading, setIsLoading] = useState(initialData === null);
     const [error, setError] = useState(null);
-    // Memoize options to avoid creating new references that would trigger re-renders
-    const stableOptions = useMemo(() => options, [
-        options ? JSON.stringify(options) : undefined
-    ]);
+    // Memoize options stringification to avoid recomputation on every render
+    // This is more efficient than stringifying in the dependency array
+    const optionsKey = useMemo(() => options ? JSON.stringify(options) : undefined, [options]);
+    // Memoize the stable options object
+    const stableOptions = useMemo(() => options, [optionsKey]);
     useEffect(() => {
         // Skip effect if data was already set from window variable during initialization
         if (initialData !== null) {
@@ -127,7 +130,7 @@ function useApiInliner(variableName, jsonPath, options) {
         return () => {
             abortController.abort();
         };
-    }, [variableName, jsonPath, stableOptions, initialData]);
+    }, [variableName, jsonPath, stableOptions]); // Removed initialData from dependencies
     return { data, isLoading, error };
 }
 exports.useApiInliner = useApiInliner;

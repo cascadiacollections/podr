@@ -29,20 +29,23 @@ function getHooks() {
     return cachedHooks;
   }
 
+  // Check window availability once
+  const isWindowAvailable = typeof window !== 'undefined';
+
   // Try to get hooks from global scope or require
   const useState = 
-    (typeof window !== 'undefined' && (window as any).preactHooks?.useState) || 
-    (typeof window !== 'undefined' && (window as any).React?.useState) || 
+    (isWindowAvailable && (window as any).preactHooks?.useState) || 
+    (isWindowAvailable && (window as any).React?.useState) || 
     require('preact/hooks').useState;
 
   const useEffect = 
-    (typeof window !== 'undefined' && (window as any).preactHooks?.useEffect) || 
-    (typeof window !== 'undefined' && (window as any).React?.useEffect) || 
+    (isWindowAvailable && (window as any).preactHooks?.useEffect) || 
+    (isWindowAvailable && (window as any).React?.useEffect) || 
     require('preact/hooks').useEffect;
 
   const useMemo = 
-    (typeof window !== 'undefined' && (window as any).preactHooks?.useMemo) || 
-    (typeof window !== 'undefined' && (window as any).React?.useMemo) || 
+    (isWindowAvailable && (window as any).preactHooks?.useMemo) || 
+    (isWindowAvailable && (window as any).React?.useMemo) || 
     require('preact/hooks').useMemo;
 
   cachedHooks = { useState, useEffect, useMemo };
@@ -88,16 +91,21 @@ export function useApiInliner<T>(
       return window[variableName as keyof Window] as T;
     }
     return null;
-  }, []); // Empty deps - only compute once on mount
+  }, [variableName]); // Include variableName to handle dynamic variable names
 
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(initialData === null);
   const [error, setError] = useState<Error | null>(null);
 
-  // Memoize options to avoid creating new references that would trigger re-renders
-  const stableOptions = useMemo(() => options, [
-    options ? JSON.stringify(options) : undefined
-  ]);
+  // Memoize options stringification to avoid recomputation on every render
+  // This is more efficient than stringifying in the dependency array
+  const optionsKey = useMemo(() => 
+    options ? JSON.stringify(options) : undefined,
+    [options]
+  );
+  
+  // Memoize the stable options object
+  const stableOptions = useMemo(() => options, [optionsKey]);
 
   useEffect(() => {
     // Skip effect if data was already set from window variable during initialization
@@ -156,7 +164,7 @@ export function useApiInliner<T>(
     return () => {
       abortController.abort();
     };
-  }, [variableName, jsonPath, stableOptions, initialData]);
+  }, [variableName, jsonPath, stableOptions]); // Removed initialData from dependencies
 
   return { data, isLoading, error };
 }
