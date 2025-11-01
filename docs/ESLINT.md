@@ -13,7 +13,7 @@ The project uses **ESLint 9.x** with the **flat config format** (`eslint.config.
 1. **`eslint.config.js`** - Main ESLint configuration file
 2. **`eslint-plugin-react`** - Standard React linting rules (including `jsx-no-bind`)
 3. **`eslint-plugin-react-perf`** - Performance-focused React linting rules
-4. **`@typescript-eslint/parser@^8.46.2`** - TypeScript parser for ESLint 9
+4. **`@typescript-eslint/parser@^8.1.0`** - TypeScript parser for ESLint 9
 
 ## Running ESLint
 
@@ -228,7 +228,7 @@ In the bad example, `ExpensiveChild` re-renders every time `count` changes becau
 
 ### Issue: Parser errors with TypeScript
 
-**Solution**: The project uses `@typescript-eslint/parser@^8.46.2` which is compatible with TypeScript 5.4.5 and ESLint 9.x.
+**Solution**: The project uses `@typescript-eslint/parser@^8.1.0` (currently resolves to 8.46.2) which is compatible with TypeScript 5.4.5 and ESLint 9.x.
 
 ### Issue: Rules not catching violations
 
