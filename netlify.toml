@@ -2,6 +2,11 @@
   # Install dependencies (including devDependencies needed for heft)
   command = "yarn install --production=false --frozen-lockfile && yarn build:ci"
   publish = "dist"
+  # Skip build if only package publishing metadata changes (not affecting website runtime)
+  # See scripts/netlify-ignore.sh for the logic:
+  # - Skips: version bumps, CHANGELOG, README in packages/
+  # - Builds: plugin runtime code changes (.ts/.js), website source changes
+  ignore = "bash scripts/netlify-ignore.sh"
 
 [build.environment]
   # Build optimizations
