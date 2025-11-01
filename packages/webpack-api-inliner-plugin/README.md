@@ -17,6 +17,7 @@ A modern webpack plugin that fetches API data during build time and inlines it f
   - Both options simultaneously
 - **🛡️ TypeScript Support**: Full TypeScript definitions included
 - **🔄 Fallback Support**: Graceful fallback to default data in development or on API failures
+- **🚀 Performance Optimized**: Exponential backoff, proper cleanup, and memory leak prevention
 
 ## 📦 Installation
 

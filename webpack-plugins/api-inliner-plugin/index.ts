@@ -474,6 +474,7 @@ export {}; // This file is a module
 
   /**
    * Fetch data from an API endpoint with retry mechanism using native fetch API
+   * Optimized with exponential backoff for retries
    */
   async #fetchFromApi(
     apiUrl: string,
@@ -492,8 +493,8 @@ export {}; // This file is a module
       ...(typeof timeout === 'number' ? { signal: AbortSignal.timeout(timeout) } : {})
     });
 
-    // Function to attempt the fetch with retries
-    const fetchWithRetry = async (retriesLeft: number): Promise<unknown> => {
+    // Function to attempt the fetch with retries and exponential backoff
+    const fetchWithRetry = async (retriesLeft: number, attempt: number = 0): Promise<unknown> => {
       try {
         const response = await fetch(apiUrl, fetchOptions);
 
@@ -503,8 +504,10 @@ export {}; // This file is a module
 
           // Retry on 5xx errors if we have retries left
           if (response.status >= 500 && retriesLeft > 0) {
-            console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to ${response.status} error (${retriesLeft} attempts left)`);
-            return fetchWithRetry(retriesLeft - 1);
+            const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff, max 5s
+            console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to ${response.status} error in ${delay}ms (${retriesLeft} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(retriesLeft - 1, attempt + 1);
           }
 
           throw error;
@@ -516,8 +519,10 @@ export {}; // This file is a module
       } catch (error) {
         // Handle network errors and retries
         if (retriesLeft > 0 && !(error instanceof SyntaxError)) {
-          console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to error: ${(error as Error).message} (${retriesLeft} attempts left)`);
-          return fetchWithRetry(retriesLeft - 1);
+          const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff, max 5s
+          console.log(`ApiInlinerPlugin: Retrying ${apiUrl} due to error: ${(error as Error).message} in ${delay}ms (${retriesLeft} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry(retriesLeft - 1, attempt + 1);
         }
         throw error;
       }

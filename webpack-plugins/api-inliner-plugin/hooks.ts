@@ -2,11 +2,65 @@
  * API Inliner Hooks
  * 
  * Provides Preact/React hooks for accessing data inlined by the API Inliner Plugin.
+ * Optimized for performance with proper dependency tracking and cleanup.
  */
+
+import type { FunctionComponent } from 'preact';
+
+// Hook types for compatibility
+type SetState<S> = (value: S | ((prevState: S) => S)) => void;
+type StateHook<S> = [S, SetState<S>];
+type EffectHook = (effect: () => void | (() => void), deps?: ReadonlyArray<any>) => void;
+type UseMemoHook = <T>(factory: () => T, deps: ReadonlyArray<any> | undefined) => T;
+
+// Cache for hook resolution to avoid repeated lookups
+let cachedHooks: {
+  useState: <S>(initialState: S | (() => S)) => StateHook<S>;
+  useEffect: EffectHook;
+  useMemo: UseMemoHook;
+} | null = null;
+
+/**
+ * Get hooks from the available library (Preact or React)
+ * Cached for performance to avoid repeated lookups
+ */
+function getHooks() {
+  if (cachedHooks) {
+    return cachedHooks;
+  }
+
+  // Check window availability once
+  const isWindowAvailable = typeof window !== 'undefined';
+
+  // Try to get hooks from global scope or require
+  const useState = 
+    (isWindowAvailable && (window as any).preactHooks?.useState) || 
+    (isWindowAvailable && (window as any).React?.useState) || 
+    require('preact/hooks').useState;
+
+  const useEffect = 
+    (isWindowAvailable && (window as any).preactHooks?.useEffect) || 
+    (isWindowAvailable && (window as any).React?.useEffect) || 
+    require('preact/hooks').useEffect;
+
+  const useMemo = 
+    (isWindowAvailable && (window as any).preactHooks?.useMemo) || 
+    (isWindowAvailable && (window as any).React?.useMemo) || 
+    require('preact/hooks').useMemo;
+
+  cachedHooks = { useState, useEffect, useMemo };
+  return cachedHooks;
+}
 
 /**
  * Custom hook for accessing data inlined by the API Inliner Plugin.
  * Compatible with Preact hooks and React hooks.
+ * 
+ * Optimized for performance:
+ * - Proper dependency tracking to avoid unnecessary re-renders
+ * - Cleanup with AbortController to prevent memory leaks
+ * - Memoized options to avoid creating new references
+ * - Cached hook resolution for better performance
  * 
  * @template T - Type of the data (for type safety)
  * @param variableName - The name of the window variable to check
@@ -24,35 +78,38 @@
  * return <div>{data.products.length} products found</div>;
  * ```
  */
-export function useApiInliner<T>(variableName: string, jsonPath: string, options?: RequestInit) {
-  // These types allow for compatibility with both Preact and React
-  type SetState<S> = (value: S | ((prevState: S) => S)) => void;
-  type StateHook<S> = [S, SetState<S>];
-  type EffectHook = (effect: () => void | (() => void), deps?: ReadonlyArray<any>) => void;
-  
-  // Get the hooks from whatever library is available
-  // This approach works with both Preact and React
-  const useState: <S>(initialState: S | (() => S)) => StateHook<S> = 
-    (window as any).preactHooks?.useState || 
-    (window as any).React?.useState || 
-    require('preact/hooks').useState;
-
-  const useEffect: EffectHook = 
-    (window as any).preactHooks?.useEffect || 
-    (window as any).React?.useEffect || 
-    require('preact/hooks').useEffect;
+export function useApiInliner<T>(
+  variableName: string, 
+  jsonPath: string, 
+  options?: RequestInit
+): { data: T | null; isLoading: boolean; error: Error | null } {
+  const { useState, useEffect, useMemo } = getHooks();
 
   // Initialize state - check for window variable first to avoid unnecessary re-renders
-  const initialData = typeof window !== 'undefined' && window[variableName as keyof Window] 
-    ? window[variableName as keyof Window] as T 
-    : null;
+  const initialData = useMemo(() => {
+    if (typeof window !== 'undefined' && window[variableName as keyof Window]) {
+      return window[variableName as keyof Window] as T;
+    }
+    return null;
+  }, [variableName]); // Include variableName to handle dynamic variable names
+
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(initialData === null);
   const [error, setError] = useState<Error | null>(null);
 
+  // Memoize options stringification to avoid recomputation on every render
+  // This is more efficient than stringifying in the dependency array
+  const optionsKey = useMemo(() => 
+    options ? JSON.stringify(options) : undefined,
+    [options]
+  );
+  
+  // Memoize the stable options object
+  const stableOptions = useMemo(() => options, [optionsKey]);
+
   useEffect(() => {
     // Skip effect if data was already set from window variable during initialization
-    if (data !== null) {
+    if (initialData !== null) {
       return;
     }
     
@@ -69,8 +126,14 @@ export function useApiInliner<T>(variableName: string, jsonPath: string, options
       }
     }
 
+    // Create abort controller for cleanup
+    const abortController = new AbortController();
+
     // Fall back to static JSON file
-    fetch(`/${jsonPath}`, options)
+    fetch(`/${jsonPath}`, {
+      ...stableOptions,
+      signal: abortController.signal
+    })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -78,16 +141,30 @@ export function useApiInliner<T>(variableName: string, jsonPath: string, options
         return response.json();
       })
       .then(result => {
-        setData(result as T);
+        if (!abortController.signal.aborted) {
+          setData(result as T);
+        }
       })
       .catch(err => {
-        setError(err instanceof Error ? err : new Error(String(err)));
-        console.error(`Failed to load data from ${jsonPath}:`, err);
+        if (!abortController.signal.aborted) {
+          // Only set error if it's not an abort error
+          if (err.name !== 'AbortError') {
+            setError(err instanceof Error ? err : new Error(String(err)));
+            console.error(`Failed to load data from ${jsonPath}:`, err);
+          }
+        }
       })
       .finally(() => {
-        setIsLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
       });
-  }, [variableName, jsonPath, JSON.stringify(options), data]);
+
+    // Cleanup function to abort fetch on unmount
+    return () => {
+      abortController.abort();
+    };
+  }, [variableName, jsonPath, stableOptions]); // Removed initialData from dependencies
 
   return { data, isLoading, error };
 }
