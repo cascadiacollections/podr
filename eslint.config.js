@@ -3,9 +3,8 @@
 
 const path = require('path');
 const typescriptParser = require('@typescript-eslint/parser');
-
-// Import the custom rule
-const noJsxLiterals = require('./eslint-rules/no-jsx-literals.js');
+const reactPlugin = require('eslint-plugin-react');
+const reactPerfPlugin = require('eslint-plugin-react-perf');
 
 module.exports = [
   {
@@ -69,21 +68,24 @@ module.exports = [
     },
     
     plugins: {
-      'podr': {
-        rules: {
-          'no-jsx-literals': noJsxLiterals
-        }
-      }
+      'react': reactPlugin,
+      'react-perf': reactPerfPlugin
     },
     
     rules: {
-      // Enable our custom rule to prevent re-render issues
-      'podr/no-jsx-literals': ['error', {
-        allowEmptyArray: false,
-        allowEmptyObject: false,
-        checkInlineFunctions: true,
-        checkHookDependencies: true
+      // Prevent inline arrow functions and binds in JSX props (causes re-renders)
+      'react/jsx-no-bind': ['error', {
+        allowArrowFunctions: false,
+        allowBind: false,
+        allowFunctions: false,
+        ignoreRefs: true,
+        ignoreDOMComponents: false
       }],
+      
+      // Prevent JSX props from being set to new object/array literals
+      'react-perf/jsx-no-new-object-as-prop': 'error',
+      'react-perf/jsx-no-new-array-as-prop': 'error',
+      'react-perf/jsx-no-new-function-as-prop': 'error',
       
       // Basic code quality rules
       'no-console': 'off', // We use console for logging
@@ -102,13 +104,11 @@ module.exports = [
     files: ['**/__tests__/**/*.ts', '**/__tests__/**/*.tsx', '**/*.test.ts', '**/*.test.tsx'],
     
     rules: {
-      // Relax the rule for test files since they often use literals intentionally
-      'podr/no-jsx-literals': ['warn', {
-        allowEmptyArray: true,
-        allowEmptyObject: true,
-        checkInlineFunctions: false,
-        checkHookDependencies: true
-      }]
+      // Relax rules for test files since they often use literals intentionally
+      'react/jsx-no-bind': 'off',
+      'react-perf/jsx-no-new-object-as-prop': 'warn',
+      'react-perf/jsx-no-new-array-as-prop': 'warn',
+      'react-perf/jsx-no-new-function-as-prop': 'off'
     }
   }
 ];
