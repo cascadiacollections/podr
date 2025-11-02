@@ -144,7 +144,7 @@ function createWebpackConfig({ production }) {
         emitDeclarationFile: true, // Generate TypeScript declaration file
         declarationFilePath: 'api-inliner.d.ts', // Path relative to output directory
         endpoints: [{
-          url: 'https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10',
+          url: 'https://podr-service.cascadiacollections.workers.dev/?q=toppodcasts&limit=10',
           outputFile: 'top-podcasts.json',
           fallbackData: {
             feed: {

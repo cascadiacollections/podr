@@ -10,7 +10,7 @@ class TopPodcastsPlugin {
   constructor(options = {}) {
     // Default options
     this.options = {
-      apiEndpoint: 'https://podr-svc-48579879001.us-west4.run.app/?q=toppodcasts&limit=10',
+      apiEndpoint: 'https://podr-service.cascadiacollections.workers.dev/?q=toppodcasts&limit=10',
       outputFile: 'top-podcasts.json',
       fallbackData: { feed: { entry: [] } },
       production: true, // Whether to fetch data from API (production) or just use fallback (development)
