@@ -46,7 +46,7 @@ export class App extends Component<{}, IAppState> {
   private static readonly Favorited: Set<IFeed> = new Set<IFeed>();
   
   // Constants
-  private static readonly API_BASE_URL = 'https://podr-svc-48579879001.us-west4.run.app';
+  private static readonly API_BASE_URL = 'https://podr-service.cascadiacollections.workers.dev';
   private static readonly LOCAL_STORAGE_FEEDS_KEY = 'podr_feeds';
   private static readonly LOCAL_STORAGE_RESULTS_KEY = 'podr_results';
   private static readonly DEFAULT_SEARCH_LIMIT = 14;
