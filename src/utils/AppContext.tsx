@@ -68,7 +68,7 @@ export interface AppContextType {
  * Application configuration constants
  */
 export const APP_CONFIG = {
-  API_BASE_URL: 'https://podr-svc-48579879001.us-west4.run.app',
+  API_BASE_URL: 'https://podr-service.cascadiacollections.workers.dev',
   LOCAL_STORAGE: {
     FEEDS_KEY: 'podr_feeds',
     RESULTS_KEY: 'podr_results',
