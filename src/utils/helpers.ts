@@ -116,9 +116,11 @@ export async function resolveFeedUrl(feedUrl: string): Promise<string> {
   if (isApplePodcastsUrl(feedUrl)) {
     const podcastId = extractApplePodcastsId(feedUrl);
     
-    if (podcastId) {
-      return await fetchApplePodcastsFeedUrl(podcastId);
+    if (!podcastId) {
+      throw new Error('Failed to extract podcast ID from Apple Podcasts URL');
     }
+    
+    return await fetchApplePodcastsFeedUrl(podcastId);
   }
   
   // Otherwise, return the URL as-is
