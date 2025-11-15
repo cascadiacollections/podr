@@ -1,6 +1,6 @@
 {
 	"name": "podr - Node.js",
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-24-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:1.3-24-bookworm",
 	"customizations": {
 		"vscode": {
 			"settings": {
