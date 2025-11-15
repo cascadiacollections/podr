@@ -165,27 +165,22 @@ export const App = (): JSX.Element => {
       // Resolve the feed URL (converts Apple Podcasts URLs to RSS feed URLs)
       const resolvedFeedUrl = await resolveFeedUrl(feedUrl);
       
-      return fetch(getFeedUrl(resolvedFeedUrl), { cache: 'force-cache' })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(({ items: feedResults = EMPTY_ARRAY }) => {
-          results.value = feedResults;
-          localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
-        })
-        .catch((err: Error) => {
-          window.gtag('event', 'exception', {
-            description: `feed_fetch_${feedUrl}_${err.message}`,
-            fatal: false
-          });
-        });
+      // Fetch the feed data
+      const response = await fetch(getFeedUrl(resolvedFeedUrl), { cache: 'force-cache' });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const { items: feedResults = EMPTY_ARRAY } = await response.json();
+      
+      results.value = feedResults;
+      localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
     } catch (err: unknown) {
-      // Handle errors from resolveFeedUrl
+      // Handle errors from both resolveFeedUrl and fetch
+      const error = err as Error;
       window.gtag('event', 'exception', {
-        description: `feed_resolve_${feedUrl}_${(err as Error).message}`,
+        description: `feed_fetch_${feedUrl}_${error.message}`,
         fatal: false
       });
     }
