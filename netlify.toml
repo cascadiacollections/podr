@@ -26,7 +26,7 @@
   for = "/*"
   [headers.values]
     # Content Security Policy - Allow required external resources
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://api.rss2json.com https://podr-svc-48579879001.us-west4.run.app https://podr-service.cascadiacollections.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://api.rss2json.com https://itunes.apple.com https://podr-svc-48579879001.us-west4.run.app https://podr-service.cascadiacollections.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     # Security headers
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
