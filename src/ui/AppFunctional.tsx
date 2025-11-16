@@ -3,7 +3,7 @@ import { Fragment, h, JSX } from 'preact';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 
 import { APP_CONFIG, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
-import { getFeedUrl, getSecureUrl } from '../utils/helpers';
+import { getFeedUrl, getSecureUrl, resolveFeedUrl } from '../utils/helpers';
 import { List } from './List';
 import { IFeedItem } from './Result';
 import { Search } from './Search';
@@ -161,23 +161,29 @@ export const App = (): JSX.Element => {
       return;
     }
 
-    return fetch(getFeedUrl(feedUrl), { cache: 'force-cache' })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(({ items: feedResults = EMPTY_ARRAY }) => {
-        results.value = feedResults;
-        localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
-      })
-      .catch((err: Error) => {
-        window.gtag('event', 'exception', {
-          description: `feed_fetch_${feedUrl}_${err.message}`,
-          fatal: false
-        });
+    try {
+      // Resolve the feed URL (converts Apple Podcasts URLs to RSS feed URLs)
+      const resolvedFeedUrl = await resolveFeedUrl(feedUrl);
+      
+      // Fetch the feed data
+      const response = await fetch(getFeedUrl(resolvedFeedUrl), { cache: 'force-cache' });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const { items: feedResults = EMPTY_ARRAY } = await response.json();
+      
+      results.value = feedResults;
+      localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
+    } catch (err: unknown) {
+      // Handle errors from both resolveFeedUrl and fetch
+      const error = err as Error;
+      window.gtag('event', 'exception', {
+        description: `feed_fetch_${feedUrl}_${error.message}`,
+        fatal: false
       });
+    }
   }, []);
 
   const onSearch = useCallback((searchQuery: string, limit: number = APP_CONFIG.SEARCH.DEFAULT_LIMIT) => {
