@@ -1,5 +1,5 @@
 import { render, renderHook, screen } from '@testing-library/preact';
-import { createElement, createRef, FunctionComponent } from 'preact';
+import { createElement, createRef, FunctionComponent, VNode } from 'preact';
 import { ClassListProvider, createEnhancedElement, enhancedJSX, h, OptimizedClassList, setClassList, toggleClassList, unsetClassList, useClassList, useClassListSelector, useConditionalClassList, useElementClassList, useOptimizedClassList, useToggleClassListSelector, withClassList } from '../hooks';
 
 // Setup DOM testing environment
@@ -1600,7 +1600,7 @@ describe('Preact Idiomatic classList APIs', () => {
         };
 
         // Test the component directly instead of the h() wrapper
-        const buttonElement = Button({ variant: 'primary', size: 'large' });
+        const buttonElement = Button({ variant: 'primary', size: 'large' }) as VNode<any>;
         expect(buttonElement?.type).toBe('button');
         expect(buttonElement?.props.className).toBe('btn btn--primary btn--large');
 
