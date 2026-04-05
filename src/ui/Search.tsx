@@ -154,7 +154,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
           value={querySignal?.value}
           disabled={disabled || isLoading}
           autoComplete="off"
-          spellCheck={false}
+          spellcheck={false}
         />
         {isLoading && (
           <div className="search-loading-indicator" aria-hidden="true">
