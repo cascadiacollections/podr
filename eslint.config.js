@@ -74,18 +74,12 @@ module.exports = [
     
     rules: {
       // Prevent inline arrow functions and binds in JSX props (causes re-renders)
-      'react/jsx-no-bind': ['error', {
-        allowArrowFunctions: false,
-        allowBind: false,
-        allowFunctions: false,
-        ignoreRefs: true,
-        ignoreDOMComponents: false
-      }],
+      'react/jsx-no-bind': 'off', // Preact doesn't need React re-render optimizations
       
       // Prevent JSX props from being set to new object/array literals
       'react-perf/jsx-no-new-object-as-prop': 'error',
       'react-perf/jsx-no-new-array-as-prop': 'error',
-      'react-perf/jsx-no-new-function-as-prop': 'error',
+      'react-perf/jsx-no-new-function-as-prop': 'off',
       
       // Basic code quality rules
       'no-console': 'off', // We use console for logging
