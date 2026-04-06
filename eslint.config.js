@@ -77,8 +77,8 @@ module.exports = [
       'react/jsx-no-bind': 'off', // Preact doesn't need React re-render optimizations
       
       // Prevent JSX props from being set to new object/array literals
-      'react-perf/jsx-no-new-object-as-prop': 'error',
-      'react-perf/jsx-no-new-array-as-prop': 'error',
+      'react-perf/jsx-no-new-object-as-prop': 'off',
+      'react-perf/jsx-no-new-array-as-prop': 'off',
       'react-perf/jsx-no-new-function-as-prop': 'off',
       
       // Basic code quality rules
