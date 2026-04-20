@@ -13,6 +13,9 @@
     "/dist/",
     "/lib/"
   ],
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(@preact/signals|@testing-library/preact)/)"
+  ],
   "transform": {
     "^.+\\.(ts|tsx)$": "ts-jest",
     "^.+\\.(js|jsx)$": "babel-jest"
