@@ -10,6 +10,7 @@ const { useApiInliner } = require('../hooks');
 jest.mock('preact/hooks', () => ({
   useState: jest.fn((init) => [init, jest.fn()]),
   useEffect: jest.fn((fn) => fn()),
+  useMemo: jest.fn((factory) => factory()),
 }));
 
 // Mock fetch API
@@ -74,7 +75,9 @@ describe('useApiInliner hook', () => {
     require('preact/hooks').useEffect.mock.calls[1][0]();
     
     // Verify fetch was called with the right URL
-    expect(fetch).toHaveBeenCalledWith('/test.json', undefined);
+    expect(fetch).toHaveBeenCalledWith('/test.json', expect.objectContaining({
+      signal: expect.any(Object)
+    }));
   });
   
   test('should handle fetch errors gracefully', async () => {
@@ -87,6 +90,8 @@ describe('useApiInliner hook', () => {
     const { data, isLoading, error } = useApiInliner('MISSING_VARIABLE', 'error.json');
     
     // Verify fetch was called
-    expect(fetch).toHaveBeenCalledWith('/error.json', undefined);
+    expect(fetch).toHaveBeenCalledWith('/error.json', expect.objectContaining({
+      signal: expect.any(Object)
+    }));
   });
 });

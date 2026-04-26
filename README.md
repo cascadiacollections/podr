@@ -117,8 +117,8 @@ git clone https://github.com/cascadiacollections/podr.git
 # 📂 Navigate to project directory
 cd podr
 
-# 📦 Install dependencies
-yarn install
+# 📦 Install dependencies from the committed Yarn lockfile
+yarn install --frozen-lockfile
 
 # 🚀 Start development server
 yarn start
@@ -227,6 +227,8 @@ code .                  # VS Code will prompt for container reopen
 - GitLens - Advanced Git visualization
 
 > 💡 **Pro Tip:** The dev container ensures every team member has an identical development environment!
+
+> ℹ️ The root application uses Yarn and `yarn.lock` for reproducible installs. The publishable webpack plugin package keeps its own npm lockfile under `packages/webpack-api-inliner-plugin/`.
 
 ### 🔧 Code Quality Standards
 
