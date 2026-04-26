@@ -10,6 +10,7 @@ import { h, render } from 'preact';
 // Import modern functional component instead of class component
 import { App } from './ui/AppFunctional';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { registerServiceWorker } from './utils/registerSW';
 
 const rootEl: HTMLElement | null = document.getElementById('root');
 
@@ -20,4 +21,6 @@ if (typeof window !== 'undefined' && rootEl) {
     </ErrorBoundary>,
     rootEl
   );
+
+  registerServiceWorker();
 }

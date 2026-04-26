@@ -26,7 +26,7 @@
   for = "/*"
   [headers.values]
     # Content Security Policy - Allow required external resources
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://api.rss2json.com https://itunes.apple.com https://podr-svc-48579879001.us-west4.run.app https://podr-service.cascadiacollections.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://api.rss2json.com https://itunes.apple.com https://podr-svc-48579879001.us-west4.run.app https://podr-service.cascadiacollections.workers.dev; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     # Security headers
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
@@ -47,11 +47,24 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Manifest and service worker should be revalidated
+# Manifest and service worker should be revalidated on every load so PWA
+# updates roll out promptly. Service-Worker-Allowed lets /sw.js control the
+# whole site even if it ever moves out of the root.
 [[headers]]
-  for = "/@(manifest.json|sw.js|service-worker.js)"
+  for = "/@(manifest.json|site.webmanifest|sw.js|service-worker.js|workbox-*.js)"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Service-Worker-Allowed = "/"
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/site.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
 
 # HTML should not be cached to ensure users get the latest version
 [[headers]]

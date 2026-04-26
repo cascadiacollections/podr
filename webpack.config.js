@@ -6,6 +6,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const { GenerateSW } = require('workbox-webpack-plugin');
 const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
@@ -129,6 +131,90 @@ function createWebpackConfig({ production }) {
         test: /\.(js|css|html|svg)$/,
         threshold: 10240, // Only compress assets bigger than 10kb
         minRatio: 0.8 // Only compress assets that compress better than 80%
+      })] : []),
+
+      // Copy PWA manifest and icons from /assets to the build output so they
+      // are served from the site root. HtmlWebpackPlugin already handles
+      // index.html and the favicon; everything else gets copied here.
+      new CopyPlugin({
+        patterns: [
+          {
+            from: 'assets',
+            to: '.',
+            globOptions: {
+              ignore: ['**/index.html']
+            }
+          }
+        ]
+      }),
+
+      // Generate a Workbox service worker for offline support and PWA install.
+      // Production-only: in dev, a stale SW would interfere with hot reloads.
+      ...(production ? [new GenerateSW({
+        swDest: 'sw.js',
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        // Fall back to the cached app shell for any uncached navigation request.
+        navigateFallback: '/index.html',
+        // Don't precache compressed siblings or sourcemaps.
+        exclude: [/\.map$/, /\.gz$/, /^manifest.*\.js$/],
+        // Allow up to ~5MB precache (icons + bundle).
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            // iTunes / Apple podcast artwork.
+            urlPattern: /^https:\/\/[a-z0-9-]+\.mzstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'mzstatic-images',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 24 * 60 * 60 // 60 days
+              },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            // Podr API (Cloudflare Worker).
+            urlPattern: /^https:\/\/podr-service\.cascadiacollections\.workers\.dev\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'podr-api',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            // iTunes search / lookup API.
+            urlPattern: /^https:\/\/itunes\.apple\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'itunes-api',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            // Pico.css from CDN.
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'jsdelivr-cdn',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+              },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       })] : []),
       require('autoprefixer'),  // Automatically add vendor prefixes for cross-browser compatibility
       

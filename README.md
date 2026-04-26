@@ -126,6 +126,17 @@ yarn start
 
 > 🎉 **Success!** Open [http://localhost:9000](http://localhost:9000) to see Podr in action!
 
+## 📲 Install Podr as an App (PWA)
+
+Podr is an installable Progressive Web App. Once installed it runs in its own window, launches from the OS app launcher, and works offline for the app shell and recently-viewed content.
+
+- **Microsoft Edge / Chrome (desktop)**: visit [podrapp.com](https://podrapp.com), then click the **Install app** icon in the address bar (or *Settings → Apps → Install this site as an app*).
+- **Safari (macOS)**: *File → Add to Dock…*
+- **iOS Safari**: *Share → Add to Home Screen*.
+- **Android Chrome**: tap the **⋮** menu → *Install app*.
+
+Caching is powered by [Workbox](https://developer.chrome.com/docs/workbox): the app shell is precached, podcast artwork is cached on first request, and API responses use a stale-while-revalidate strategy.
+
 ## 📋 Development Commands
 
 | Command | Description | Usage |
