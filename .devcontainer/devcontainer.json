@@ -1,6 +1,6 @@
 {
 	"name": "podr - Node.js",
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-24-bookworm",
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -42,7 +42,6 @@
 		}
 	},
 	"mounts": [
-		"source=/var/lib/apt/lists,target=/var/lib/apt/lists,type=volume",
 		"source=podr-yarn-cache,target=/usr/local/share/.cache/yarn,type=volume"
 	],
 	"postCreateCommand": "yarn install --prefer-offline",

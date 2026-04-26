@@ -13,7 +13,7 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "interfaces.js", 
+    "interfaces.js",
     "interfaces.d.ts",
     "hooks.js",
     "hooks.d.ts",
@@ -25,7 +25,7 @@
   "keywords": [
     "webpack",
     "plugin",
-    "api", 
+    "api",
     "inliner",
     "build-time",
     "inline",
@@ -43,14 +43,15 @@
   "author": "Cascadia Collections",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0",
-    "preact": "^10.26.10"
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.6.0",
+    "jest": "^30.3.0",
+    "preact": "^10.29.1",
+    "typescript": "^6.0.3",
+    "eslint": "^8.0.0"
   },
   "peerDependencies": {
-    "html-webpack-plugin": ">=5.0.0", 
+    "html-webpack-plugin": ">=5.0.0",
     "webpack": ">=5.0.0"
   },
   "engines": {

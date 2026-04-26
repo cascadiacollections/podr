@@ -22,12 +22,12 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1 # Shallow clone for faster checkout
     
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24
         cache: 'yarn'
@@ -45,7 +45,7 @@ jobs:
       run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
     
     - name: Cache Yarn dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: yarn-cache
       with:
         path: |
@@ -57,7 +57,7 @@ jobs:
           ${{ runner.os }}-yarn-
     
     - name: Cache node_modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: node-modules-cache
       with:
         path: node_modules
@@ -81,7 +81,7 @@ jobs:
       
     - name: Publish Test Report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results
         path: test-report.json
@@ -95,7 +95,7 @@ jobs:
         NODE_ENV: production
     
     - name: Cache build output
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ./dist
         key: ${{ runner.os }}-build-${{ github.sha }}
@@ -103,7 +103,7 @@ jobs:
           ${{ runner.os }}-build-
     
     - name: Archive production artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: www
         path: dist
