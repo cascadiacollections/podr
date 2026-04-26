@@ -17,7 +17,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -38,19 +38,19 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 1 # Shallow clone for faster checkout
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24
         cache: 'npm'
         cache-dependency-path: 'packages/webpack-api-inliner-plugin/package-lock.json'
 
     - name: Cache npm dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: npm-cache
       with:
         path: packages/webpack-api-inliner-plugin/node_modules
@@ -73,7 +73,7 @@ jobs:
       continue-on-error: true # Allow to pass without tests initially
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: webpack-plugin-build
         path: packages/webpack-api-inliner-plugin/*.{js,d.ts}
@@ -87,12 +87,12 @@ jobs:
       packages: write
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 1 # Shallow clone for faster checkout
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24
         cache: 'npm'  
@@ -101,7 +101,7 @@ jobs:
         scope: '@cascadiacollections'
 
     - name: Cache npm dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: npm-cache
       with:
         path: packages/webpack-api-inliner-plugin/node_modules
@@ -118,7 +118,23 @@ jobs:
       working-directory: packages/webpack-api-inliner-plugin
       run: npm run build
 
+    - name: Check published package version
+      id: published-version
+      working-directory: packages/webpack-api-inliner-plugin
+      run: |
+        package_version="$(node -p "require('./package.json').version")"
+        if npm view "@cascadiacollections/webpack-api-inliner@${package_version}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+          echo "published=true" >> "$GITHUB_OUTPUT"
+          echo "Package version ${package_version} is already published; skipping publish."
+        else
+          echo "published=false" >> "$GITHUB_OUTPUT"
+          echo "Package version ${package_version} has not been published."
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Publish to GitHub Packages
+      if: steps.published-version.outputs.published != 'true'
       working-directory: packages/webpack-api-inliner-plugin
       run: npm publish
       env:

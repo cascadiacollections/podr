@@ -20,6 +20,7 @@ jest.mock('preact/hooks', () => ({
     // Store the callback to call manually in tests
     mockUseEffectCallback = callback;
   }),
+  useMemo: jest.fn((factory) => factory()),
 }));
 
 // Mock fetch API
@@ -101,7 +102,9 @@ describe('useApiInliner hook', () => {
     }
     
     // Verify fetch was called with the right URL
-    expect(fetch).toHaveBeenCalledWith('/test.json', undefined);
+    expect(fetch).toHaveBeenCalledWith('/test.json', expect.objectContaining({
+      signal: expect.any(Object)
+    }));
   });
   
   test('should handle fetch errors gracefully', async () => {
@@ -119,6 +122,8 @@ describe('useApiInliner hook', () => {
     }
     
     // Verify fetch was called
-    expect(fetch).toHaveBeenCalledWith('/error.json', undefined);
+    expect(fetch).toHaveBeenCalledWith('/error.json', expect.objectContaining({
+      signal: expect.any(Object)
+    }));
   });
 });

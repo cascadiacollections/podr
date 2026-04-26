@@ -1,8 +1,7 @@
 {
-  "extends": "@rushstack/heft-jest-plugin/includes/jest-shared.config.json",
   "testEnvironment": "jsdom",
   "rootDir": "../",
-  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "mjs", "json"],
   "collectCoverageFrom": [
     "src/**/*.{ts,tsx}",
     "!src/**/*.d.ts",
@@ -11,15 +10,21 @@
   "testPathIgnorePatterns": [
     "/node_modules/",
     "/dist/",
-    "/lib/"
+    "/lib/",
+    "/lib-commonjs/",
+    "/src/ui/__tests__/setup.ts",
+    "/webpack-plugins/"
   ],
   "transformIgnorePatterns": [
-    "/node_modules/(?!(@preact/signals|@testing-library/preact)/)"
+    "/node_modules/(?!(preact|@preact/signals|@testing-library/preact)/)"
   ],
   "transform": {
     "^.+\\.(ts|tsx)$": "ts-jest",
-    "^.+\\.(js|jsx)$": "babel-jest"
+    "^.+\\.(js|jsx|mjs)$": "babel-jest"
   },
+  "modulePathIgnorePatterns": [
+    "<rootDir>/webpack-plugins/"
+  ],
   "moduleNameMapper": {
     "\\.(css|less|scss|sass)$": "<rootDir>/__mocks__/styleMock.js",
     "\\.(gif|ttf|eot|svg|png)$": "<rootDir>/__mocks__/fileMock.js"
