@@ -16,7 +16,7 @@
     "/webpack-plugins/"
   ],
   "transformIgnorePatterns": [
-    "/node_modules/(?!(preact|@preact/signals|@testing-library/preact)/)"
+    "/node_modules/(?!(preact|@preact/signals|@preact/signals-core|@testing-library/preact)/)"
   ],
   "transform": {
     "^.+\\.(ts|tsx)$": "ts-jest",

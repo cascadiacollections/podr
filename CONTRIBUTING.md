@@ -47,8 +47,8 @@ git remote add upstream https://github.com/cascadiacollections/podr.git
 ### Install Dependencies
 
 ```bash
-# Install all dependencies
-yarn install
+# Install all dependencies from the committed Yarn lockfile
+yarn install --frozen-lockfile
 
 # Verify installation
 yarn test
@@ -72,6 +72,8 @@ For a consistent development environment, use the dev container:
 # In VS Code, press F1 and select:
 # "Dev Containers: Reopen in Container"
 ```
+
+The dev container uses the Node.js 24 image and preinstalls GitHub CLI, Git LFS, and Yarn cache support. The root project uses Yarn; use npm only inside `packages/webpack-api-inliner-plugin/`, which has its own `package-lock.json` for publishing.
 
 ## 🔧 Making Changes
 
