@@ -56,6 +56,7 @@ describe('useApiInliner hook', () => {
     
     // Verify useState was called with the correct initial values
     const preactHooks = require('preact/hooks');
+    expect(preactHooks.useMemo).toHaveBeenCalledWith(expect.any(Function), ['TEST_VARIABLE']);
     expect(preactHooks.useState).toHaveBeenCalledWith({ products: [{ id: 2, name: 'Inlined Product' }] }); // data
     expect(preactHooks.useState).toHaveBeenCalledWith(false); // isLoading
     expect(preactHooks.useState).toHaveBeenCalledWith(null); // error
@@ -92,6 +93,7 @@ describe('useApiInliner hook', () => {
     
     // Verify initial loading state is true since no window data is available
     const preactHooks = require('preact/hooks');
+    expect(preactHooks.useMemo).toHaveBeenCalledWith(expect.any(Function), ['MISSING_VARIABLE']);
     expect(preactHooks.useState).toHaveBeenCalledWith(null); // data
     expect(preactHooks.useState).toHaveBeenCalledWith(true); // isLoading
     expect(preactHooks.useState).toHaveBeenCalledWith(null); // error

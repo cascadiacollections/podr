@@ -1,5 +1,6 @@
 name: "Copilot Setup Steps"
 
+# Validates and preinstalls the Node/Yarn toolchain Copilot uses before agent sessions.
 on:
   workflow_dispatch:
   push:

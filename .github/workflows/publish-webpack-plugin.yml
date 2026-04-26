@@ -123,12 +123,16 @@ jobs:
       working-directory: packages/webpack-api-inliner-plugin
       run: |
         package_version="$(node -p "require('./package.json').version")"
-        if npm view "@cascadiacollections/webpack-api-inliner@${package_version}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+        npm_view_output="$(npm view "@cascadiacollections/webpack-api-inliner@${package_version}" version --registry=https://npm.pkg.github.com 2>&1)" && npm_view_status=0 || npm_view_status=$?
+        if [ "$npm_view_status" -eq 0 ]; then
           echo "published=true" >> "$GITHUB_OUTPUT"
           echo "Package version ${package_version} is already published; skipping publish."
-        else
+        elif echo "$npm_view_output" | grep -qi "E404"; then
           echo "published=false" >> "$GITHUB_OUTPUT"
           echo "Package version ${package_version} has not been published."
+        else
+          echo "$npm_view_output"
+          exit "$npm_view_status"
         fi
       env:
         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
