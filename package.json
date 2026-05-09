@@ -60,7 +60,7 @@
     "jest-environment-jsdom": "^30.3.0",
     "mini-css-extract-plugin": "2.10.2",
     "node-notifier": "10.0.1",
-    "postcss": "8.5.13",
+    "postcss": "8.5.14",
     "postcss-loader": "8.2.1",
     "postcss-preset-env": "^11.2.1",
     "postcss-reporter": "^7.1.0",
