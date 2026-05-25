@@ -9,7 +9,7 @@
 					"source.fixAll.eslint": "explicit"
 				},
 				"editor.defaultFormatter": "esbenp.prettier-vscode",
-				"typescript.preferences.importModuleSpecifier": "relative",
+				"js/ts.preferences.importModuleSpecifier": "relative",
 				"npm.packageManager": "yarn",
 				"terminal.integrated.profiles.linux": {
 					"bash": {
@@ -56,7 +56,7 @@
 	"initializeCommand": "echo '🔧 Initializing Podr development environment...'",
 	"remoteUser": "node",
 	"containerEnv": {
-		"PATH": "${containerEnv:PATH}:${localEnv:HOME}/.local/bin",
+		"PATH": "${containerEnv:PATH}:/home/node/.local/bin",
 		"YARN_CACHE_FOLDER": "/home/node/.cache/yarn",
 		"DEBIAN_FRONTEND": "noninteractive"
 	}
