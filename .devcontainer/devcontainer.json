@@ -9,7 +9,7 @@
 					"source.fixAll.eslint": "explicit"
 				},
 				"editor.defaultFormatter": "esbenp.prettier-vscode",
-				"typescript.preferences.importModuleSpecifier": "relative",
+				"js/ts.preferences.importModuleSpecifier": "relative",
 				"npm.packageManager": "yarn",
 				"terminal.integrated.profiles.linux": {
 					"bash": {
@@ -28,11 +28,15 @@
 				"ms-vscode.vscode-css-peek",
 				"formulahendry.auto-rename-tag",
 				"christian-kohler.path-intellisense",
-				"ms-vscode.vscode-scss"
+				"ms-vscode.vscode-scss",
+				"github.copilot",
+				"github.copilot-chat",
+				"github.vscode-pull-request-github"
 			]
 		}
 	},
 	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
@@ -42,14 +46,17 @@
 		}
 	},
 	"mounts": [
-		"source=podr-yarn-cache,target=/home/node/.cache/yarn,type=volume"
+		"source=podr-yarn-cache,target=/home/node/.cache/yarn,type=volume",
+		"source=podr-npm-cache,target=/home/node/.npm,type=volume"
 	],
-	"postCreateCommand": "yarn install --prefer-offline",
-	"updateContentCommand": "yarn install --prefer-offline",
+	"onCreateCommand": ".devcontainer/on-create.sh",
+	"postCreateCommand": ".devcontainer/post-create.sh",
+	"updateContentCommand": ".devcontainer/update-content.sh",
+	"postStartCommand": ".devcontainer/post-start.sh",
 	"initializeCommand": "echo '🔧 Initializing Podr development environment...'",
-	"onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
 	"remoteUser": "node",
 	"containerEnv": {
+		"PATH": "${containerEnv:PATH}:/home/node/.local/bin",
 		"YARN_CACHE_FOLDER": "/home/node/.cache/yarn",
 		"DEBIAN_FRONTEND": "noninteractive"
 	}
