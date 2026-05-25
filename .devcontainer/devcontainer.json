@@ -42,7 +42,7 @@
 		}
 	},
 	"mounts": [
-		"source=podr-yarn-cache,target=/usr/local/share/.cache/yarn,type=volume"
+		"source=podr-yarn-cache,target=/home/node/.cache/yarn,type=volume"
 	],
 	"postCreateCommand": "yarn install --prefer-offline",
 	"updateContentCommand": "yarn install --prefer-offline",
@@ -50,7 +50,7 @@
 	"onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
 	"remoteUser": "node",
 	"containerEnv": {
-		"YARN_CACHE_FOLDER": "/usr/local/share/.cache/yarn",
+		"YARN_CACHE_FOLDER": "/home/node/.cache/yarn",
 		"DEBIAN_FRONTEND": "noninteractive"
 	}
 }
