@@ -56,8 +56,10 @@
 	"initializeCommand": "echo '🔧 Initializing Podr development environment...'",
 	"remoteUser": "node",
 	"containerEnv": {
-		"PATH": "${containerEnv:PATH}:/home/node/.local/bin",
 		"YARN_CACHE_FOLDER": "/home/node/.cache/yarn",
 		"DEBIAN_FRONTEND": "noninteractive"
+	},
+	"remoteEnv": {
+		"PATH": "${containerEnv:PATH}:/home/node/.local/bin"
 	}
 }
