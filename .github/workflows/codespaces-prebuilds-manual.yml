@@ -1,0 +1,27 @@
+name: Codespaces Prebuilds (Manual)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/codespaces-prebuilds-manual.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  prebuild-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Validate prebuild update-content command
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: |
+            sudo mkdir -p /home/node/.cache/yarn /home/node/.npm
+            sudo chown root:root /home/node/.cache /home/node/.cache/yarn /home/node/.npm
+            .devcontainer/update-content.sh
