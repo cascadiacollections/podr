@@ -45,7 +45,7 @@
   resolved "https://registry.yarnpkg.com/@babel/compat-data/-/compat-data-8.0.0.tgz#e780eb6052d8ceeaeadd3a6cd82dda470a945622"
   integrity sha512-DOjnob/cXOUgDOozCDeq/aK2p5y8dUIVdf6tNhEV1HQRd6I8aQ4f4fbtHRVEvb6lP3BGomrKHiS8ICAASSVQSw==
 
-"@babel/core@^7.23.9", "@babel/core@^7.27.4":
+"@babel/core@^7.23.9", "@babel/core@^7.27.4", "@babel/core@^7.29.7":
   version "7.29.7"
   resolved "https://registry.yarnpkg.com/@babel/core/-/core-7.29.7.tgz#80c10b17248082968b57a857b91640971f2070f7"
   integrity sha512-RgHBCvtjbOK2gXSNBNIkNoEc9qoVEtau3hj8gEqKQuL3HZAibKarWFEI3Lfm6EYKkLalOh8eSrj9b+ch9H/VBA==
