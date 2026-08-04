@@ -96,6 +96,7 @@ exports[`List component renders with results 1`] = `
             class="episode-title-cell"
           >
             <a
+              aria-disabled="false"
               aria-label="Stream or download: Test Episode 1"
               href="https://example.com/episode1.mp3"
             >
@@ -127,6 +128,7 @@ exports[`List component renders with results 1`] = `
             class="episode-title-cell"
           >
             <a
+              aria-disabled="false"
               aria-label="Stream or download: Test Episode 2"
               href="https://example.com/episode2.mp3"
             >

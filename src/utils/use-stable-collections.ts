@@ -726,50 +726,56 @@ export function usePagination<T>(
 /**
  * Standalone filter function
  */
-export const filter = <T>(
+export const useFilter = <T>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>, 
   predicate: (item: T) => boolean
 ): ReadonlySignal<ReadonlyArray<T>> => useTransform(items).filter(predicate);
+export const filter = useFilter;
 
 /**
  * Standalone map function
  */
-export const map = <T, U>(
+export const useMap = <T, U>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>, 
   mapper: (item: T) => U
 ): ReadonlySignal<ReadonlyArray<U>> => useTransform(items).map(mapper);
+export const map = useMap;
 
 /**
  * Standalone sort function
  */
-export const sort = <T>(
+export const useSort = <T>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>, 
   compareFn?: (a: T, b: T) => number
 ): ReadonlySignal<ReadonlyArray<T>> => useTransform(items).sort(compareFn);
+export const sort = useSort;
 
 /**
  * Standalone unique function
  */
-export const unique = <T>(
+export const useUnique = <T>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>
 ): ReadonlySignal<ReadonlyArray<T>> => useTransform(items).unique();
+export const unique = useUnique;
 
 /**
  * Standalone groupBy function
  */
-export const groupBy = <T, K>(
+export const useGroupBy = <T, K>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>, 
   keyFn: (item: T) => K
 ): ReadonlySignal<ReadonlyMapType<K, ReadonlyArray<T>>> => useTransform(items).groupBy(keyFn);
+export const groupBy = useGroupBy;
 
 /**
  * Standalone reduce function
  */
-export const reduce = <T, U>(
+export const useReduce = <T, U>(
   items: ReadonlyArray<T> | ReadonlySignal<ReadonlyArray<T>>, 
   reducer: (acc: U, item: T) => U, 
   initialValue: U
 ): ReadonlySignal<U> => useTransform(items).reduce(reducer, initialValue);
+export const reduce = useReduce;
 
 // ============================================================================
 // Exports

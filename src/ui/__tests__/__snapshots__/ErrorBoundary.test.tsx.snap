@@ -27,6 +27,11 @@ exports[`ErrorBoundary renders fallback UI when an error occurs 1`] = `
     <p>
       Please refresh the page to try again.
     </p>
+    <button
+      type="button"
+    >
+      Try again
+    </button>
     <details>
       <summary>
         Error Details

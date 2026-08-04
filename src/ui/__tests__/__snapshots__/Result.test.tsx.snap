@@ -14,6 +14,7 @@ exports[`Result component renders correctly 1`] = `
           class="episode-title-cell"
         >
           <a
+            aria-disabled="false"
             aria-label="Stream or download: Test Episode Title"
             href="https://example.com/episode.mp3"
           >
@@ -54,6 +55,7 @@ exports[`Result component renders with empty duration and date 1`] = `
           class="episode-title-cell"
         >
           <a
+            aria-disabled="false"
             aria-label="Stream or download: Test Episode Title"
             href="https://example.com/episode.mp3"
           >

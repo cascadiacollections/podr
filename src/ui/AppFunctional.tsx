@@ -174,7 +174,7 @@ export const App = (): JSX.Element => {
         fatal: false
       });
     }
-  }, []);
+  }, [results]);
 
   const onSearch = useCallback((searchQuery: string, limit: number = APP_CONFIG.SEARCH.DEFAULT_LIMIT) => {
     window.gtag('event', 'search', {
@@ -208,7 +208,7 @@ export const App = (): JSX.Element => {
           fatal: false
         });
       });
-  }, []);
+  }, [query, searchResults]);
 
   const onClick = useCallback((item: IFeedItem) => {
     const url: string = item.enclosure.link;
@@ -255,7 +255,7 @@ const pinFeedUrl = useCallback((feed: IFeed | string): void => {
       return new Set([...favorited.value, feed]);
     }
   })();
-}, []);
+}, [favorited]);
 
 const unpinFeedUrl = useCallback((feed: IFeed): void => {
   favorited.value = new Set(Array.from(favorited.value).filter(f => f.feedUrl !== feed.feedUrl));
@@ -264,7 +264,7 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
     eventLabel: feed.feedUrl,
     transport: 'beacon'
   });
-}, []);
+}, [favorited]);
 
   // Hoisted handlers for JSX to avoid inline arrow functions
   const handleSearchResultClick = useCallback((feedUrl: string) => {

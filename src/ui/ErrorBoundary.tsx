@@ -34,11 +34,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         fatal: false
       });
     }
-
-    private handleReset = () => {
-      this.setState({ error: null, errorInfo: null });
-    };
   }
+
+  private handleReset = () => {
+    this.setState({ error: null, errorInfo: null });
+  };
 
   render() {
     if (this.state.error) {

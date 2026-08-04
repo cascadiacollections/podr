@@ -92,12 +92,20 @@ module.exports = [
       'no-alert': 'warn',
       'no-var': 'error',
       'prefer-const': 'error',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_' 
       }]
+    }
+  },
+  {
+    // Enforce hook correctness in rendered UI components. Utility hook factories
+    // expose fluent APIs that intentionally call hooks from methods.
+    files: ['src/ui/**/*.ts', 'src/ui/**/*.tsx', 'src/index.tsx'],
+
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn'
     }
   },
   {

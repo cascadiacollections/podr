@@ -38,7 +38,7 @@ export function getSecureUrl(url: string): string {
     throw new Error('Invalid URL: Only HTTP and HTTPS URLs are supported');
   }
 
-  return parsedUrl.toString();
+  return secureUrl;
 }
 
 /**
