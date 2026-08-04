@@ -3,7 +3,7 @@
 exports[`List component renders empty state 1`] = `
 <div>
   <section
-    class="episodes-container empty-state"
+    aria-busy="false"
   >
     <table
       class="episodes-table"
@@ -11,39 +11,21 @@ exports[`List component renders empty state 1`] = `
       <caption>
         Podcast Episodes
       </caption>
-      <thead>
-        <tr>
-          <th
-            scope="col"
-          >
-            Episode
-          </th>
-          <th
-            class="date-column"
-            scope="col"
-          >
-            Date
-          </th>
-          <th
-            class="duration-column"
-            scope="col"
-          >
-            Duration
-          </th>
-        </tr>
-      </thead>
       <tbody>
         <tr
           class="empty-row"
         >
           <td
-            class="empty-cell"
             colspan="3"
           >
             <div
-              class="empty-message"
+              class="empty-state"
             >
-              No episodes available. Search or select a podcast to see episodes.
+              <p
+                class="empty-message"
+              >
+                Pick a podcast above to see its episodes.
+              </p>
             </div>
           </td>
         </tr>
@@ -56,7 +38,7 @@ exports[`List component renders empty state 1`] = `
 exports[`List component renders with results 1`] = `
 <div>
   <section
-    class="episodes-container"
+    aria-busy="false"
   >
     <table
       class="episodes-table"
@@ -87,20 +69,18 @@ exports[`List component renders with results 1`] = `
       </thead>
       <tbody>
         <tr
-          aria-label="Play episode: Test Episode 1"
           class="episode-row"
-          role="button"
-          tabindex="0"
         >
           <td
             class="episode-title-cell"
           >
-            <a
-              aria-label="Stream or download: Test Episode 1"
-              href="https://example.com/episode1.mp3"
+            <button
+              aria-label="Play episode: Test Episode 1"
+              class="episode-title"
+              type="button"
             >
               Test Episode 1
-            </a>
+            </button>
           </td>
           <td
             class="date-column"
@@ -118,20 +98,18 @@ exports[`List component renders with results 1`] = `
           </td>
         </tr>
         <tr
-          aria-label="Play episode: Test Episode 2"
           class="episode-row"
-          role="button"
-          tabindex="0"
         >
           <td
             class="episode-title-cell"
           >
-            <a
-              aria-label="Stream or download: Test Episode 2"
-              href="https://example.com/episode2.mp3"
+            <button
+              aria-label="Play episode: Test Episode 2"
+              class="episode-title"
+              type="button"
             >
               Test Episode 2
-            </a>
+            </button>
           </td>
           <td
             class="date-column"

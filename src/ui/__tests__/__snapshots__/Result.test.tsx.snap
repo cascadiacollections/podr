@@ -5,20 +5,18 @@ exports[`Result component renders correctly 1`] = `
   <table>
     <tbody>
       <tr
-        aria-label="Play episode: Test Episode Title"
         class="episode-row"
-        role="button"
-        tabindex="0"
       >
         <td
           class="episode-title-cell"
         >
-          <a
-            aria-label="Stream or download: Test Episode Title"
-            href="https://example.com/episode.mp3"
+          <button
+            aria-label="Play episode: Test Episode Title"
+            class="episode-title"
+            type="button"
           >
             Test Episode Title
-          </a>
+          </button>
         </td>
         <td
           class="date-column"
@@ -45,20 +43,18 @@ exports[`Result component renders with empty duration and date 1`] = `
   <table>
     <tbody>
       <tr
-        aria-label="Play episode: Test Episode Title"
         class="episode-row"
-        role="button"
-        tabindex="0"
       >
         <td
           class="episode-title-cell"
         >
-          <a
-            aria-label="Stream or download: Test Episode Title"
-            href="https://example.com/episode.mp3"
+          <button
+            aria-label="Play episode: Test Episode Title"
+            class="episode-title"
+            type="button"
           >
             Test Episode Title
-          </a>
+          </button>
         </td>
         <td
           class="date-column"

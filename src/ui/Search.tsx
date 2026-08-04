@@ -64,24 +64,30 @@ export const Search: FunctionComponent<ISearchProps> = ({
    */
   const processSearchQuery = useCallback((query: string): string | null => {
     const trimmedQuery = query.trim();
-    
+
     if (trimmedQuery.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
       return null;
     }
-    
+
     return trimmedQuery;
   }, []);
-  
+
   /**
-   * Executes search with validation and analytics
+   * Executes search with validation and analytics.
+   *
+   * Submitting an empty field is a request to clear the results, not a no-op -
+   * previously there was no way to dismiss a set of search results.
    */
   const executeSearch = useCallback((query: string) => {
     const processedQuery = processSearchQuery(query);
-    
-    if (processedQuery) {
-      onSearch(processedQuery);
-      trackSearch(processedQuery);
+
+    if (!processedQuery) {
+      onSearch('');
+      return;
     }
+
+    onSearch(processedQuery);
+    trackSearch(processedQuery);
   }, [onSearch, trackSearch, processSearchQuery]);
   
   /**

@@ -209,6 +209,21 @@ This repository is organized as a monorepo containing the main Podr application 
 - **🧪 Test Coverage** - Unit and integration testing
 - **♿ Accessibility** - WCAG 2.1 AA compliance
 
+### 📶 Offline and Low-Bandwidth Behavior
+
+Podr is built to stay usable on a slow, metered, or absent connection, and on hardware
+that feels every wasted millisecond.
+
+| Concern | How it is handled |
+|---------|-------------------|
+| **First paint** | Styles ship inside the bundle — no third-party stylesheet blocks rendering. The top-podcasts list is inlined at build time by the API inliner plugin. |
+| **Repeat and offline visits** | `assets/sw.js` precaches the app shell and this build's hashed assets (the list is injected by `webpack-plugins/copy-assets-plugin.js`). Podcast APIs are network-first with a cache fallback; artwork is cache-first in a size-capped cache; audio is never cached. |
+| **Metered connections** | `navigator.connection.saveData`, `effectiveType`, and `prefers-reduced-data` suppress the background refresh and request the smallest available artwork. |
+| **Long feeds** | Episode rows render in pages of 30 and use `content-visibility` so off-screen rows cost nothing. Only 60 episodes are persisted, without their unused descriptions, to keep cold starts cheap. |
+| **Wasted requests** | Feed and search requests are aborted when superseded or when the app unmounts. |
+| **Reduced motion** | Every transition and scripted scroll respects `prefers-reduced-motion`. |
+| **Being offline** | The UI says so, and keeps showing the podcasts and episodes already on the device instead of clearing them. |
+
 ### 🐳 Dev Container Setup
 
 Experience **zero-config development** with our containerized environment:
