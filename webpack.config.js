@@ -8,6 +8,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
+const CopyAssetsPlugin = require('./webpack-plugins/copy-assets-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
 /**
@@ -114,6 +115,22 @@ function createWebpackConfig({ production }) {
       // when unset the client omits the api_key parameter entirely.
       new webpack.DefinePlugin({
         PODR_RSS_API_KEY: JSON.stringify(process.env.PODR_RSS_API_KEY || '')
+      }),
+      // The manifest, its icons, and the service worker are fetched by URL at
+      // runtime, so they have to be emitted rather than imported
+      new CopyAssetsPlugin({
+        from: 'assets',
+        injectManifestInto: 'sw.js',
+        files: [
+          'sw.js',
+          'site.webmanifest',
+          'android-chrome-192x192.png',
+          'android-chrome-512x512.png',
+          'maskable-icon-512x512.png',
+          'apple-touch-icon.png',
+          'favicon-16x16.png',
+          'favicon-32x32.png'
+        ]
       }),
       new HtmlWebpackPlugin({
         template: 'assets/index.html',

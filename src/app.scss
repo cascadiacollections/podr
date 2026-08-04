@@ -1,174 +1,771 @@
-/* Minimal custom styles - letting Pico.css handle most styling */
+/**
+ * Podr design system.
+ *
+ * Self contained on purpose: this replaces a render-blocking CSS framework
+ * fetched from a third-party CDN, which cost a connection and a round trip before
+ * the first paint on exactly the slow networks this app should behave best on.
+ * Everything below is a few kilobytes, inlined into the bundle.
+ */
 
-/* Theme customization */
+/* ---------------------------------------------------------------- tokens */
+
 :root {
-  --primary: #ffa500;
-  --primary-hover: #ff8c00;
+  color-scheme: light dark;
+
+  /* Brand */
+  --accent: #d2691e;
+  --accent-strong: #b4571a;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(210, 105, 30, 0.12);
+
+  /* Surfaces */
+  --bg: #faf8f6;
+  --surface: #ffffff;
+  --surface-sunken: #f2eeea;
+  --border: rgba(28, 25, 23, 0.12);
+  --border-strong: rgba(28, 25, 23, 0.24);
+
+  /* Text */
+  --text: #1c1917;
+  --text-muted: #6b625b;
+  --danger: #b3261e;
+
+  /* Shape and depth */
+  --radius: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-pill: 999px;
+  --shadow-low: 0 1px 2px rgba(28, 25, 23, 0.08);
+  --shadow-high: 0 -1px 16px rgba(28, 25, 23, 0.12);
+
+  /* Rhythm */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Motion, zeroed out under prefers-reduced-motion below */
+  --duration: 150ms;
+
+  --app-bar-height: 3.75rem;
+  --player-bar-height: 4.5rem;
+  --content-width: 68rem;
+
+  font-synthesis-weight: none;
 }
 
-/* Essential utility styles */
-[role="button"] {
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #f0913f;
+    --accent-strong: #ffab5c;
+    --accent-contrast: #21160c;
+    --accent-soft: rgba(240, 145, 63, 0.16);
+
+    --bg: #121110;
+    --surface: #1c1a18;
+    --surface-sunken: #262322;
+    --border: rgba(245, 240, 235, 0.14);
+    --border-strong: rgba(245, 240, 235, 0.28);
+
+    --text: #f5f1ec;
+    --text-muted: #a8a09a;
+    --danger: #f2b8b5;
+
+    --shadow-low: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-high: 0 -1px 16px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------ base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: clamp(0.95rem, 0.9rem + 0.2vw, 1.0625rem);
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  /* Keeps a missing or slow image from collapsing the layout */
+  background-color: var(--surface-sunken);
+}
+
+button {
+  font: inherit;
+  color: inherit;
   cursor: pointer;
 }
 
-/* Media player styles */
-audio {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  left: 0;
-  margin: 0;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--space-1);
 }
 
-/* Container styles */
-.results {
-  height: 128px;
-  overflow-y: auto;
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
-.feeds {
-  max-height: 100px;
-  overflow-y: auto;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Section headers */
-.section-header {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid var(--muted-border-color);
-  padding-bottom: 0.5rem;
-}
+/* --------------------------------------------------------------- app bar */
 
-/* Episodes table container */
-.episodes-container {
-  height: 340px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.episodes-table {
-  width: 100%;
-  table-layout: fixed;
-  margin: 0;
-  border-collapse: collapse;
-}
-
-.episodes-table thead th {
+.app-bar {
   position: sticky;
   top: 0;
-  background-color: var(--card-background-color);
-  z-index: 1;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  min-height: var(--app-bar-height);
+  padding: var(--space-3) var(--space-4);
+  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--border);
+  /* Progressive: browsers without color-mix get the solid surface below */
+  backdrop-filter: blur(8px);
 }
 
-.episodes-table tr {
-  line-height: 1.2;
+@supports not (background-color: color-mix(in srgb, white 50%, transparent)) {
+  .app-bar {
+    background-color: var(--surface);
+  }
 }
 
-.episodes-table td,
-.episodes-table th {
-  padding: 0.75rem;
-  vertical-align: middle;
+/* The heading is a wrapper only; the link inside carries the styling */
+.app-brand-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
-/* Column width distribution */
-.episodes-table th:first-child,
-.episodes-table td:first-child {
-  width: 60%;
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
-.date-column {
-  width: 20%;
-  text-align: center;
+.app-brand:hover {
+  text-decoration: none;
 }
 
-.duration-column {
-  width: 20%;
-  text-align: center;
+.app-brand__mark {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
-/* Episode row styling */
-.episode-row {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  background-color: transparent;
-  border: none;
-  color: inherit;
+/* ---------------------------------------------------------------- layout */
+
+.app-main {
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+  /* Room for the player bar so it never covers the last row */
+  padding-bottom: calc(var(--player-bar-height) + var(--space-6));
 }
 
-/* Override Pico CSS button styles for table rows */
-.episode-row[role="button"] {
-  background-color: transparent;
-  border: none;
-  color: inherit;
-  display: table-row;
+.section {
+  margin-bottom: var(--space-6);
+  /* Offset for the sticky app bar when a section is scrolled into view */
+  scroll-margin-top: calc(var(--app-bar-height) + var(--space-4));
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.section__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.section__title {
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section__count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- notices */
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+.notice--error {
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
+.notice--offline {
+  border-left-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- search */
+
+.search-form {
+  display: flex;
+  flex: 1 1 16rem;
+  gap: var(--space-2);
+  max-width: 28rem;
+  margin-left: auto;
+}
+
+.search-input-container {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background-color: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.form-control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.search-loading-indicator {
+  position: absolute;
+  top: 50%;
+  right: 0.625rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--duration) ease;
+}
+
+.search-button:hover:not(:disabled) {
+  background-color: var(--accent-strong);
+}
+
+.search-button:disabled,
+.form-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------- podcast card */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+.podcast-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.podcast-card__open {
+  display: block;
   width: 100%;
   padding: 0;
-  margin: 0;
-  font-weight: inherit;
-  text-align: inherit;
-  font-size: inherit;
-  line-height: inherit;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+  transition: transform var(--duration) ease;
 }
 
-.episode-row:hover {
-  background-color: var(--card-sectionning-background-color);
+.podcast-card__open:hover {
+  transform: translateY(-2px);
 }
 
-.episode-row:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-  background-color: transparent;
-}
-
-/* Episode title cell */
-.episode-title-cell a {
-  color: var(--primary);
-  text-decoration: none;
+.podcast-card__artwork {
   display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-low);
+}
+
+.podcast-card__name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin-top: var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.podcast-card--current .podcast-card__artwork {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  line-height: 1;
+  transition: color var(--duration) ease, border-color var(--duration) ease;
+}
+
+@supports not (background-color: color-mix(in srgb, white 50%, transparent)) {
+  .icon-button {
+    background-color: var(--surface);
+  }
+}
+
+.icon-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.icon-button--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
+}
+
+.podcast-card__favorite {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+}
+
+/* ------------------------------------------------------- selected podcast */
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-low);
+}
+
+.now-playing__artwork {
+  flex: 0 0 auto;
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.now-playing__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.now-playing__title {
+  font-size: 1.125rem;
+  font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.episode-title-cell a:hover {
-  color: var(--primary-hover);
-  text-decoration: underline;
+.now-playing__meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
-/* Empty state styling */
-.empty-row td {
+/* -------------------------------------------------------------- episodes */
+
+.episodes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.episodes-table caption {
+  /* The heading above the table already names it */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.episodes-table thead th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.episode-row {
+  /* Off-screen rows are skipped entirely, which keeps a long feed cheap on
+     low-power devices without hand-rolled virtualization */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 3.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background-color var(--duration) ease;
+}
+
+.episode-row:hover {
+  background-color: var(--surface-sunken);
+}
+
+.episode-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.episode-row td {
+  padding: var(--space-3);
+  vertical-align: middle;
+}
+
+.episode-title-cell {
+  width: 60%;
+}
+
+.episode-title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+  font-weight: 550;
+  text-align: left;
+  color: var(--text);
+  transition: color var(--duration) ease;
+}
+
+.episode-title:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.episode-title:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.episode-row--current {
+  background-color: var(--accent-soft);
+}
+
+.episode-row--current .episode-title {
+  color: var(--accent);
+}
+
+.date-column,
+.duration-column {
+  width: 20%;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.duration-column {
+  text-align: right;
+}
+
+.episodes-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-4);
+}
+
+.button-quiet {
+  padding: 0.4375rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 550;
+  transition: border-color var(--duration) ease, color var(--duration) ease;
+}
+
+.button-quiet:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Collapse the table into stacked rows where columns cannot fit */
+@media (max-width: 640px) {
+  .episodes-table,
+  .episodes-table tbody {
+    display: block;
+  }
+
+  .episodes-table thead {
+    display: none;
+  }
+
+  .episode-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'title title'
+      'date duration';
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-3) var(--space-1);
+    contain-intrinsic-size: auto 4rem;
+  }
+
+  .episode-row td {
+    display: block;
+    width: auto;
+    padding: 0;
+  }
+
+  .episode-title-cell {
+    grid-area: title;
+  }
+
+  .date-column {
+    grid-area: date;
+    font-size: 0.8125rem;
+  }
+
+  .duration-column {
+    grid-area: duration;
+    font-size: 0.8125rem;
+  }
+
+  .episode-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
+/* ------------------------------------------------------------ empty state */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
   text-align: center;
-  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+/* An empty section should explain itself without taking over the screen */
+.empty-state--compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: 0.9375rem;
+}
+
+.empty-row td {
+  padding: 0 !important;
 }
 
 .empty-message {
-  color: var(--muted-color);
-  font-style: italic;
+  color: var(--text-muted);
 }
 
-/* Feed request failure notice */
-.feed-error {
-  color: var(--del-color, #d9534f);
-  margin: 0 0 1rem;
+/* -------------------------------------------------------------- skeletons */
+
+.skeleton {
+  border-radius: var(--radius);
+  background-color: var(--surface-sunken);
+  /* The shimmer is decorative; the sweep is dropped when data or motion is
+     constrained, leaving a plain block */
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--surface) 70%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+.skeleton--card {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.skeleton--row {
+  height: 1rem;
+  margin: var(--space-3) 0;
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 150% 0;
+  }
+
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@media (prefers-reduced-data: reduce) {
+  .skeleton {
+    background-image: none;
+    animation: none;
+  }
 }
 
 .loading-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--text-muted);
 }
 
 .loading-spinner {
   display: inline-block;
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid var(--muted-border-color);
-  border-top-color: var(--primary);
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -177,9 +774,78 @@ audio {
   }
 }
 
-/* Mobile optimizations */
-@media (max-width: 576px) {
-  .duration-column {
-    display: none;
+/* ------------------------------------------------------------- player bar */
+
+/* The class sets display, so it has to opt back out of it when hidden -
+   the user-agent [hidden] rule loses on specificity */
+.player-bar[hidden] {
+  display: none;
+}
+
+.player-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-high);
+}
+
+.player-bar__artwork {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: cover;
+  border-radius: var(--space-1);
+}
+
+.player-bar__text {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.player-bar__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.player-bar__subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.player-bar audio {
+  flex: 2 1 18rem;
+  width: 100%;
+  height: 2.5rem;
+}
+
+@media (max-width: 560px) {
+  :root {
+    /* The bar wraps its transport controls onto a second line here, and the main
+       content's bottom padding is derived from this */
+    --player-bar-height: 7.5rem;
+  }
+
+  .player-bar {
+    flex-wrap: wrap;
+  }
+
+  .player-bar audio {
+    flex: 1 1 100%;
+    order: 3;
   }
 }

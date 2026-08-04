@@ -33,14 +33,14 @@ function formatDuration(duration: number): string {
   if (!duration || !Number.isFinite(duration) || duration < 0) {
     return DURATION_CONFIG.FALLBACK_DURATION;
   }
-  
+
   const hours = Math.floor(duration / (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE));
   const minutes = Math.floor((duration % (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE)) / DURATION_CONFIG.SECONDS_PER_MINUTE);
   const seconds = Math.floor(duration % DURATION_CONFIG.SECONDS_PER_MINUTE);
-  
-  const formatPart = (value: number): string => 
+
+  const formatPart = (value: number): string =>
     value.toString().padStart(DURATION_CONFIG.PAD_LENGTH, DURATION_CONFIG.PAD_CHAR);
-  
+
   return [
     formatPart(hours),
     formatPart(minutes),
@@ -57,13 +57,13 @@ function formatPubDate(isoString: string): string {
   if (!isoString || typeof isoString !== 'string') {
     return 'Unknown date';
   }
-  
+
   try {
     const date = new Date(isoString);
     if (!Number.isFinite(date.getTime())) {
       return 'Invalid date';
     }
-    
+
     return date.toLocaleDateString(undefined, DATE_FORMAT_OPTIONS);
   } catch {
     return 'Invalid date';
@@ -95,57 +95,54 @@ export interface IFeedItem {
 export interface IResultProps {
   readonly result: IFeedItem;
   readonly onClick: (result: IFeedItem) => void;
+  /** Whether this episode is the one loaded in the player */
+  readonly isCurrent?: boolean;
 }
 
 /**
  * Result component that displays a podcast episode with optimized rendering
- * Uses HTML5 semantic elements and memoization for performance
+ *
+ * The title is the row's single interactive element: it is a real button, so it
+ * carries keyboard activation and focus for free. The row itself is no longer a
+ * button wrapping a link - nesting interactive elements left keyboard and screen
+ * reader users with two overlapping targets and one unreachable action.
  */
 export const Result: FunctionComponent<IResultProps> = memo(
-  ({ onClick, result }: IResultProps) => {
+  ({ onClick, result, isCurrent = false }: IResultProps) => {
     const { title, pubDate, enclosure } = result;
 
     // Feeds routinely omit the enclosure on trailer and note-only entries
-    const enclosureLink = enclosure?.link ?? '';
+    const isPlayable = Boolean(enclosure?.link);
     const enclosureDuration = enclosure?.duration ?? 0;
 
     // Memoize callback to prevent unnecessary re-renders
     const handleClick = useCallback(() => {
       onClick(result);
     }, [result, onClick]);
-    
-    // Memoize keyboard handler for better performance
-    const handleKeyDown = useCallback((event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handleClick();
-      }
-    }, [handleClick]);
-    
+
     // Memoize formatted values for better performance
     const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
     const formattedDuration = useMemo(() => formatDuration(enclosureDuration), [enclosureDuration]);
-    
+
     // Memoize aria label for accessibility
-    const ariaLabel = useMemo(() => `Play episode: ${title}`, [title]);
-    const linkAriaLabel = useMemo(() => `Stream or download: ${title}`, [title]);
+    const ariaLabel = useMemo(
+      () => (isPlayable ? `Play episode: ${title}` : `${title} (no audio available)`),
+      [title, isPlayable]
+    );
 
     return (
-      <tr
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-        role="button"
-        aria-label={ariaLabel}
-        className="episode-row"
-      >
+      <tr className={isCurrent ? 'episode-row episode-row--current' : 'episode-row'}>
         <td className="episode-title-cell">
-          <a
-            href={enclosureLink || undefined}
-            aria-label={linkAriaLabel}
-            onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="episode-title"
+            onClick={handleClick}
+            disabled={!isPlayable}
+            aria-label={ariaLabel}
+            aria-current={isCurrent ? 'true' : undefined}
+          >
             {title}
-          </a>
+          </button>
         </td>
         <td className="date-column">
           <time dateTime={pubDate}>{formattedDate}</time>
@@ -160,16 +157,20 @@ export const Result: FunctionComponent<IResultProps> = memo(
     if (prevProps.result.guid !== nextProps.result.guid) {
       return false;
     }
-    
+
     // Check if click handler reference changed (optimization for function identity)
     if (prevProps.onClick !== nextProps.onClick) {
       return false;
     }
-    
+
+    if (prevProps.isCurrent !== nextProps.isCurrent) {
+      return false;
+    }
+
     // Check critical fields that affect rendering
     const prevResult = prevProps.result;
     const nextResult = nextProps.result;
-    
+
     return (
       prevResult.title === nextResult.title &&
       prevResult.pubDate === nextResult.pubDate &&
