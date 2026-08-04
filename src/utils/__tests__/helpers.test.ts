@@ -47,9 +47,9 @@ describe('helpers', () => {
       const feedUrl = 'https://example.com/feed.rss';
       const result = getFeedUrl(feedUrl);
       
-      expect(result).toContain('https://api.rss2json.com/v1/api.json');
+      expect(result).toContain('https://podr-service.cascadiacollections.workers.dev/');
       expect(result).toContain('rss_url=https%3A%2F%2Fexample.com%2Ffeed.rss');
-      expect(result).toContain('api_key=xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6');
+      expect(result).not.toContain('api_key=');
       expect(result).toContain('count=300');
     });
 

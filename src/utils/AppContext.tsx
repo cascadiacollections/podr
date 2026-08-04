@@ -1,5 +1,4 @@
-import { Signal, signal } from '@preact/signals';
-import { createContext } from 'preact';
+import { computed, Signal, signal } from '@preact/signals';
 import { IFeedItem } from '../ui/Result';
 
 /**
@@ -59,6 +58,7 @@ export interface ITopPodcast {
 export interface AppContextType {
   readonly query: Signal<string>;
   readonly favorited: Signal<ReadonlySet<IFeed>>;
+  readonly feeds: Signal<ReadonlyArray<IFeed>>;
   readonly results: Signal<ReadonlyArray<IFeedItem>>;
   readonly searchResults: Signal<ReadonlyArray<IFeed>>;
   readonly topResults: Signal<ReadonlyArray<ITopPodcast>>;
@@ -100,20 +100,18 @@ export const APP_CONFIG = {
 /**
  * Creates default context values with proper type safety
  */
-function createDefaultContext(): AppContextType {
+export function createAppState(initialState?: Partial<Pick<AppContextType, 'favorited' | 'results'>>): AppContextType {
+  const favorited = initialState?.favorited ?? signal<ReadonlySet<IFeed>>(new Set());
+
   return {
     query: signal(''),
-    favorited: signal<ReadonlySet<IFeed>>(new Set()),
-    results: signal<ReadonlyArray<IFeedItem>>(EMPTY_ARRAY),
+    favorited,
+    feeds: computed(() => Array.from(favorited.value)),
+    results: initialState?.results ?? signal<ReadonlyArray<IFeedItem>>(EMPTY_ARRAY),
     searchResults: signal<ReadonlyArray<IFeed>>(EMPTY_ARRAY),
     topResults: signal<ReadonlyArray<ITopPodcast>>(EMPTY_ARRAY),
   } as const;
 }
-
-/**
- * Application context for managing global state with signals
- */
-export const AppContext = createContext<AppContextType>(createDefaultContext());
 
 /**
  * @deprecated Use APP_CONFIG instead. This will be removed in a future version.
