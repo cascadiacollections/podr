@@ -35,6 +35,11 @@ interface ITopPodcast {
   }>;
 }
 
+const getTopPodcastImage = (result: ITopPodcast): string => {
+  const images = result['im:image'];
+  return images[2]?.label ?? images[images.length - 1]?.label ?? '';
+};
+
 declare global {
   interface Window { 
     gtag: (command: string, action: string, params?: Record<string, unknown>) => void;
@@ -147,7 +152,7 @@ export class App extends Component<{}, IAppState> {
             {this.state.topResults && this.state.topResults.map((result: ITopPodcast) => (
               <img
                 key={result.title.label}
-                src={result['im:image'][2].label}
+                src={getTopPodcastImage(result)}
                 height={100}
                 width={100}
                 className='img-fluid rounded-3'
@@ -244,7 +249,14 @@ export class App extends Component<{}, IAppState> {
     });
 
     if (App.AudioRef.current) {
-      App.AudioRef.current.src = getSecureUrl(url);
+      try {
+        App.AudioRef.current.src = getSecureUrl(url);
+      } catch (err) {
+        window.gtag('event', 'exception', {
+          description: `audio_url_${(err as Error).message}`,
+          fatal: false
+        });
+      }
     }
   }
 

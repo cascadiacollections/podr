@@ -4,6 +4,7 @@
 const path = require('path');
 const typescriptParser = require('@typescript-eslint/parser');
 const reactPlugin = require('eslint-plugin-react');
+const reactHooksPlugin = require('eslint-plugin-react-hooks');
 const reactPerfPlugin = require('eslint-plugin-react-perf');
 
 module.exports = [
@@ -47,6 +48,9 @@ module.exports = [
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLAudioElement: 'readonly',
+        URL: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         
         // Node.js globals
         module: 'readonly',
@@ -69,6 +73,7 @@ module.exports = [
     
     plugins: {
       'react': reactPlugin,
+      'react-hooks': reactHooksPlugin,
       'react-perf': reactPerfPlugin
     },
     
@@ -87,6 +92,8 @@ module.exports = [
       'no-alert': 'warn',
       'no-var': 'error',
       'prefer-const': 'error',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_' 

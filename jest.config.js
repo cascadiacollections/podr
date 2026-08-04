@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/packages'],
   testMatch: [
     '**/__tests__/**/*.test.(ts|tsx|js|jsx)',
     '**/?(*.)+(spec|test).(ts|tsx|js|jsx)'
@@ -36,7 +36,9 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
-    '/lib/'
+    '/lib/',
+    '/lib-commonjs/',
+    '/webpack-plugins/'
   ],
   transform: {
     '^.+\\.(ts|tsx|js|jsx|mjs)$': ['babel-jest', { configFile: './.babelrc' }]

@@ -9,7 +9,6 @@ const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
  */
 const RSS_API_CONFIG = {
   BASE_URL: 'https://api.rss2json.com/v1/api.json',
-  API_KEY: 'xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6',
   DEFAULT_MAX_COUNT: 300,
 } as const;
 
@@ -31,8 +30,15 @@ export function getSecureUrl(url: string): string {
   if (!url || typeof url !== 'string') {
     throw new Error('Invalid URL: URL must be a non-empty string');
   }
-  
-  return url.replace(INSECURE_PROTOCOL_PATTERN, SECURE_PROTOCOL);
+
+  const secureUrl = url.replace(INSECURE_PROTOCOL_PATTERN, SECURE_PROTOCOL);
+  const parsedUrl = new URL(secureUrl);
+
+  if (parsedUrl.protocol !== 'https:') {
+    throw new Error('Invalid URL: Only HTTP and HTTPS URLs are supported');
+  }
+
+  return parsedUrl.toString();
 }
 
 /**
@@ -149,9 +155,13 @@ export function getFeedUrl(
   
   const searchParams = new URLSearchParams({
     rss_url: feedUrl,
-    api_key: RSS_API_CONFIG.API_KEY,
     count: maxCount.toString(),
   });
+
+  const apiKey = process.env.RSS2JSON_API_KEY;
+  if (apiKey) {
+    searchParams.set('api_key', apiKey);
+  }
   
   return `${RSS_API_CONFIG.BASE_URL}?${searchParams.toString()}`;
 }

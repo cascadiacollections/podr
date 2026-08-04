@@ -1,4 +1,4 @@
-import { Component, h, ComponentChildren } from 'preact';
+import { Component, h, ComponentChildren, ErrorInfo } from 'preact';
 
 interface ErrorBoundaryProps {
   children: ComponentChildren;
@@ -7,7 +7,7 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   error: Error | null;
-  errorInfo: any;
+  errorInfo: ErrorInfo | null;
 }
 
 /**
@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.state = { error: null, errorInfo: null };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Catch errors in any components below and re-render with error message
     this.setState({
       error: error,
@@ -34,6 +34,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         fatal: false
       });
     }
+
+    private handleReset = () => {
+      this.setState({ error: null, errorInfo: null });
+    };
   }
 
   render() {
@@ -43,6 +47,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="error-boundary">
           <h2>Something went wrong</h2>
           <p>Please refresh the page to try again.</p>
+          <button type="button" onClick={this.handleReset}>Try again</button>
           <details>
             <summary>Error Details</summary>
             <pre>{this.state.error.toString()}</pre>

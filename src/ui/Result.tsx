@@ -1,6 +1,7 @@
 import { h, FunctionComponent } from 'preact';
 import { useCallback, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
+import { getSecureUrl } from '../utils/helpers';
 
 /**
  * Duration formatting configuration
@@ -121,6 +122,13 @@ export const Result: FunctionComponent<IResultProps> = memo(
     // Memoize formatted values for better performance
     const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
     const formattedDuration = useMemo(() => formatDuration(enclosure.duration), [enclosure.duration]);
+    const safeLink = useMemo(() => {
+      try {
+        return getSecureUrl(enclosure.link);
+      } catch {
+        return undefined;
+      }
+    }, [enclosure.link]);
     
     // Memoize aria label for accessibility
     const ariaLabel = useMemo(() => `Play episode: ${title}`, [title]);
@@ -137,11 +145,18 @@ export const Result: FunctionComponent<IResultProps> = memo(
       >
         <td className="episode-title-cell">
           <a 
-            href={enclosure.link} 
+            href={safeLink ?? '#'} 
             aria-label={linkAriaLabel} 
-            dangerouslySetInnerHTML={{ __html: title }}
-            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking link
-          />
+            aria-disabled={!safeLink}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!safeLink) {
+                e.preventDefault();
+              }
+            }} // Prevent row click when clicking link
+          >
+            {title}
+          </a>
         </td>
         <td className="date-column">
           <time dateTime={pubDate}>{formattedDate}</time>

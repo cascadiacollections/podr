@@ -40,6 +40,11 @@ describe('helpers', () => {
     it('should throw error for non-string input', () => {
       expect(() => getSecureUrl(123 as any)).toThrow('Invalid URL: URL must be a non-empty string');
     });
+
+    it('should reject scriptable URLs', () => {
+      expect(() => getSecureUrl('javascript:alert(1)')).toThrow('Invalid URL: Only HTTP and HTTPS URLs are supported');
+      expect(() => getSecureUrl('data:text/html,<svg onload=alert(1)>')).toThrow('Invalid URL: Only HTTP and HTTPS URLs are supported');
+    });
   });
 
   describe('getFeedUrl', () => {
@@ -49,7 +54,7 @@ describe('helpers', () => {
       
       expect(result).toContain('https://api.rss2json.com/v1/api.json');
       expect(result).toContain('rss_url=https%3A%2F%2Fexample.com%2Ffeed.rss');
-      expect(result).toContain('api_key=xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6');
+      expect(result).not.toContain('api_key=');
       expect(result).toContain('count=300');
     });
 
