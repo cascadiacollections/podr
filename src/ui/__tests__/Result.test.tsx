@@ -47,4 +47,20 @@ describe('Result component', () => {
     );
     expect(container).toMatchSnapshot();
   });
+
+  test('renders a malicious title as text', () => {
+    const { container } = render(
+      <table>
+        <tbody>
+          <Result
+            result={{ ...mockFeedItem, title: '<img src=x onerror=alert(1)>' }}
+            onClick={jest.fn()}
+          />
+        </tbody>
+      </table>
+    );
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('<img src=x onerror=alert(1)>');
+  });
 });
