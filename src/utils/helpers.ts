@@ -4,12 +4,8 @@
 const SECURE_PROTOCOL = 'https://' as const;
 const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
 
-/**
- * RSS to JSON API configuration
- */
-const RSS_API_CONFIG = {
-  BASE_URL: 'https://api.rss2json.com/v1/api.json',
-  API_KEY: 'xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6',
+const RSS_PROXY_CONFIG = {
+  BASE_URL: 'https://podr-service.cascadiacollections.workers.dev',
   DEFAULT_MAX_COUNT: 300,
 } as const;
 
@@ -137,7 +133,7 @@ export async function resolveFeedUrl(feedUrl: string): Promise<string> {
  */
 export function getFeedUrl(
   feedUrl: string, 
-  maxCount: number = RSS_API_CONFIG.DEFAULT_MAX_COUNT
+  maxCount: number = RSS_PROXY_CONFIG.DEFAULT_MAX_COUNT
 ): string {
   if (!feedUrl || typeof feedUrl !== 'string') {
     throw new Error('Invalid feed URL: URL must be a non-empty string');
@@ -149,11 +145,10 @@ export function getFeedUrl(
   
   const searchParams = new URLSearchParams({
     rss_url: feedUrl,
-    api_key: RSS_API_CONFIG.API_KEY,
     count: maxCount.toString(),
   });
   
-  return `${RSS_API_CONFIG.BASE_URL}?${searchParams.toString()}`;
+  return `${RSS_PROXY_CONFIG.BASE_URL}/?${searchParams.toString()}`;
 }
 
 /**

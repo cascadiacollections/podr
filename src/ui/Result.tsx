@@ -139,9 +139,9 @@ export const Result: FunctionComponent<IResultProps> = memo(
           <a 
             href={enclosure.link} 
             aria-label={linkAriaLabel} 
-            dangerouslySetInnerHTML={{ __html: title }}
-            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking link
-          />
+            onClick={(e) => e.stopPropagation()}>
+            {title}
+          </a>
         </td>
         <td className="date-column">
           <time dateTime={pubDate}>{formattedDate}</time>

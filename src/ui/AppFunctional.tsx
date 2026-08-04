@@ -1,101 +1,28 @@
-import { computed, effect, signal, Signal } from '@preact/signals';
+import { effect, signal, Signal } from '@preact/signals';
 import { Fragment, h, JSX } from 'preact';
-import { useCallback, useEffect, useRef } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
-import { APP_CONFIG, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
+import { trackEvent } from '../utils/analytics';
+import { APP_CONFIG, createAppState, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
 import { getFeedUrl, getSecureUrl, resolveFeedUrl } from '../utils/helpers';
+import { readStoredJson, writeStoredJson } from '../utils/storage';
 import { List } from './List';
 import { IFeedItem } from './Result';
 import { Search } from './Search';
 
 declare global {
   interface Window {
-    gtag: (command: string, action: string, params?: Record<string, unknown>) => void;
     PODR_TOP_PODCASTS?: { feed: { entry: ReadonlyArray<ITopPodcast> } };
   }
 }
 
-
-// Single stable empty array for all empty signal defaults
-
-const query = signal<string>('');
-const favorited = signal<ReadonlySet<IFeed>>(new Set());
-const results = signal<readonly IFeedItem[]>(
-  (() => {
-    const raw = localStorage.getItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY);
-    try {
-      return raw ? JSON.parse(raw) : EMPTY_ARRAY;
-    } catch {
-      return EMPTY_ARRAY;
-    }
-  })()
-);
-const searchResults = signal<readonly IFeed[]>(EMPTY_ARRAY);
-const topResults = signal<readonly ITopPodcast[]>(EMPTY_ARRAY);
-
-// Computed values
-const feeds = computed(() => Array.from(favorited.value.values()));
-
 // Custom hook for localStorage persistence
 const useLocalStorage = <T,>(key: string, value: Signal<T>): Signal<T> => {
   useEffect(() => {
-    const savedValue = localStorage.getItem(key);
-    if (savedValue) {
-      try {
-        if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
-          favorited.value = new Set(JSON.parse(savedValue));
-        } else {
-          value.value = JSON.parse(savedValue);
-        }
-      } catch (e) {
-        console.error(`Error parsing localStorage for ${key}:`, e);
-      }
-    }
-  }, [key]);
+    return effect(() => writeStoredJson(key, value.value));
+  }, [key, value]);
 
-  effect(() => {
-    if (key === APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY) {
-      localStorage.setItem(key, JSON.stringify(Array.from(favorited.value.values())));
-    } else {
-      localStorage.setItem(key, JSON.stringify(value.value));
-    }
-  });
   return value;
-};
-
-// Custom hook for API requests
-const useFetch = <T,>(url: string, options?: RequestInit): { data: T | null; error: Error | null; isLoading: boolean } => {
-  const data = signal<T | null>(null);
-  const error = signal<Error | null>(null);
-  const isLoading = signal(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      isLoading.value = true;
-      try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const result = await response.json();
-        data.value = result;
-      } catch (err) {
-        error.value = err as Error;
-        window.gtag('event', 'exception', {
-          description: `fetch_error_${url}_${(err as Error).message}`,
-          fatal: false
-        });
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    if (url) {
-      fetchData();
-    }
-  }, [url]);
-
-  return { data: data.value, error: error.value, isLoading: isLoading.value };
 };
 
 const BACKGROUND_REFRESH_TIMEOUT = 5000;
@@ -103,9 +30,33 @@ export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
+  const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
+    () => createAppState({
+      favorited: signal(new Set(readStoredJson<IFeed[]>(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, []))),
+      results: signal(readStoredJson<readonly IFeedItem[]>(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, EMPTY_ARRAY)),
+    }),
+    []
+  );
 
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds);
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results);
+
+  const fetchTopPodcastsFromAPI = useCallback(() => {
+    fetch(`${APP_CONFIG.API_BASE_URL}/?q=toppodcasts&limit=10`)
+      .then(async (response: Response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
+        topResults.value = json.feed.entry;
+      })
+      .catch((err: Error) => {
+        trackEvent('exception', {
+          description: `search_fetch_toppodcasts_${err.message}`,
+          fatal: false
+        });
+      });
+  }, [topResults]);
 
   // Fetch top podcasts - uses inlined window variable or static file for initial render, then optionally updates from API
   useEffect(() => {
@@ -130,31 +81,9 @@ export const App = (): JSX.Element => {
     }
 
     // Optionally refresh data from API after initial load
-    const ENABLE_BACKGROUND_REFRESH = true; // Could be an environment variable in the future
-    if (ENABLE_BACKGROUND_REFRESH) {
-      setTimeout(() => {
-        fetchTopPodcastsFromAPI();
-      }, BACKGROUND_REFRESH_TIMEOUT);
-    }
-  }, []);
-
-  // Function to fetch top podcasts from API
-  const fetchTopPodcastsFromAPI = () => {
-    fetch(`${APP_CONFIG.API_BASE_URL}/?q=toppodcasts&limit=10`)
-      .then(async (response: Response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
-        topResults.value = json.feed.entry;
-      })
-      .catch((err: Error) => {
-        window.gtag('event', 'exception', {
-          description: `search_fetch_toppodcasts_${err.message}`,
-          fatal: false
-        });
-      });
-  };
+    const refreshTimer = window.setTimeout(fetchTopPodcastsFromAPI, BACKGROUND_REFRESH_TIMEOUT);
+    return () => window.clearTimeout(refreshTimer);
+  }, [fetchTopPodcastsFromAPI, topResults]);
 
   const tryFetchFeed = useCallback(async (feedUrl?: string): Promise<void> => {
     if (!feedUrl) {
@@ -175,11 +104,10 @@ export const App = (): JSX.Element => {
       const { items: feedResults = EMPTY_ARRAY } = await response.json();
       
       results.value = feedResults;
-      localStorage.setItem(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, JSON.stringify(feedResults));
     } catch (err: unknown) {
       // Handle errors from both resolveFeedUrl and fetch
       const error = err as Error;
-      window.gtag('event', 'exception', {
+      trackEvent('exception', {
         description: `feed_fetch_${feedUrl}_${error.message}`,
         fatal: false
       });
@@ -187,7 +115,7 @@ export const App = (): JSX.Element => {
   }, []);
 
   const onSearch = useCallback((searchQuery: string, limit: number = APP_CONFIG.SEARCH.DEFAULT_LIMIT) => {
-    window.gtag('event', 'search', {
+    trackEvent('search', {
       'search_term': searchQuery,
       transport: 'beacon'
     });
@@ -213,7 +141,7 @@ export const App = (): JSX.Element => {
         searchResults.value = json.results;
       })
       .catch((err: Error) => {
-        window.gtag('event', 'exception', {
+        trackEvent('exception', {
           description: `search_fetch_${limit}_${searchQuery}_${err.message}`,
           fatal: false
         });
@@ -223,7 +151,7 @@ export const App = (): JSX.Element => {
   const onClick = useCallback((item: IFeedItem) => {
     const url: string = item.enclosure.link;
 
-    window.gtag('event', 'Audio', {
+    trackEvent('Audio', {
       eventAction: 'play',
       eventLabel: url,
       transport: 'beacon'
@@ -243,14 +171,14 @@ const pinFeedUrl = useCallback((feed: IFeed | string): void => {
         artworkUrl100: '',
         artworkUrl600: ''
       };
-      window.gtag('event', 'Feed', {
+      trackEvent('Feed', {
         eventAction: 'favorite',
         eventLabel: feed,
         transport: 'beacon'
       });
       return new Set([...favorited.value, simpleFeed]);
     } else {
-      window.gtag('event', 'Feed', {
+      trackEvent('Feed', {
         eventAction: 'favorite',
         eventLabel: feed.feedUrl,
         transport: 'beacon'
@@ -262,7 +190,7 @@ const pinFeedUrl = useCallback((feed: IFeed | string): void => {
 
 const unpinFeedUrl = useCallback((feed: IFeed): void => {
   favorited.value = new Set(Array.from(favorited.value).filter(f => f.feedUrl !== feed.feedUrl));
-  window.gtag('event', 'Feed', {
+  trackEvent('Feed', {
     eventAction: 'unfavorite',
     eventLabel: feed.feedUrl,
     transport: 'beacon'
@@ -285,7 +213,7 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
       }
       return await response.json();
     }).catch((err: Error) => {
-      window.gtag('event', 'exception', {
+      trackEvent('exception', {
         description: `fetch_podcast_${itunesId}_${err.message}`,
         fatal: false
       });
