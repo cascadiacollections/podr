@@ -46,11 +46,19 @@ describe('helpers', () => {
     it('should construct valid RSS feed URL with default count', () => {
       const feedUrl = 'https://example.com/feed.rss';
       const result = getFeedUrl(feedUrl);
-      
-      expect(result).toContain('https://podr-service.cascadiacollections.workers.dev/');
+
+      expect(result).toContain('https://api.rss2json.com/v1/api.json?');
       expect(result).toContain('rss_url=https%3A%2F%2Fexample.com%2Ffeed.rss');
-      expect(result).not.toContain('api_key=');
       expect(result).toContain('count=300');
+    });
+
+    it('should omit the api key when none was configured at build time', () => {
+      // PODR_RSS_API_KEY is injected by webpack and left undefined under test
+      expect(getFeedUrl('https://example.com/feed.rss')).not.toContain('api_key=');
+    });
+
+    it('should not target the Podr worker, which has no RSS to JSON route', () => {
+      expect(getFeedUrl('https://example.com/feed.rss')).not.toContain('workers.dev');
     });
 
     it('should construct valid RSS feed URL with custom count', () => {

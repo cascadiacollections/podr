@@ -148,6 +148,12 @@ audio {
   font-style: italic;
 }
 
+/* Feed request failure notice */
+.feed-error {
+  color: var(--del-color, #d9534f);
+  margin: 0 0 1rem;
+}
+
 .loading-container {
   display: flex;
   flex-direction: column;

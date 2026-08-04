@@ -4,10 +4,32 @@
 const SECURE_PROTOCOL = 'https://' as const;
 const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
 
-const RSS_PROXY_CONFIG = {
-  BASE_URL: 'https://podr-service.cascadiacollections.workers.dev',
+/**
+ * Build-time RSS API key, injected by webpack's DefinePlugin from the
+ * PODR_RSS_API_KEY environment variable. Never committed to source; the request
+ * omits the parameter entirely when it is unset.
+ */
+declare const PODR_RSS_API_KEY: string | undefined;
+
+/**
+ * RSS to JSON API configuration
+ *
+ * Note: the Podr worker (APP_CONFIG.API_BASE_URL) only implements the iTunes
+ * search, top-podcast, and podcast-detail routes. A request carrying `rss_url`
+ * has no `q` parameter, so the worker answers it with its OpenAPI schema and a
+ * 200 status - which parsed as zero episodes instead of surfacing an error.
+ * Feed conversion therefore goes to rss2json.
+ */
+const RSS_API_CONFIG = {
+  BASE_URL: 'https://api.rss2json.com/v1/api.json',
   DEFAULT_MAX_COUNT: 300,
 } as const;
+
+/**
+ * The RSS API key, or an empty string when no key was configured at build time.
+ * `typeof` keeps this safe when the identifier was never substituted (e.g. tests).
+ */
+const RSS_API_KEY: string = typeof PODR_RSS_API_KEY === 'string' ? PODR_RSS_API_KEY : '';
 
 /**
  * Apple Podcasts configuration
@@ -132,23 +154,27 @@ export async function resolveFeedUrl(feedUrl: string): Promise<string> {
  * @throws {Error} When the feedUrl is invalid
  */
 export function getFeedUrl(
-  feedUrl: string, 
-  maxCount: number = RSS_PROXY_CONFIG.DEFAULT_MAX_COUNT
+  feedUrl: string,
+  maxCount: number = RSS_API_CONFIG.DEFAULT_MAX_COUNT
 ): string {
   if (!feedUrl || typeof feedUrl !== 'string') {
     throw new Error('Invalid feed URL: URL must be a non-empty string');
   }
-  
+
   if (maxCount <= 0 || !Number.isInteger(maxCount)) {
     throw new Error('Invalid maxCount: Must be a positive integer');
   }
-  
+
   const searchParams = new URLSearchParams({
     rss_url: feedUrl,
     count: maxCount.toString(),
   });
-  
-  return `${RSS_PROXY_CONFIG.BASE_URL}/?${searchParams.toString()}`;
+
+  if (RSS_API_KEY) {
+    searchParams.set('api_key', RSS_API_KEY);
+  }
+
+  return `${RSS_API_CONFIG.BASE_URL}?${searchParams.toString()}`;
 }
 
 /**

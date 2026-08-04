@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -108,6 +109,12 @@ function createWebpackConfig({ production }) {
       } : false
     },
     plugins: [
+      // Inject the optional RSS API key at build time. It is read from the
+      // PODR_RSS_API_KEY environment variable and is never committed to source;
+      // when unset the client omits the api_key parameter entirely.
+      new webpack.DefinePlugin({
+        PODR_RSS_API_KEY: JSON.stringify(process.env.PODR_RSS_API_KEY || '')
+      }),
       new HtmlWebpackPlugin({
         template: 'assets/index.html',
         favicon: 'assets/favicon.ico',
