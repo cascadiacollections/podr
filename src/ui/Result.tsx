@@ -104,7 +104,11 @@ export interface IResultProps {
 export const Result: FunctionComponent<IResultProps> = memo(
   ({ onClick, result }: IResultProps) => {
     const { title, pubDate, enclosure } = result;
-    
+
+    // Feeds routinely omit the enclosure on trailer and note-only entries
+    const enclosureLink = enclosure?.link ?? '';
+    const enclosureDuration = enclosure?.duration ?? 0;
+
     // Memoize callback to prevent unnecessary re-renders
     const handleClick = useCallback(() => {
       onClick(result);
@@ -120,7 +124,7 @@ export const Result: FunctionComponent<IResultProps> = memo(
     
     // Memoize formatted values for better performance
     const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
-    const formattedDuration = useMemo(() => formatDuration(enclosure.duration), [enclosure.duration]);
+    const formattedDuration = useMemo(() => formatDuration(enclosureDuration), [enclosureDuration]);
     
     // Memoize aria label for accessibility
     const ariaLabel = useMemo(() => `Play episode: ${title}`, [title]);
@@ -136,9 +140,9 @@ export const Result: FunctionComponent<IResultProps> = memo(
         className="episode-row"
       >
         <td className="episode-title-cell">
-          <a 
-            href={enclosure.link} 
-            aria-label={linkAriaLabel} 
+          <a
+            href={enclosureLink || undefined}
+            aria-label={linkAriaLabel}
             onClick={(e) => e.stopPropagation()}>
             {title}
           </a>
@@ -169,8 +173,8 @@ export const Result: FunctionComponent<IResultProps> = memo(
     return (
       prevResult.title === nextResult.title &&
       prevResult.pubDate === nextResult.pubDate &&
-      prevResult.enclosure.duration === nextResult.enclosure.duration &&
-      prevResult.enclosure.link === nextResult.enclosure.link
+      prevResult.enclosure?.duration === nextResult.enclosure?.duration &&
+      prevResult.enclosure?.link === nextResult.enclosure?.link
     );
   }
 );

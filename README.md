@@ -139,6 +139,12 @@ yarn start
 | `yarn lint` | 🔍 Check code quality with ESLint | Pre-commit |
 | `yarn lint:fix` | 🔧 Auto-fix ESLint issues | Cleanup |
 
+### 🔑 Build-Time Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PODR_RSS_API_KEY` | Optional [rss2json](https://rss2json.com/) API key used when converting podcast RSS feeds to JSON. It is injected into the bundle at build time and omitted from requests when unset, so episodes still load (at the anonymous rate limit) without it. Never commit a key to source. |
+
 ### 🔄 Development Workflow
 
 ```bash

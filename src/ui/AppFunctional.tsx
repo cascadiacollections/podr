@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
 import { trackEvent } from '../utils/analytics';
 import { APP_CONFIG, createAppState, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
+import { parseFeedResponse, parseStoredFeedItems } from '../utils/feed';
 import { getFeedUrl, getSecureUrl, resolveFeedUrl } from '../utils/helpers';
 import { readStoredJson, writeStoredJson } from '../utils/storage';
 import { List } from './List';
@@ -26,6 +27,22 @@ const useLocalStorage = <T,>(key: string, value: Signal<T>): Signal<T> => {
 };
 
 const BACKGROUND_REFRESH_TIMEOUT = 5000;
+const FEED_ERROR_MESSAGE = 'Could not load episodes for this podcast. Please try again.';
+
+/**
+ * Picks the largest artwork the iTunes top-podcasts feed offers.
+ * The feed normally provides three sizes, but the list length is not guaranteed.
+ */
+const getTopPodcastArtwork = (podcast: ITopPodcast): string => {
+  const images = podcast['im:image'];
+
+  if (!images || images.length === 0) {
+    return '';
+  }
+
+  return images[images.length - 1].label;
+};
+
 export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
@@ -33,10 +50,22 @@ export const App = (): JSX.Element => {
   const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
     () => createAppState({
       favorited: signal(new Set(readStoredJson<IFeed[]>(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, []))),
-      results: signal(readStoredJson<readonly IFeedItem[]>(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, EMPTY_ARRAY)),
+      results: signal(parseStoredFeedItems(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, EMPTY_ARRAY))),
     }),
     []
   );
+
+  // Feed request status, kept local to the component rather than in shared state
+  const { isFeedLoading, feedError } = useMemo(
+    () => ({
+      isFeedLoading: signal(false),
+      feedError: signal<string | null>(null)
+    }),
+    []
+  );
+
+  // Identifies the newest feed request so slower earlier ones cannot overwrite it
+  const feedRequestId = useRef(0);
 
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds);
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results);
@@ -47,8 +76,8 @@ export const App = (): JSX.Element => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
-        topResults.value = json.feed.entry;
+        const json: { feed?: { entry?: ReadonlyArray<ITopPodcast> } } = await response.json();
+        topResults.value = json?.feed?.entry ?? EMPTY_ARRAY;
       })
       .catch((err: Error) => {
         trackEvent('exception', {
@@ -60,9 +89,12 @@ export const App = (): JSX.Element => {
 
   // Fetch top podcasts - uses inlined window variable or static file for initial render, then optionally updates from API
   useEffect(() => {
-    // First check for window variable (inlined at build time)
-    if (window.PODR_TOP_PODCASTS && window.PODR_TOP_PODCASTS.feed && window.PODR_TOP_PODCASTS.feed.entry) {
-      topResults.value = window.PODR_TOP_PODCASTS.feed.entry;
+    // First check for window variable (inlined at build time). An empty entry list
+    // means the build fell back to placeholder data, so keep looking.
+    const inlinedEntries = window.PODR_TOP_PODCASTS?.feed?.entry;
+
+    if (inlinedEntries && inlinedEntries.length > 0) {
+      topResults.value = inlinedEntries;
     } else {
       // Fall back to static JSON file
       fetch('/top-podcasts.json')
@@ -70,8 +102,8 @@ export const App = (): JSX.Element => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
-          const json: { feed: { entry: ReadonlyArray<ITopPodcast> } } = await response.json();
-          topResults.value = json.feed.entry;
+          const json: { feed?: { entry?: ReadonlyArray<ITopPodcast> } } = await response.json();
+          topResults.value = json?.feed?.entry ?? EMPTY_ARRAY;
         })
         .catch((err: Error) => {
           console.error('Failed to load static top podcasts data:', err);
@@ -90,27 +122,50 @@ export const App = (): JSX.Element => {
       return;
     }
 
+    const requestId = ++feedRequestId.current;
+    const isCurrentRequest = (): boolean => requestId === feedRequestId.current;
+
+    isFeedLoading.value = true;
+    feedError.value = null;
+
     try {
       // Resolve the feed URL (converts Apple Podcasts URLs to RSS feed URLs)
       const resolvedFeedUrl = await resolveFeedUrl(feedUrl);
-      
+
       // Fetch the feed data
-      const response = await fetch(getFeedUrl(resolvedFeedUrl), { cache: 'force-cache' });
-      
+      const response = await fetch(getFeedUrl(resolvedFeedUrl));
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
-      const { items: feedResults = EMPTY_ARRAY } = await response.json();
-      
+
+      // Throws when the response is not a feed, so a wrong-but-successful
+      // response surfaces as an error rather than an empty episode list
+      const feedResults = parseFeedResponse(await response.json());
+
+      // A newer request has since started; its results win
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       results.value = feedResults;
     } catch (err: unknown) {
-      // Handle errors from both resolveFeedUrl and fetch
+      // Handle errors from resolveFeedUrl, fetch, and response parsing
       const error = err as Error;
+
+      // Leave any previously loaded episodes in place rather than clearing them
+      if (isCurrentRequest()) {
+        feedError.value = FEED_ERROR_MESSAGE;
+      }
+
       trackEvent('exception', {
         description: `feed_fetch_${feedUrl}_${error.message}`,
         fatal: false
       });
+    } finally {
+      if (isCurrentRequest()) {
+        isFeedLoading.value = false;
+      }
     }
   }, []);
 
@@ -151,6 +206,15 @@ export const App = (): JSX.Element => {
   const onClick = useCallback((item: IFeedItem) => {
     const url: string = item.enclosure.link;
 
+    // Entries such as trailers or notes can arrive without playable audio
+    if (!url) {
+      trackEvent('exception', {
+        description: `audio_missing_enclosure_${item.guid}`,
+        fatal: false
+      });
+      return;
+    }
+
     trackEvent('Audio', {
       eventAction: 'play',
       eventLabel: url,
@@ -162,40 +226,35 @@ export const App = (): JSX.Element => {
     }
   }, []);
 
-const pinFeedUrl = useCallback((feed: IFeed | string): void => {
-  favorited.value = (() => {
-    if (typeof feed === 'string') {
-      const simpleFeed: IFeed = {
-        collectionName: feed,
-        feedUrl: feed,
-        artworkUrl100: '',
-        artworkUrl600: ''
-      };
-      trackEvent('Feed', {
-        eventAction: 'favorite',
-        eventLabel: feed,
-        transport: 'beacon'
-      });
-      return new Set([...favorited.value, simpleFeed]);
-    } else {
-      trackEvent('Feed', {
-        eventAction: 'favorite',
-        eventLabel: feed.feedUrl,
-        transport: 'beacon'
-      });
-      return new Set([...favorited.value, feed]);
-    }
-  })();
-}, []);
+  const pinFeed = useCallback((feed: IFeed): void => {
+    const pinned = Array.from(favorited.value);
 
-const unpinFeedUrl = useCallback((feed: IFeed): void => {
-  favorited.value = new Set(Array.from(favorited.value).filter(f => f.feedUrl !== feed.feedUrl));
-  trackEvent('Feed', {
-    eventAction: 'unfavorite',
-    eventLabel: feed.feedUrl,
-    transport: 'beacon'
-  });
-}, []);
+    // Favorites are a Set of objects, so identical feeds from separate fetches are
+    // distinct references - deduplicate on feedUrl instead
+    if (pinned.some((existing: IFeed) => existing.feedUrl === feed.feedUrl)) {
+      return;
+    }
+
+    favorited.value = new Set([...pinned, feed]);
+
+    trackEvent('Feed', {
+      eventAction: 'favorite',
+      eventLabel: feed.feedUrl,
+      transport: 'beacon'
+    });
+  }, []);
+
+  const unpinFeed = useCallback((feed: IFeed): void => {
+    favorited.value = new Set(
+      Array.from(favorited.value).filter((existing: IFeed) => existing.feedUrl !== feed.feedUrl)
+    );
+
+    trackEvent('Feed', {
+      eventAction: 'unfavorite',
+      eventLabel: feed.feedUrl,
+      transport: 'beacon'
+    });
+  }, []);
 
   // Hoisted handlers for JSX to avoid inline arrow functions
   const handleSearchResultClick = useCallback((feedUrl: string) => {
@@ -203,8 +262,8 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
   }, [tryFetchFeed]);
 
   const handleSearchResultDblClick = useCallback((feed: IFeed) => {
-    pinFeedUrl(feed);
-  }, [pinFeedUrl]);
+    pinFeed(feed);
+  }, [pinFeed]);
 
   const handleTopPodcastClick = useCallback(async (itunesId: string) => {
     const feedResults = await fetch(`${APP_CONFIG.API_BASE_URL}/?q=${itunesId}`).then(async (response: Response) => {
@@ -226,17 +285,26 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
     }
   }, [tryFetchFeed]);
 
-  const handleTopPodcastDblClick = useCallback((feedId: string) => {
-    pinFeedUrl(feedId);
-  }, [pinFeedUrl]);
+  // Pin a top podcast with its real title and artwork; its Apple Podcasts page URL
+  // is resolved to an RSS feed URL when the favorite is opened
+  const handleTopPodcastDblClick = useCallback((podcast: ITopPodcast) => {
+    const artwork = getTopPodcastArtwork(podcast);
+
+    pinFeed({
+      collectionName: podcast.title.label,
+      feedUrl: podcast.id.label,
+      artworkUrl100: artwork,
+      artworkUrl600: artwork
+    });
+  }, [pinFeed]);
 
   const handleFavoriteClick = useCallback((feedUrl: string) => {
     tryFetchFeed(feedUrl);
   }, [tryFetchFeed]);
 
   const handleFavoriteDblClick = useCallback((feed: IFeed) => {
-    unpinFeedUrl(feed);
-  }, [unpinFeedUrl]);
+    unpinFeed(feed);
+  }, [unpinFeed]);
 
   return (
     <div ref={mainContainerRef}>
@@ -268,14 +336,14 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
         <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
           {topResults.value && topResults.value.map((result: ITopPodcast) => (
             <img
-              key={result.title.label}
-              src={result['im:image'][2].label}
+              key={result.id.attributes['im:id']}
+              src={getTopPodcastArtwork(result)}
               height={100}
               width={100}
               className='img-fluid rounded-3'
               alt={result.title.label}
               onClick={() => handleTopPodcastClick(result.id.attributes['im:id'])}
-              onDblClick={() => handleTopPodcastDblClick(result.id.label)}
+              onDblClick={() => handleTopPodcastDblClick(result)}
               aria-label={`Favorite ${result.title.label}`} />
           ))}
         </div>
@@ -284,7 +352,7 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
       <div className="feeds d-grid gap-3 d-flex flex-row flex-wrap justify-content-evenly align-items-start">
       {feeds.value.map((result) => (
         <img
-          key={result.collectionName}
+          key={result.feedUrl}
           src={result.artworkUrl100}
           height={100}
           width={100}
@@ -297,7 +365,10 @@ const unpinFeedUrl = useCallback((feed: IFeed): void => {
       ))}
       </div>
       <h2 className="section-header">Episodes</h2>
-      <List results={results.value} onClick={onClick} />
+      {feedError.value ?
+        <p className="feed-error" role="alert">{feedError.value}</p> : null
+      }
+      <List results={results.value} onClick={onClick} isLoading={isFeedLoading.value} />
       <audio
         ref={audioRef}
         autoPlay
