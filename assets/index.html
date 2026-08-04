@@ -1,15 +1,25 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="auto">
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Podr | Home</title>
-    <meta name="description" content="Podr - Listen to your favorite podcasts">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Podr | Listen to your favorite podcasts</title>
+    <meta name="description" content="Podr is an open source podcast player for the web. Search podcasts, keep your favorites, and listen right in the browser.">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#faf8f6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
     <meta property="og:title" content="Podr">
-    <meta property="og:type" content="application">
+    <meta property="og:description" content="An open source podcast player for the web.">
+    <meta property="og:type" content="website">
     <meta property="og:url" content="https://podrapp.com">
-    <meta property="og:image" content="">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <meta property="og:image" content="/android-chrome-512x512.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <!-- Artwork comes from Apple's CDN; warming the connection saves a round trip on the first grid -->
+    <link rel="preconnect" href="https://is1-ssl.mzstatic.com" crossorigin>
+    <!-- Styles ship inside the bundle: no third-party stylesheet blocks the first paint -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-19Z3SPSJPY"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -19,6 +29,6 @@
     </script>
   </head>
   <body>
-    <main id="root" class="container"></main>
+    <div id="root"></div>
   </body>
 </html>

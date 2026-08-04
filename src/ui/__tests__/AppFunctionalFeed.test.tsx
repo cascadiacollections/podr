@@ -77,7 +77,7 @@ describe('App episode fetching', () => {
     });
 
     render(<App />);
-    fireEvent.click(screen.getByAltText(STORED_FEED.collectionName));
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
 
     await waitFor(() => {
       expect(screen.getByText('Fresh Episode')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('App episode fetching', () => {
     render(<App />);
     expect(screen.getByText(STORED_EPISODE.title)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByAltText(STORED_FEED.collectionName));
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/could not load episodes/i);
@@ -112,14 +112,14 @@ describe('App episode fetching', () => {
     );
 
     render(<App />);
-    fireEvent.click(screen.getByAltText(STORED_FEED.collectionName));
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 
-  test('does not favorite the same podcast twice', async () => {
+  test('adds a podcast to the library once, and removes it again', async () => {
     const topPodcast = {
       title: { label: 'Top Show' },
       id: {
@@ -135,28 +135,36 @@ describe('App episode fetching', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByAltText('Top Show')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Top Show' })).toBeInTheDocument();
     });
 
-    const artwork = screen.getByAltText('Top Show');
-    fireEvent.dblClick(artwork);
-    fireEvent.dblClick(artwork);
+    // Only the Top podcasts grid lists it so far
+    expect(screen.getAllByRole('button', { name: 'Top Show' })).toHaveLength(1);
 
-    // One image in Top podcasts, one in Favorites - the second pin is a no-op
+    fireEvent.click(screen.getByRole('button', { name: 'Add Top Show to your library' }));
+
+    // Now in both the library and the Top podcasts grid, and only once in each
     await waitFor(() => {
-      expect(screen.getAllByAltText('Top Show')).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: 'Top Show' })).toHaveLength(2);
     });
 
-    // The favorite carries the podcast's real artwork rather than an empty src
-    const favorite = screen.getAllByAltText('Top Show')[1];
-    expect(favorite).toHaveAttribute('src', 'large.jpg');
+    // The library entry carries the podcast's real artwork rather than an empty src
+    const libraryCard = screen.getAllByRole('button', { name: 'Top Show' })[0];
+    expect(libraryCard.querySelector('img')).toHaveAttribute('src', 'large.jpg');
+
+    // The toggle is symmetric: pressing it again empties the library
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove Top Show from your library' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Top Show' })).toHaveLength(1);
+    });
   });
 
   test('requests episodes from the RSS to JSON service, not the Podr worker', async () => {
     global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
 
     render(<App />);
-    fireEvent.click(screen.getByAltText(STORED_FEED.collectionName));
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
 
     await waitFor(() => {
       const feedCall = (global.fetch as jest.Mock).mock.calls
