@@ -143,7 +143,7 @@ yarn start
 
 | Variable | Description |
 |----------|-------------|
-| `PODR_RSS_API_KEY` | Optional [rss2json](https://rss2json.com/) API key used when converting podcast RSS feeds to JSON. It is injected into the bundle at build time and omitted from requests when unset, so episodes still load (at the anonymous rate limit) without it. Never commit a key to source. |
+| `PODR_RSS_API_KEY` | Overrides the [rss2json](https://rss2json.com/) API key used when converting podcast RSS feeds to JSON. A default key is inlined in `src/utils/helpers.ts` so a plain build returns full feeds; setting this variable rotates the key without a code change. Tracked in [#133](https://github.com/cascadiacollections/podr/issues/133): the key belongs behind the Podr worker, not in the client. |
 
 ### 🔄 Development Workflow
 
