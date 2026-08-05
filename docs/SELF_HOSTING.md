@@ -29,6 +29,35 @@ security headers, same three cache tiers, same SPA fallback.
 
 ## Build the artifact
 
+### Point the build at your Podr service
+
+`PODR_API_BASE_URL` selects the Podr API origin at build time. It defaults to
+`https://podr-service.cascadiacollections.workers.dev`, preserving the hosted
+deployment. Set it to the HTTPS origin of the service you run on your Debian
+host or FreeBSD jail:
+
+```sh
+PODR_API_BASE_URL=https://podr.example.org yarn build:ci
+```
+
+The value must be an origin (not a path), and the build rejects malformed or
+plain-HTTP non-localhost values. The same resolved value is injected into the
+browser bundle and used by the top-podcasts inliner, so search, podcast details,
+and the initial top-podcasts payload always use one service. A service can run
+as a regular Node or Deno HTTP process behind nginx or Caddy; it does not need a
+Cloudflare account. Configure the reverse proxy so the API is available at the
+same public origin as Podr, then use that origin above.
+
+The API service needs to provide Podr's search (`/?q=`), top-podcasts
+(`/?q=toppodcasts`), podcast-detail (`/podcast/<id>`), and feed-conversion
+(`GET /feed?rss_url=<encoded URL>&count=<number>`) endpoints. When using
+a service implementation with the feed-conversion route from
+[#133](https://github.com/cascadiacollections/podr/issues/133), configure it to
+handle feed conversion as well; this retires `rss2json` and its client-side key.
+Run the API process under the host's normal supervisor (a systemd service on
+Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
+nginx or Caddy virtual host.
+
 Podr needs Node 24 or newer (`engines` in `package.json`, `.node-version`).
 Debian stable ships an older Node LTS, so building on the host itself means
 installing Node from nodesource, `fnm`, or `nvm`.
@@ -222,19 +251,14 @@ Add that origin to both `script-src` and `connect-src` in whichever server
 configuration you installed. The shipped configurations list no analytics origin,
 matching the tracker-free default.
 
-## Replacing the remaining hosted services
+## Content Security Policy for a self-hosted service
 
-Two runtime dependencies are still hosted elsewhere, and neither is addressed by
-this document:
+The nginx and Caddy templates use `connect-src 'self' https://itunes.apple.com`.
+This is sufficient when Podr and its API service share an origin: the browser
+can reach the service, while the service—not the browser—contacts any other
+upstream. It also means a fully self-hosted build does not grant browser
+connections to `workers.dev` or `rss2json.com`.
 
-- **`podr-service.cascadiacollections.workers.dev`** — a Cloudflare Worker
-  proxying iTunes search, top podcasts, and podcast detail. Configured in
-  `APP_CONFIG.API_BASE_URL` (`src/utils/AppContext.tsx`) and in the build-time
-  inliner (`config/api-inliner.json`, `webpack.config.js`).
-- **`api.rss2json.com`** — feed conversion, with a key inlined in
-  `src/utils/helpers.ts`.
-
-Both are small enough to replace with one service on the same Debian host or
-FreeBSD jail that serves the site, which would also retire the inlined key.
-Tracked in [#133](https://github.com/cascadiacollections/podr/issues/133). Until
-then, the `connect-src` in the shipped server configurations lists both origins.
+If the API is intentionally hosted on a separate origin, add that origin to
+`connect-src`. The hosted Netlify configuration retains the two hosted upstreams
+because its default build uses them.
