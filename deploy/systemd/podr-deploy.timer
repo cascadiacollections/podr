@@ -1,0 +1,17 @@
+[Unit]
+# The Netlify site rebuilds daily so the inlined top-podcasts payload stays
+# fresh; this timer is the self-hosted equivalent.
+Description=Deploy the latest Podr build daily
+Documentation=https://github.com/cascadiacollections/podr/blob/main/docs/SELF_HOSTING.md
+
+[Timer]
+OnCalendar=daily
+# Spread the fetch out rather than having every host hit the artifact URL at
+# exactly 00:00.
+RandomizedDelaySec=30m
+# Catch up after a reboot or a host that was powered off at the scheduled time.
+Persistent=true
+Unit=podr-deploy.service
+
+[Install]
+WantedBy=timers.target

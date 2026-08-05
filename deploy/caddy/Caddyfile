@@ -1,0 +1,74 @@
+# Podr served by Caddy from a static build.
+#
+# Debian:  /etc/caddy/Caddyfile
+# FreeBSD: /usr/local/etc/caddy/Caddyfile
+#
+# The Netlify configuration (netlify.toml) translated to Caddy: the SPA fallback,
+# the same security headers, and the same three cache tiers. Caddy provisions and
+# renews TLS itself, so there is no certbot step. See docs/SELF_HOSTING.md.
+
+podr.example.org {
+	# podr-deploy.sh swaps this symlink atomically, so a deploy never serves a
+	# half-extracted release.
+	root * /srv/podr/current
+
+	log {
+		output file /var/log/caddy/podr.log
+	}
+
+	# ---- Cache tiers --------------------------------------------------------
+	# Content-hashed assets, minus anything that has to stay revalidated. The
+	# exclusion is explicit rather than relying on directive order, so a cached
+	# service worker can never pin users to an old build.
+	@immutable {
+		not path /sw.js /service-worker.js /site.webmanifest /manifest.json
+		path /static/* *.js *.css *.png *.jpg *.jpeg *.webp *.woff *.woff2 *.ttf *.eot *.svg *.ico *.gif
+	}
+
+	@revalidate path /sw.js /service-worker.js /site.webmanifest /manifest.json *.html /
+
+	# ---- Security headers ---------------------------------------------------
+	# Content-Security-Policy notes:
+	#   media-src   episode audio is served from whichever CDN a podcast uses,
+	#               and without it playback falls back to default-src 'self' and
+	#               is blocked
+	#   connect-src the podcast APIs Podr talks to. Replace the workers.dev
+	#               origin with your own service host if you self-host the feed
+	#               proxy.
+	#   script-src  'unsafe-inline' is required by the inlined top-podcasts
+	#               payload and the analytics snippet. No third-party analytics
+	#               origin is listed: a default build ships none. If you set
+	#               PODR_ANALYTICS_PROVIDER, add that origin to script-src and
+	#               connect-src (the build prints it).
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://api.rss2json.com https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()"
+		# "preload" is a commitment: do not add it on a host that may need to
+		# serve plain HTTP again.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# Caddy advertises itself otherwise.
+		-Server
+	}
+
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	header @revalidate Cache-Control "public, max-age=0, must-revalidate"
+
+	# Caddy has no MIME mapping for .webmanifest and would serve it with no
+	# Content-Type at all, which browsers reject. Set it explicitly. This also
+	# upgrades manifest.json from application/json to the registered type.
+	@manifest path /site.webmanifest /manifest.json
+	header @manifest Content-Type "application/manifest+json"
+
+	# ---- Static files and the SPA fallback ----------------------------------
+	# precompressed serves the .gz files webpack's CompressionPlugin already
+	# emitted rather than compressing on every request.
+	try_files {path} {path}/ /index.html
+	file_server {
+		precompressed gzip
+	}
+	encode gzip
+}

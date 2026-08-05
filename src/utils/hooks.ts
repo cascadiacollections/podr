@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { Signal, effect, signal } from '@preact/signals';
 import { createElement, ComponentType, JSX, FunctionComponent, cloneElement, Fragment, ComponentChildren } from 'preact';
+import { trackEvent as reportEvent } from './analytics';
 import { APP_CONFIG } from './AppContext';
 
 /**
@@ -385,66 +386,62 @@ export function useFetch<T>(
 
 /**
  * Enhanced custom hook for analytics tracking with better type safety
+ *
+ * Every call routes through the shared reporter in `./analytics`, so the
+ * provider these events land in is whatever the build configured - Google
+ * Analytics, a self-hosted Umami/Plausible/GoatCounter, or nothing at all.
  */
 export function useAnalytics() {
   const trackEvent = useCallback((
-    category: string, 
-    action: string, 
+    category: string,
+    action: string,
     label?: string,
     value?: number
   ) => {
-    if (typeof window === 'undefined' || !window.gtag) return;
-    
     const eventData: Record<string, unknown> = {
       event_category: category,
       event_label: label,
       transport_type: 'beacon',
     };
-    
+
     if (value !== undefined) {
       eventData.value = value;
     }
-    
-    window.gtag('event', action, eventData);
+
+    reportEvent(action, eventData);
   }, []);
-  
+
   const trackException = useCallback((
-    description: string, 
+    description: string,
     fatal: boolean = false,
     category: string = 'error'
   ) => {
-    if (typeof window === 'undefined' || !window.gtag) return;
-    
-    window.gtag('event', 'exception', {
+    reportEvent('exception', {
       description,
       fatal,
       event_category: category,
     });
   }, []);
-  
+
   const trackSearch = useCallback((searchTerm: string, resultsCount?: number) => {
-    if (typeof window === 'undefined' || !window.gtag) return;
-    
     const eventData: Record<string, unknown> = {
       search_term: searchTerm,
       transport_type: 'beacon',
     };
-    
+
     if (resultsCount !== undefined) {
       eventData.results_count = resultsCount;
     }
-    
-    window.gtag('event', 'search', eventData);
+
+    reportEvent('search', eventData);
   }, []);
-  
+
   const trackPerformance = useCallback((
     name: string,
     duration: number,
     category: string = 'performance'
   ) => {
-    if (typeof window === 'undefined' || !window.gtag) return;
-    
-    window.gtag('event', 'timing_complete', {
+    reportEvent('timing_complete', {
       name,
       value: Math.round(duration),
       event_category: category,

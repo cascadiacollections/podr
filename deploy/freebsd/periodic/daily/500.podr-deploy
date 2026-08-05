@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Daily Podr deploy for FreeBSD, the counterpart to podr-deploy.timer on Debian.
+# Podr serves as static files, so there is no daemon and nothing for rc.d to
+# supervise - the recurring work is fetching the newest build, which is exactly
+# what periodic(8) is for.
+#
+# Install as /usr/local/etc/periodic/daily/500.podr-deploy, mode 755, then enable
+# it in /etc/periodic.conf:
+#
+#   daily_podr_deploy_enable="YES"
+#
+# Deploy settings themselves live in /usr/local/etc/podr.conf.
+
+if [ -r /etc/defaults/periodic.conf ]; then
+	. /etc/defaults/periodic.conf
+	source_periodic_confs
+fi
+
+: "${daily_podr_deploy_enable:=NO}"
+
+case "$daily_podr_deploy_enable" in
+[Yy][Ee][Ss])
+	echo
+	echo 'Deploying the latest Podr build:'
+
+	if /usr/local/bin/podr-deploy.sh deploy; then
+		rc=0
+	else
+		rc=3
+	fi
+	;;
+*)
+	rc=0
+	;;
+esac
+
+exit $rc
