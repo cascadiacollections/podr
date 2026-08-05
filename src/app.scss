@@ -280,8 +280,18 @@ button {
 }
 
 .notice--error {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
   border-left-color: var(--danger);
   color: var(--danger);
+}
+
+/* The underlying cause, so a failure can be reported without a console */
+.notice__reason {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  word-break: break-word;
 }
 
 .notice--offline {
