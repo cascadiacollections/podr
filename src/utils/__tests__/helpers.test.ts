@@ -52,9 +52,10 @@ describe('helpers', () => {
       expect(result).toContain('count=300');
     });
 
-    it('should omit the api key when none was configured at build time', () => {
-      // PODR_RSS_API_KEY is injected by webpack and left undefined under test
-      expect(getFeedUrl('https://example.com/feed.rss')).not.toContain('api_key=');
+    it('should send an api key so the full feed is returned', () => {
+      // The inlined key applies when no build-time override was configured.
+      // Without a key rss2json ignores `count` and drops to anonymous limits.
+      expect(getFeedUrl('https://example.com/feed.rss')).toContain('api_key=');
     });
 
     it('should not target the Podr worker, which has no RSS to JSON route', () => {

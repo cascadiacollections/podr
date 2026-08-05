@@ -5,11 +5,27 @@ const SECURE_PROTOCOL = 'https://' as const;
 const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
 
 /**
- * Build-time RSS API key, injected by webpack's DefinePlugin from the
- * PODR_RSS_API_KEY environment variable. Never committed to source; the request
- * omits the parameter entirely when it is unset.
+ * Build-time RSS API key override, injected by webpack's DefinePlugin from the
+ * PODR_RSS_API_KEY environment variable. Takes precedence over the inlined key
+ * below, so the key can be rotated by setting the variable in the build
+ * environment without touching source.
  */
 declare const PODR_RSS_API_KEY: string | undefined;
+
+/**
+ * Inlined rss2json key.
+ *
+ * This is not a secret in any meaningful sense: rss2json keys are designed to be
+ * called from the browser, and this one has shipped in every deployed bundle and
+ * sat in this repository's git history for as long as the feature has existed.
+ * It is inlined so episodes keep returning the full feed on a default build,
+ * rather than silently dropping to the anonymous request limit.
+ *
+ * It should still not live here. Tracked in cascadiacollections/podr#133:
+ * move feed conversion behind the Podr worker, keep the key in a Cloudflare
+ * secret, and rotate this value once nothing depends on it.
+ */
+const INLINE_RSS_API_KEY = 'xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6' as const;
 
 /**
  * RSS to JSON API configuration
@@ -26,10 +42,12 @@ const RSS_API_CONFIG = {
 } as const;
 
 /**
- * The RSS API key, or an empty string when no key was configured at build time.
- * `typeof` keeps this safe when the identifier was never substituted (e.g. tests).
+ * The RSS API key: the build-time override when one was configured, otherwise the
+ * inlined key. `typeof` keeps this safe where the identifier was never
+ * substituted, such as under test.
  */
-const RSS_API_KEY: string = typeof PODR_RSS_API_KEY === 'string' ? PODR_RSS_API_KEY : '';
+const RSS_API_KEY: string =
+  (typeof PODR_RSS_API_KEY === 'string' && PODR_RSS_API_KEY) || INLINE_RSS_API_KEY;
 
 /**
  * Apple Podcasts configuration
