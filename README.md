@@ -144,6 +144,9 @@ yarn start
 | Variable | Description |
 |----------|-------------|
 | `PODR_RSS_API_KEY` | Overrides the [rss2json](https://rss2json.com/) API key used when converting podcast RSS feeds to JSON. A default key is inlined in `src/utils/helpers.ts` so a plain build returns full feeds; setting this variable rotates the key without a code change. Tracked in [#133](https://github.com/cascadiacollections/podr/issues/133): the key belongs behind the Podr worker, not in the client. |
+| `PODR_ANALYTICS_PROVIDER` | Which analytics provider to report to: `none` (default), `umami`, `plausible`, `goatcounter`, or `gtag`. A default build injects no analytics script and reports nothing. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md#analytics-without-a-third-party). |
+| `PODR_ANALYTICS_HOST` | Origin of your self-hosted analytics instance, e.g. `https://stats.example.org`. Required for `umami`, `plausible`, and `goatcounter`. |
+| `PODR_ANALYTICS_SITE_ID` | Umami website id, Plausible domain, or GA measurement id. Unused by `goatcounter`. |
 
 ### 🔄 Development Workflow
 
@@ -188,6 +191,12 @@ This repository is organized as a monorepo containing the main Podr application 
 │   ├── 📝 types/                     # TypeScript type definitions
 │   │   └── testing-library__jest-dom.d.ts
 │   └── 🎨 app.scss                   # Global styles & variables
+├── 🐧 deploy/                        # Self-hosting configuration (Debian, FreeBSD)
+│   ├── 🌐 nginx/                     # nginx server block and headers snippet
+│   ├── 🌐 caddy/                     # Caddyfile
+│   ├── 🔧 bin/podr-deploy.sh         # Atomic artifact deploy, rollback, list
+│   ├── ⏱️ systemd/                   # Debian: daily deploy service and timer
+│   └── ⏱️ freebsd/                   # FreeBSD: periodic(8) job and settings
 └── 📦 packages/                      # Reusable packages
     └── 🔌 webpack-api-inliner-plugin/ # API inlining webpack plugin
         ├── 📖 README.md              # Plugin documentation
@@ -378,6 +387,24 @@ netlify deploy --prod --dir=dist
 # 🔍 Preview deployment locally
 yarn serve                  # Serve built files locally
 ```
+
+### 🐧 Self-Hosting on Debian or FreeBSD
+
+Podr builds to plain static files, so Netlify is a convenience rather than a
+requirement. [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) covers running Podr on
+your own Debian host or FreeBSD jail with free software only, and `deploy/` ships
+the configuration:
+
+| Path | Purpose |
+|------|---------|
+| `deploy/nginx/`, `deploy/caddy/` | `netlify.toml` translated to nginx and Caddy — SPA fallback, security headers, cache tiers |
+| `deploy/bin/podr-deploy.sh` | Atomic artifact deploy with `rollback` and `list` |
+| `deploy/systemd/`, `deploy/freebsd/` | Daily deploys via a systemd timer or `periodic(8)` |
+
+Analytics is opt-in and off by default; self-hosted [Umami](https://umami.is/),
+[Plausible](https://plausible.io/self-hosted-web-analytics), and
+[GoatCounter](https://www.goatcounter.com/) are supported alongside Google
+Analytics.
 
 ### 📈 Build Optimizations
 
