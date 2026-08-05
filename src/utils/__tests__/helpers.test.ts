@@ -6,6 +6,8 @@ import {
   extractApplePodcastsId,
   fetchApplePodcastsFeedUrl,
   resolveFeedUrl,
+  resolveFeed,
+  fetchPodcastDetail,
 } from '../helpers';
 
 describe('helpers', () => {
@@ -209,6 +211,116 @@ describe('helpers', () => {
       });
       
       await expect(fetchApplePodcastsFeedUrl('1234')).rejects.toThrow('Feed URL not found in Apple Podcasts response');
+    });
+  });
+
+  describe('fetchPodcastDetail', () => {
+    beforeEach(() => {
+      global.fetch = jest.fn();
+    });
+
+    it('resolves a podcast through the Podr worker', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          podcast: {
+            trackName: 'The Daily',
+            feedUrl: 'https://feeds.simplecast.com/the-daily',
+            artworkUrl600: 'https://example.com/artwork-600.jpg'
+          }
+        })
+      });
+
+      await expect(fetchPodcastDetail('1200361736')).resolves.toEqual({
+        feedUrl: 'https://feeds.simplecast.com/the-daily',
+        collectionName: 'The Daily',
+        artworkUrl: 'https://example.com/artwork-600.jpg'
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://podr-service.cascadiacollections.workers.dev/podcast/1200361736'
+      );
+    });
+
+    it('throws when the worker has no feed URL for the podcast', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({ podcast: { trackName: 'No feed here' } })
+      });
+
+      await expect(fetchPodcastDetail('123')).rejects.toThrow(
+        'Feed URL not found in podcast detail response'
+      );
+    });
+
+    it('throws on a failed request', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 502 });
+
+      await expect(fetchPodcastDetail('123')).rejects.toThrow(
+        'Podcast lookup failed with status: 502'
+      );
+    });
+  });
+
+  describe('resolveFeed', () => {
+    beforeEach(() => {
+      global.fetch = jest.fn();
+    });
+
+    it('returns a plain RSS URL untouched, without any request', async () => {
+      await expect(resolveFeed('https://example.com/feed.rss')).resolves.toEqual({
+        feedUrl: 'https://example.com/feed.rss'
+      });
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('prefers the worker for Apple Podcasts URLs, and reports its metadata', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          podcast: {
+            trackName: 'The Daily',
+            feedUrl: 'https://feeds.simplecast.com/the-daily',
+            artworkUrl600: 'https://example.com/artwork-600.jpg'
+          }
+        })
+      });
+
+      const resolved = await resolveFeed(
+        'https://podcasts.apple.com/us/podcast/the-daily/id1200361736'
+      );
+
+      expect(resolved.collectionName).toBe('The Daily');
+      expect(resolved.artworkUrl).toBe('https://example.com/artwork-600.jpg');
+      // Only the worker was consulted; Apple was not contacted directly
+      expect((global.fetch as jest.Mock).mock.calls.every(([url]: [string]) =>
+        String(url).includes('workers.dev')
+      )).toBe(true);
+    });
+
+    it('falls back to the iTunes lookup when the worker route fails', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) =>
+        String(url).includes('workers.dev')
+          ? Promise.resolve({ ok: false, status: 404 })
+          : Promise.resolve({
+              ok: true,
+              json: async () => ({ results: [{ feedUrl: 'https://feeds.example.com/fallback.rss' }] })
+            })
+      );
+
+      await expect(
+        resolveFeed('https://podcasts.apple.com/us/podcast/the-daily/id1200361736')
+      ).resolves.toEqual({ feedUrl: 'https://feeds.example.com/fallback.rss' });
+
+      expect((global.fetch as jest.Mock).mock.calls.map(([url]: [string]) => String(url))).toEqual([
+        'https://podr-service.cascadiacollections.workers.dev/podcast/1200361736',
+        'https://itunes.apple.com/lookup?id=1200361736&entity=podcast'
+      ]);
+    });
+
+    it('rejects an invalid feed URL', async () => {
+      await expect(resolveFeed('')).rejects.toThrow('Invalid feed URL');
     });
   });
 

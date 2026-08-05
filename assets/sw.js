@@ -97,6 +97,43 @@ self.addEventListener('activate', (event) => {
  * @param {string} cacheName
  * @param {number} maxEntries
  */
+/**
+ * Writes to a cache without ever letting the failure reach the page.
+ *
+ * A cache write can reject for reasons that have nothing to do with whether the
+ * response is good: storage pressure, quota padding for opaque cross-origin
+ * responses, or a browser that refuses to store them at all. WebKit is strict
+ * here. Awaiting the write inside a fetch handler turned any such refusal into a
+ * failed request, which is how every piece of cross-origin artwork ended up as a
+ * broken image.
+ * @param {string} cacheName
+ * @param {Request} request
+ * @param {Response} response
+ * @returns {Promise<void>}
+ */
+async function putSafely(cacheName, request, response) {
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response);
+  } catch (error) {
+    // Caching is an optimization; the page already has its response
+  }
+}
+
+/**
+ * Schedules background work on the event when possible, so the worker is not
+ * terminated mid-write, while never blocking the response.
+ * @param {FetchEvent | undefined} event
+ * @param {Promise<unknown>} work
+ */
+function runInBackground(event, work) {
+  const settled = Promise.resolve(work).catch(() => undefined);
+
+  if (event && typeof event.waitUntil === 'function') {
+    event.waitUntil(settled);
+  }
+}
+
 async function trimCache(cacheName, maxEntries) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
@@ -114,20 +151,21 @@ async function trimCache(cacheName, maxEntries) {
  * @param {string} cacheName
  * @returns {Promise<Response>}
  */
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request, cacheName, event) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
 
   const network = fetch(request)
     .then((response) => {
       if (response && response.ok) {
-        cache.put(request, response.clone());
+        runInBackground(event, putSafely(cacheName, request, response.clone()));
       }
       return response;
     })
     .catch(() => undefined);
 
   if (cached) {
+    runInBackground(event, network);
     return cached;
   }
 
@@ -147,18 +185,17 @@ async function staleWhileRevalidate(request, cacheName) {
  * @param {string} cacheName
  * @returns {Promise<Response>}
  */
-async function networkFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-
+async function networkFirst(request, cacheName, event) {
   try {
     const response = await fetch(request);
 
     if (response && response.ok) {
-      cache.put(request, response.clone());
+      runInBackground(event, putSafely(cacheName, request, response.clone()));
     }
 
     return response;
   } catch (error) {
+    const cache = await caches.open(cacheName);
     const cached = await cache.match(request);
 
     if (cached) {
@@ -175,7 +212,7 @@ async function networkFirst(request, cacheName) {
  * @param {string} cacheName
  * @returns {Promise<Response>}
  */
-async function cacheFirst(request, cacheName) {
+async function cacheFirst(request, cacheName, event) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
 
@@ -185,9 +222,14 @@ async function cacheFirst(request, cacheName) {
 
   const response = await fetch(request);
 
+  // Stored in the background: the response is handed to the page either way
   if (response && (response.ok || response.type === 'opaque')) {
-    await cache.put(request, response.clone());
-    await trimCache(cacheName, MAX_IMAGE_ENTRIES);
+    runInBackground(
+      event,
+      putSafely(cacheName, request, response.clone()).then(() =>
+        trimCache(cacheName, MAX_IMAGE_ENTRIES)
+      )
+    );
   }
 
   return response;
@@ -196,13 +238,13 @@ async function cacheFirst(request, cacheName) {
 /**
  * Network first with the app shell as the offline fallback
  * @param {Request} request
+ * @param {FetchEvent} [event]
  * @returns {Promise<Response>}
  */
-async function handleNavigation(request) {
+async function handleNavigation(request, event) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(SHELL_CACHE);
-    cache.put('/index.html', response.clone());
+    runInBackground(event, putSafely(SHELL_CACHE, '/index.html', response.clone()));
     return response;
   } catch (error) {
     const cache = await caches.open(SHELL_CACHE);
@@ -231,28 +273,28 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(handleNavigation(request));
+    event.respondWith(handleNavigation(request, event));
     return;
   }
 
   if (DATA_HOSTS.includes(url.hostname)) {
-    event.respondWith(networkFirst(request, DATA_CACHE));
+    event.respondWith(networkFirst(request, DATA_CACHE, event));
     return;
   }
 
   if (request.destination === 'image' && url.origin !== self.location.origin) {
-    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    event.respondWith(cacheFirst(request, IMAGE_CACHE, event));
     return;
   }
 
   if (url.origin === self.location.origin) {
     if (url.pathname === '/top-podcasts.json') {
-      event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
+      event.respondWith(staleWhileRevalidate(request, DATA_CACHE, event));
       return;
     }
 
     if (ASSET_PATTERN.test(url.pathname)) {
-      event.respondWith(staleWhileRevalidate(request, ASSET_CACHE));
+      event.respondWith(staleWhileRevalidate(request, ASSET_CACHE, event));
     }
   }
 });

@@ -1,3 +1,5 @@
+import { APP_CONFIG } from './AppContext';
+
 /**
  * Protocol configuration for URL security
  */
@@ -139,28 +141,99 @@ export async function fetchApplePodcastsFeedUrl(podcastId: string): Promise<stri
 }
 
 /**
+ * A resolved feed, with whatever metadata the resolution turned up
+ */
+export interface IResolvedFeed {
+  /** The RSS feed URL to fetch episodes from */
+  readonly feedUrl: string;
+  /** The podcast's name, when the resolver could supply one */
+  readonly collectionName?: string;
+  /** Artwork URL, when the resolver could supply one */
+  readonly artworkUrl?: string;
+}
+
+/**
+ * Shape of the Podr worker's podcast detail response
+ */
+interface IPodcastDetailResponse {
+  readonly podcast?: {
+    readonly trackName?: string;
+    readonly feedUrl?: string;
+    readonly artworkUrl600?: string;
+  };
+}
+
+/**
+ * Resolves an Apple Podcasts ID through the Podr worker.
+ *
+ * Preferred over calling the iTunes lookup API from the browser: the worker sends
+ * CORS headers, reaches Apple through its own proxy (Apple answers some clients
+ * with a 403), caches the result, and returns the podcast's name and artwork
+ * alongside the feed URL.
+ * @param podcastId - The Apple Podcasts podcast ID
+ * @returns The resolved feed
+ * @throws {Error} When the worker cannot supply a feed URL
+ */
+export async function fetchPodcastDetail(podcastId: string): Promise<IResolvedFeed> {
+  const response = await fetch(`${APP_CONFIG.API_BASE_URL}/podcast/${podcastId}`);
+
+  if (!response.ok) {
+    throw new Error(`Podcast lookup failed with status: ${response.status}`);
+  }
+
+  const data: IPodcastDetailResponse = await response.json();
+  const feedUrl = data?.podcast?.feedUrl;
+
+  if (!feedUrl) {
+    throw new Error('Feed URL not found in podcast detail response');
+  }
+
+  return {
+    feedUrl,
+    collectionName: data.podcast?.trackName,
+    artworkUrl: data.podcast?.artworkUrl600
+  };
+}
+
+/**
+ * Resolves a feed URL, converting Apple Podcasts URLs to RSS feed URLs if
+ * necessary, and reporting any metadata found along the way.
+ * @param feedUrl - The feed URL to resolve
+ * @returns Promise resolving to the actual RSS feed and its metadata
+ */
+export async function resolveFeed(feedUrl: string): Promise<IResolvedFeed> {
+  if (!feedUrl || typeof feedUrl !== 'string') {
+    throw new Error('Invalid feed URL: URL must be a non-empty string');
+  }
+
+  // Anything that is already an RSS URL needs no resolution
+  if (!isApplePodcastsUrl(feedUrl)) {
+    return { feedUrl };
+  }
+
+  const podcastId = extractApplePodcastsId(feedUrl);
+
+  if (!podcastId) {
+    throw new Error('Failed to extract podcast ID from Apple Podcasts URL');
+  }
+
+  try {
+    return await fetchPodcastDetail(podcastId);
+  } catch {
+    // Fall back to the iTunes lookup API directly, which works from some
+    // clients even when the worker route is unavailable
+    return { feedUrl: await fetchApplePodcastsFeedUrl(podcastId) };
+  }
+}
+
+/**
  * Resolves a feed URL, converting Apple Podcasts URLs to RSS feed URLs if necessary
  * @param feedUrl - The feed URL to resolve
  * @returns Promise resolving to the actual RSS feed URL
  */
 export async function resolveFeedUrl(feedUrl: string): Promise<string> {
-  if (!feedUrl || typeof feedUrl !== 'string') {
-    throw new Error('Invalid feed URL: URL must be a non-empty string');
-  }
-  
-  // If it's an Apple Podcasts web page URL, convert it to RSS feed URL
-  if (isApplePodcastsUrl(feedUrl)) {
-    const podcastId = extractApplePodcastsId(feedUrl);
-    
-    if (!podcastId) {
-      throw new Error('Failed to extract podcast ID from Apple Podcasts URL');
-    }
-    
-    return await fetchApplePodcastsFeedUrl(podcastId);
-  }
-  
-  // Otherwise, return the URL as-is
-  return feedUrl;
+  const resolved = await resolveFeed(feedUrl);
+  return resolved.feedUrl;
 }
 
 /**
