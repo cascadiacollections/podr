@@ -8,6 +8,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
+const { resolveAnalyticsConfig } = require('./config/analytics');
 const CopyAssetsPlugin = require('./webpack-plugins/copy-assets-plugin');
 const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // Keep for backward compatibility
 
@@ -16,6 +17,17 @@ const TopPodcastsPlugin = require('./webpack-plugins/top-podcasts-plugin'); // K
  * "production" function parameter will be true.  You can use this to enable bundling optimizations.
  */
 function createWebpackConfig({ production }) {
+  // Analytics is opt-in per deployment: an unconfigured build injects no
+  // third-party script and reports nothing. See config/analytics.js.
+  const analytics = resolveAnalyticsConfig();
+
+  if (analytics.provider !== 'none') {
+    console.log(
+      `[podr] analytics provider: ${analytics.provider} ` +
+        `(Content-Security-Policy must allow ${analytics.origins.join(' ')})`
+    );
+  }
+
   const webpackConfig = {
     // Documentation: https://webpack.js.org/configuration/mode/
     mode: production ? 'production' : 'development',
@@ -114,7 +126,10 @@ function createWebpackConfig({ production }) {
       // PODR_RSS_API_KEY environment variable and is never committed to source;
       // when unset the client omits the api_key parameter entirely.
       new webpack.DefinePlugin({
-        PODR_RSS_API_KEY: JSON.stringify(process.env.PODR_RSS_API_KEY || '')
+        PODR_RSS_API_KEY: JSON.stringify(process.env.PODR_RSS_API_KEY || ''),
+        // Which analytics provider trackEvent dispatches to. Paired with the
+        // script tag injected into the HTML template below.
+        PODR_ANALYTICS_PROVIDER: JSON.stringify(analytics.provider)
       }),
       // The manifest, its icons, and the service worker are fetched by URL at
       // runtime, so they have to be emitted rather than imported
@@ -135,6 +150,9 @@ function createWebpackConfig({ production }) {
       new HtmlWebpackPlugin({
         template: 'assets/index.html',
         favicon: 'assets/favicon.ico',
+        // Consumed by assets/index.html. Empty for an unconfigured build, which
+        // is what keeps a default Podr build free of third-party requests.
+        analyticsSnippet: analytics.snippet,
         minify: production ? {
           collapseWhitespace: true,
           removeComments: true,

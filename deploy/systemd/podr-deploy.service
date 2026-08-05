@@ -1,0 +1,28 @@
+[Unit]
+# Fetches the latest Podr build and swaps it in. Podr serves as static files, so
+# there is no long-running Podr process: this is a oneshot job, driven by
+# podr-deploy.timer, that replaces the Netlify daily-build-and-deploy loop on a
+# Debian host.
+Description=Deploy the latest Podr build
+Documentation=https://github.com/cascadiacollections/podr/blob/main/docs/SELF_HOSTING.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/podr
+ExecStart=/usr/local/bin/podr-deploy.sh deploy
+
+# The script only ever writes under PODR_ROOT and a temporary directory.
+ProtectSystem=strict
+ReadWritePaths=/srv/podr
+PrivateTmp=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+NoNewPrivileges=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM

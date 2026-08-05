@@ -20,13 +20,12 @@
     <!-- Artwork comes from Apple's CDN; warming the connection saves a round trip on the first grid -->
     <link rel="preconnect" href="https://is1-ssl.mzstatic.com" crossorigin>
     <!-- Styles ship inside the bundle: no third-party stylesheet blocks the first paint -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-19Z3SPSJPY"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-19Z3SPSJPY');
-    </script>
+    <!--
+      Analytics is injected at build time from PODR_ANALYTICS_PROVIDER and is
+      empty unless a deployment opts in, so a default build loads no analytics
+      script at all. See config/analytics.js and docs/SELF_HOSTING.md.
+    -->
+    <%= htmlWebpackPlugin.options.analyticsSnippet || '' %>
   </head>
   <body>
     <div id="root"></div>

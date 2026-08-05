@@ -1,0 +1,23 @@
+# Podr deploy configuration. Install as /etc/default/podr.
+#
+# Read by both podr-deploy.sh and podr-deploy.service, so it has to stay plain
+# KEY=value: systemd's EnvironmentFile does not run a shell, meaning no command
+# substitution, no variable expansion, and no `export`.
+
+# URL of the build artifact: a .tar.gz or .zip containing the contents of dist/.
+PODR_ARTIFACT_URL=https://example.org/podr/podr-dist.tar.gz
+
+# URL of a file holding the artifact's SHA-256. Recommended: without it the
+# artifact is trusted on the strength of TLS alone.
+#PODR_CHECKSUM_URL=https://example.org/podr/podr-dist.tar.gz.sha256
+
+# Where releases are unpacked. The web server's document root is
+# $PODR_ROOT/current, a symlink the deploy swaps atomically.
+PODR_ROOT=/srv/podr
+
+# How many old releases to keep for rollback.
+PODR_KEEP=5
+
+# Ownership for the extracted files. www-data on Debian's nginx; on FreeBSD this
+# is usually www:www.
+PODR_OWNER=www-data:www-data

@@ -14,6 +14,12 @@
   NODE_OPTIONS = "--max-old-space-size=4096"
   # Yarn configuration
   YARN_ENABLE_IMMUTABLE_INSTALLS = "false"
+  # Analytics is opt-in per deployment and off by default (see
+  # config/analytics.js). This site keeps Google Analytics; a self-hosted
+  # deployment sets provider to umami/plausible/goatcounter instead, and must
+  # allow that origin in the Content-Security-Policy below.
+  PODR_ANALYTICS_PROVIDER = "gtag"
+  PODR_ANALYTICS_SITE_ID = "G-19Z3SPSJPY"
 
 # SPA redirect - handle client-side routing
 [[redirects]]
