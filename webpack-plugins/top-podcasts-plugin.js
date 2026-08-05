@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { resolveApiConfig } = require('../config/api');
 const https = require('https');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -10,7 +11,7 @@ class TopPodcastsPlugin {
   constructor(options = {}) {
     // Default options
     this.options = {
-      apiEndpoint: 'https://podr-service.cascadiacollections.workers.dev/?q=toppodcasts&limit=10',
+      apiEndpoint: resolveApiConfig().topPodcastsUrl,
       outputFile: 'top-podcasts.json',
       fallbackData: { feed: { entry: [] } },
       production: true, // Whether to fetch data from API (production) or just use fallback (development)

@@ -19,6 +19,7 @@ const PLUGIN_NAME = 'CopyAssetsPlugin';
  */
 const PRECACHE_TOKEN = 'self.__PODR_PRECACHE__';
 const BUILD_ID_TOKEN = 'self.__PODR_BUILD_ID__';
+const API_HOST_TOKEN = 'self.__PODR_API_HOST__';
 
 /**
  * Assets worth precaching: the app's own code and styles. The compressed copies
@@ -28,18 +29,21 @@ const PRECACHE_PATTERN = /\.(?:js|css)$/;
 
 class CopyAssetsPlugin {
   /**
-   * @param {{ from?: string, files?: string[], injectManifestInto?: string }} options
+   * @param {{ from?: string, files?: string[], injectManifestInto?: string, apiHost?: string }} options
    *   from - directory the files are read from, relative to the project root
    *   files - file names to copy, emitted at the root of the output directory
    *   injectManifestInto - a copied file whose PRECACHE/BUILD_ID placeholders are
    *     replaced with this build's hashed asset names. Without it a hand-written
    *     service worker cannot know what to precache, and an offline visit falls
    *     back to whatever the HTTP cache happens to have kept.
+   *   apiHost - hostname of the configured Podr API service, injected into the
+   *     service worker's data cache allowlist
    */
   constructor(options = {}) {
     this.from = options.from || 'assets';
     this.files = options.files || [];
     this.injectManifestInto = options.injectManifestInto;
+    this.apiHost = options.apiHost;
   }
 
   apply(compiler) {
@@ -111,7 +115,9 @@ class CopyAssetsPlugin {
             .split(PRECACHE_TOKEN)
             .join(JSON.stringify(precache))
             .split(BUILD_ID_TOKEN)
-            .join(JSON.stringify(buildId));
+            .join(JSON.stringify(buildId))
+            .split(API_HOST_TOKEN)
+            .join(JSON.stringify(this.apiHost));
 
           compilation.updateAsset(this.injectManifestInto, new webpack.sources.RawSource(updated));
         }

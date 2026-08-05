@@ -44,9 +44,8 @@ const MAX_IMAGE_ENTRIES = 120;
  * Hosts whose responses are podcast data worth keeping for offline reads
  */
 const DATA_HOSTS = [
-  'api.rss2json.com',
+  self.__PODR_API_HOST__,
   'itunes.apple.com',
-  'podr-service.cascadiacollections.workers.dev'
 ];
 
 /**

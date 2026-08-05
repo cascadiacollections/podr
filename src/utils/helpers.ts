@@ -32,11 +32,9 @@ const INLINE_RSS_API_KEY = 'xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6' as const;
 /**
  * RSS to JSON API configuration
  *
- * Note: the Podr worker (APP_CONFIG.API_BASE_URL) only implements the iTunes
- * search, top-podcast, and podcast-detail routes. A request carrying `rss_url`
- * has no `q` parameter, so the worker answers it with its OpenAPI schema and a
- * 200 status - which parsed as zero episodes instead of surfacing an error.
- * Feed conversion therefore goes to rss2json.
+ * The hosted default continues to use rss2json for backwards compatibility.
+ * A self-hosted Podr service provides the same parameters through its `/feed`
+ * route, keeping the RSS API key and the browser's request on the host.
  */
 const RSS_API_CONFIG = {
   BASE_URL: 'https://api.rss2json.com/v1/api.json',
@@ -260,6 +258,10 @@ export function getFeedUrl(
     rss_url: feedUrl,
     count: maxCount.toString(),
   });
+
+  if (APP_CONFIG.API_BASE_URL !== 'https://podr-service.cascadiacollections.workers.dev') {
+    return `${APP_CONFIG.API_BASE_URL}/feed?${searchParams.toString()}`;
+  }
 
   if (RSS_API_KEY) {
     searchParams.set('api_key', RSS_API_KEY);

@@ -144,6 +144,7 @@ yarn start
 | Variable | Description |
 |----------|-------------|
 | `PODR_RSS_API_KEY` | Overrides the [rss2json](https://rss2json.com/) API key used when converting podcast RSS feeds to JSON. A default key is inlined in `src/utils/helpers.ts` so a plain build returns full feeds; setting this variable rotates the key without a code change. Tracked in [#133](https://github.com/cascadiacollections/podr/issues/133): the key belongs behind the Podr worker, not in the client. |
+| `PODR_API_BASE_URL` | Origin of the Podr API service. Defaults to `https://podr-service.cascadiacollections.workers.dev`; set this at build time to use a self-hosted service. It must be HTTPS, except for `localhost` during development. |
 | `PODR_ANALYTICS_PROVIDER` | Which analytics provider to report to: `none` (default), `umami`, `plausible`, `goatcounter`, or `gtag`. A default build injects no analytics script and reports nothing. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md#analytics-without-a-third-party). |
 | `PODR_ANALYTICS_HOST` | Origin of your self-hosted analytics instance, e.g. `https://stats.example.org`. Required for `umami`, `plausible`, and `goatcounter`. |
 | `PODR_ANALYTICS_SITE_ID` | Umami website id, Plausible domain, or GA measurement id. Unused by `goatcounter`. |
