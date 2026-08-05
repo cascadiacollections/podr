@@ -1,6 +1,8 @@
 import { computed, Signal, signal } from '@preact/signals';
 import { IFeedItem } from '../ui/Result';
 
+declare const PODR_API_BASE_URL: string | undefined;
+
 /**
  * Shared stable empty array for all signal defaults and empty values
  * Using readonly never[] allows assignment to any readonly array type without assertion.
@@ -68,7 +70,9 @@ export interface AppContextType {
  * Application configuration constants
  */
 export const APP_CONFIG = {
-  API_BASE_URL: 'https://podr-service.cascadiacollections.workers.dev',
+  API_BASE_URL:
+    (typeof PODR_API_BASE_URL === 'string' && PODR_API_BASE_URL) ||
+    'https://podr-service.cascadiacollections.workers.dev',
   LOCAL_STORAGE: {
     FEEDS_KEY: 'podr_feeds',
     RESULTS_KEY: 'podr_results',

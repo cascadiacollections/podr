@@ -64,6 +64,20 @@ describe('helpers', () => {
       expect(getFeedUrl('https://example.com/feed.rss')).not.toContain('workers.dev');
     });
 
+    it('uses the configured self-hosted service feed route', () => {
+      jest.isolateModules(() => {
+        jest.doMock('../AppContext', () => ({
+          APP_CONFIG: { API_BASE_URL: 'https://podr.example.org' },
+        }));
+
+        const { getFeedUrl: getSelfHostedFeedUrl } = require('../helpers');
+        const result = getSelfHostedFeedUrl('https://example.com/feed.rss');
+
+        expect(result).toContain('https://podr.example.org/feed?');
+        expect(result).not.toContain('api_key=');
+      });
+    });
+
     it('should construct valid RSS feed URL with custom count', () => {
       const feedUrl = 'https://example.com/feed.rss';
       const customCount = 100;
