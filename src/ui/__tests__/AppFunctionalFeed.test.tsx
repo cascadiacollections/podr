@@ -160,6 +160,75 @@ describe('App episode fetching', () => {
     });
   });
 
+  test('repairs a favorite saved by an older build once its feed resolves', async () => {
+    // How builds before the card redesign stored a favorited top podcast: the
+    // Apple Podcasts URL as the name, and no artwork at all
+    const legacyFeed = {
+      collectionName: 'https://podcasts.apple.com/us/podcast/the-daily/id1200361736',
+      feedUrl: 'https://podcasts.apple.com/us/podcast/the-daily/id1200361736',
+      artworkUrl100: '',
+      artworkUrl600: ''
+    };
+
+    localStorage.setItem('podr_feeds', JSON.stringify([legacyFeed]));
+
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      const target = String(url);
+
+      if (target.includes('/podcast/1200361736')) {
+        return jsonResponse({
+          podcast: {
+            trackName: 'The Daily',
+            feedUrl: 'https://feeds.simplecast.com/the-daily',
+            artworkUrl600: 'https://example.com/the-daily-600.jpg'
+          }
+        });
+      }
+
+      if (target.includes('rss_url')) {
+        return jsonResponse({ status: 'ok', items: [] });
+      }
+
+      return jsonResponse(TOP_PODCASTS_RESPONSE);
+    });
+
+    render(<App />);
+
+    // Before opening it, the library shows the raw URL
+    expect(screen.getByRole('button', { name: legacyFeed.collectionName })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: legacyFeed.collectionName }));
+
+    // Resolution supplies the real name and artwork, and the entry keeps its place
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'The Daily' })).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'The Daily' }).querySelector('img')
+    ).toHaveAttribute('src', 'https://example.com/the-daily-600.jpg');
+    expect(screen.queryByRole('button', { name: legacyFeed.collectionName })).toBeNull();
+
+    // And the repair is persisted, so it survives a reload
+    const stored = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
+    expect(stored).toHaveLength(1);
+    expect(stored[0].collectionName).toBe('The Daily');
+    expect(stored[0].feedUrl).toBe(legacyFeed.feedUrl);
+  });
+
+  test('reports the underlying cause of a feed failure', async () => {
+    global.fetch = mockFetchWithFeed(OPENAPI_SCHEMA_RESPONSE);
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /Feed response did not contain an episode list/i
+      );
+    });
+  });
+
   test('requests episodes from the RSS to JSON service, not the Podr worker', async () => {
     global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
 

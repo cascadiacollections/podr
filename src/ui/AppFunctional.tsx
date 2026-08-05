@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 import { trackEvent } from '../utils/analytics';
 import { APP_CONFIG, createAppState, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
 import { parseFeedResponse, parseStoredFeedItems } from '../utils/feed';
-import { getFeedUrl, getSecureUrl, resolveFeedUrl } from '../utils/helpers';
+import { getFeedUrl, getSecureUrl, IResolvedFeed, resolveFeed } from '../utils/helpers';
 import { isConstrainedConnection, prefersReducedMotion, useOnlineStatus } from '../utils/network';
 import { readStoredJson, writeStoredJson } from '../utils/storage';
 import { List } from './List';
@@ -22,6 +22,15 @@ declare global {
 
 const BACKGROUND_REFRESH_TIMEOUT = 5000;
 const FEED_ERROR_MESSAGE = 'Could not load episodes for this podcast. Please try again.';
+
+/**
+ * A feed failure and the underlying cause, shown so a failure can be reported
+ * without a devtools console
+ */
+interface IFeedError {
+  readonly message: string;
+  readonly reason: string;
+}
 const OFFLINE_MESSAGE =
   'You are offline. Showing the podcasts and episodes already saved on this device.';
 
@@ -84,6 +93,41 @@ const getTopPodcastArtwork = (podcast: ITopPodcast, preferSmall: boolean): strin
 };
 
 /**
+ * Whether a feed is missing the metadata the UI needs to present it.
+ *
+ * Builds before the card redesign saved favorites with the Apple Podcasts URL as
+ * the name and no artwork at all, which renders as a broken image labelled with a
+ * URL. Resolving the feed supplies both, so those entries can be repaired in place.
+ */
+const needsMetadata = (feed: IFeed): boolean =>
+  !feed.artworkUrl100 || /^https?:\/\//i.test(feed.collectionName);
+
+/**
+ * Fills in a feed's missing name and artwork from a resolution result, keeping
+ * `feedUrl` so the entry's identity - and its place in the library - is unchanged.
+ * Returns the original feed when there is nothing to repair.
+ */
+const withResolvedMetadata = (feed: IFeed, resolved: IResolvedFeed): IFeed => {
+  if (!needsMetadata(feed)) {
+    return feed;
+  }
+
+  const collectionName = resolved.collectionName ?? feed.collectionName;
+  const artwork = resolved.artworkUrl ?? feed.artworkUrl100;
+
+  if (collectionName === feed.collectionName && artwork === feed.artworkUrl100) {
+    return feed;
+  }
+
+  return {
+    collectionName,
+    feedUrl: feed.feedUrl,
+    artworkUrl100: artwork,
+    artworkUrl600: resolved.artworkUrl ?? feed.artworkUrl600
+  };
+};
+
+/**
  * Presents a top podcast as a feed so a single card component serves every grid.
  * `feedUrl` is the podcast's Apple Podcasts page, resolved to RSS when opened.
  */
@@ -116,7 +160,7 @@ export const App = (): JSX.Element => {
     () => ({
       isFeedLoading: signal(false),
       isSearching: signal(false),
-      feedError: signal<string | null>(null),
+      feedError: signal<IFeedError | null>(null),
       selectedFeed: signal<IFeed | null>(null),
       nowPlaying: signal<INowPlaying | undefined>(undefined)
     }),
@@ -214,10 +258,23 @@ export const App = (): JSX.Element => {
 
     try {
       // Resolve the feed URL (converts Apple Podcasts URLs to RSS feed URLs)
-      const resolvedFeedUrl = await resolveFeedUrl(feed.feedUrl);
+      const resolved = await resolveFeed(feed.feedUrl);
+
+      // Resolution is the only place a podcast saved by an older build can learn
+      // its own name and artwork
+      const repaired = withResolvedMetadata(feed, resolved);
+
+      if (repaired !== feed) {
+        selectedFeed.value = repaired;
+        favorited.value = new Set(
+          Array.from(favorited.value).map((candidate: IFeed) =>
+            candidate.feedUrl === repaired.feedUrl ? repaired : candidate
+          )
+        );
+      }
 
       // Fetch the feed data
-      const response = await fetch(getFeedUrl(resolvedFeedUrl), { signal: controller.signal });
+      const response = await fetch(getFeedUrl(resolved.feedUrl), { signal: controller.signal });
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -244,7 +301,7 @@ export const App = (): JSX.Element => {
 
       // Leave any previously loaded episodes in place rather than clearing them
       if (isCurrentRequest()) {
-        feedError.value = FEED_ERROR_MESSAGE;
+        feedError.value = { message: FEED_ERROR_MESSAGE, reason: error.message };
       }
 
       trackEvent('exception', {
@@ -548,7 +605,8 @@ export const App = (): JSX.Element => {
 
           {feedError.value ? (
             <p className="notice notice--error" role="alert">
-              {isOnline ? feedError.value : OFFLINE_MESSAGE}
+              <span>{isOnline ? feedError.value.message : OFFLINE_MESSAGE}</span>
+              {isOnline ? <span className="notice__reason">{feedError.value.reason}</span> : null}
             </p>
           ) : null}
 
