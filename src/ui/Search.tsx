@@ -1,4 +1,4 @@
-import { h, JSX, FunctionComponent, Fragment } from 'preact';
+import { h, FunctionComponent, Fragment, TargetedEvent, TargetedKeyboardEvent } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
 import { useAnalytics, useClassNames } from '../utils/hooks';
@@ -93,7 +93,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
   /**
    * Handle the keydown event on the search input with better UX
    */
-  const handleKeyDown = useCallback((event: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((event: TargetedKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !disabled && !isLoading) {
       event.preventDefault();
       executeSearch(event.currentTarget.value);
@@ -103,7 +103,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
   /**
    * Handle form submission with prevention of default behavior
    */
-  const handleSubmit = useCallback((event: JSX.TargetedEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback((event: TargetedEvent<HTMLFormElement>) => {
     event.preventDefault();
     
     if (inputRef.current && !disabled && !isLoading) {
@@ -114,7 +114,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
   /**
    * Handle input change if using signal with debouncing consideration
    */
-  const handleChange = useCallback((event: JSX.TargetedEvent<HTMLInputElement>) => {
+  const handleChange = useCallback((event: TargetedEvent<HTMLInputElement>) => {
     if (querySignal && !disabled) {
       querySignal.value = event.currentTarget.value;
     }

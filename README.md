@@ -168,6 +168,10 @@ yarn test:watch         # Run tests continuously
 yarn test:coverage      # Ensure coverage targets met
 ```
 
+Development builds load `preact/debug` and can trace re-renders and signal
+updates (`?debug=renders,signals`); none of it ships in `yarn build:ci`. See
+[docs/DEBUGGING.md](docs/DEBUGGING.md), including the Preact DevTools profiler.
+
 ## 🏗️ Project Architecture
 
 ### 📁 Repository Structure

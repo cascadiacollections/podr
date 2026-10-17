@@ -1,9 +1,6 @@
-if (process.env.NODE_ENV === 'development') {
-  require("preact/debug");
-} else {
-  require("preact/devtools");
-}
-
+// Must stay the first import: installs preact/debug (dev) or preact/devtools
+// (production) before any component module loads. See docs/DEBUGGING.md.
+import './utils/debug';
 import './app.scss';
 import { h, render } from 'preact';
 
