@@ -31,9 +31,9 @@ const localStorageMock = (function () {
 })();
 
 Object.defineProperty(global, 'localStorage', { value: localStorageMock });
-// The app keeps the open podcast in history.state, which jsdom shares across
-// every test in a file. Without a reset, one test opening a podcast would start
+// The app keeps the open podcast in history.state and the URL, which jsdom
+// shares across every test in a file. Without a reset, one test opening a podcast would start
 // the next one inside it.
 beforeEach(() => {
-  window.history.replaceState(null, '');
+  window.history.replaceState(null, '', '/');
 });

@@ -226,12 +226,15 @@ export interface IFeedDetails {
   readonly title: string;
   readonly author: string;
   readonly description: string;
+  /** The podcast's artwork, for a podcast opened from a link with nothing else known */
+  readonly image: string;
 }
 
 export const EMPTY_FEED_DETAILS: IFeedDetails = Object.freeze({
   title: '',
   author: '',
   description: '',
+  image: '',
 });
 
 /**
@@ -250,9 +253,11 @@ export function parseFeedDetails(payload: unknown): IFeedDetails {
   const title = toText(source.title);
   const author = toText(source.author);
   const description = toPlainText(toText(source.description));
+  // RSS nests it as <image><url>; the service flattens it, older shapes did not
+  const image = toText(isRecord(source.image) ? source.image.url : source.image);
 
-  return title || author || description
-    ? Object.freeze({ title, author, description })
+  return title || author || description || image
+    ? Object.freeze({ title, author, description, image })
     : EMPTY_FEED_DETAILS;
 }
 

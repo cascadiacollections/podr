@@ -163,20 +163,25 @@ describe('parseFeedDetails', () => {
   test('reads the feed envelope', () => {
     expect(parseFeedDetails({
       status: 'ok',
-      feed: { title: ' Show ', author: 'Maker', description: '<b>About</b>' },
+      feed: { title: ' Show ', author: 'Maker', description: '<b>About</b>', image: 'https://e.com/a.jpg' },
       items: []
-    })).toEqual({ title: 'Show', author: 'Maker', description: 'About' });
+    })).toEqual({ title: 'Show', author: 'Maker', description: 'About', image: 'https://e.com/a.jpg' });
+  });
+
+  test('reads artwork nested as RSS does', () => {
+    expect(parseFeedDetails({ feed: { image: { url: 'https://e.com/a.jpg' } } }).image)
+      .toBe('https://e.com/a.jpg');
   });
 
   test('reads bare, previously persisted details', () => {
     expect(parseFeedDetails({ feedUrl: 'u', title: 'Show', author: '', description: '' }))
-      .toEqual({ title: 'Show', author: '', description: '' });
+      .toEqual({ title: 'Show', author: '', description: '', image: '' });
   });
 
   test('never throws on junk', () => {
-    expect(parseFeedDetails(null)).toEqual({ title: '', author: '', description: '' });
-    expect(parseFeedDetails([1, 2])).toEqual({ title: '', author: '', description: '' });
-    expect(parseFeedDetails({ feed: 'nope' })).toEqual({ title: '', author: '', description: '' });
+    expect(parseFeedDetails(null)).toEqual({ title: '', author: '', description: '', image: '' });
+    expect(parseFeedDetails([1, 2])).toEqual({ title: '', author: '', description: '', image: '' });
+    expect(parseFeedDetails({ feed: 'nope' })).toEqual({ title: '', author: '', description: '', image: '' });
   });
 });
 

@@ -566,6 +566,12 @@ button {
   margin-top: var(--space-2);
 }
 
+.podcast-hero__status {
+  align-self: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
 .pill-button {
   display: inline-flex;
   align-items: center;
