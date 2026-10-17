@@ -50,10 +50,11 @@ same public origin as Podr, then use that origin above.
 
 The API service needs to provide Podr's search (`/?q=`), top-podcasts
 (`/?q=toppodcasts`), podcast-detail (`/podcast/<id>`), and feed-conversion
-(`GET /feed?rss_url=<encoded URL>&count=<number>`) endpoints. When using
-a service implementation with the feed-conversion route from
-[#133](https://github.com/cascadiacollections/podr/issues/133), configure it to
-handle feed conversion as well; this retires `rss2json` and its client-side key.
+(`GET /feed?rss_url=<encoded URL>&count=<number>`) endpoints. The feed route
+returns the rss2json `{ status, feed, items }` envelope; the hosted service
+produces it by calling rss2json server-side with its own key, so the browser
+never talks to rss2json or holds a key
+([#133](https://github.com/cascadiacollections/podr/issues/133)).
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
 nginx or Caddy virtual host.
@@ -257,8 +258,8 @@ The nginx and Caddy templates use `connect-src 'self' https://itunes.apple.com`.
 This is sufficient when Podr and its API service share an origin: the browser
 can reach the service, while the service—not the browser—contacts any other
 upstream. It also means a fully self-hosted build does not grant browser
-connections to `workers.dev` or `rss2json.com`.
+connections to `workers.dev`.
 
 If the API is intentionally hosted on a separate origin, add that origin to
-`connect-src`. The hosted Netlify configuration retains the two hosted upstreams
-because its default build uses them.
+`connect-src`. The hosted Netlify configuration allows the `workers.dev` service
+origin because its default build uses it.

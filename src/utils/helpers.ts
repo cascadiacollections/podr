@@ -7,47 +7,15 @@ const SECURE_PROTOCOL = 'https://' as const;
 const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
 
 /**
- * Build-time RSS API key override, injected by webpack's DefinePlugin from the
- * PODR_RSS_API_KEY environment variable. Takes precedence over the inlined key
- * below, so the key can be rotated by setting the variable in the build
- * environment without touching source.
- */
-declare const PODR_RSS_API_KEY: string | undefined;
-
-/**
- * Inlined rss2json key.
+ * Feed conversion configuration.
  *
- * This is not a secret in any meaningful sense: rss2json keys are designed to be
- * called from the browser, and this one has shipped in every deployed bundle and
- * sat in this repository's git history for as long as the feature has existed.
- * It is inlined so episodes keep returning the full feed on a default build,
- * rather than silently dropping to the anonymous request limit.
- *
- * It should still not live here. Tracked in cascadiacollections/podr#133:
- * move feed conversion behind the Podr worker, keep the key in a Cloudflare
- * secret, and rotate this value once nothing depends on it.
+ * Episodes come from the Podr service's `/feed` route, which converts RSS to
+ * JSON server-side. Any upstream API key stays on the service rather than in
+ * this bundle (cascadiacollections/podr#133).
  */
-const INLINE_RSS_API_KEY = 'xwxutnum3sroxsxlretuqp0dvigu3hsbeydbhbo6' as const;
-
-/**
- * RSS to JSON API configuration
- *
- * The hosted default continues to use rss2json for backwards compatibility.
- * A self-hosted Podr service provides the same parameters through its `/feed`
- * route, keeping the RSS API key and the browser's request on the host.
- */
-const RSS_API_CONFIG = {
-  BASE_URL: 'https://api.rss2json.com/v1/api.json',
+const FEED_CONFIG = {
   DEFAULT_MAX_COUNT: 300,
 } as const;
-
-/**
- * The RSS API key: the build-time override when one was configured, otherwise the
- * inlined key. `typeof` keeps this safe where the identifier was never
- * substituted, such as under test.
- */
-const RSS_API_KEY: string =
-  (typeof PODR_RSS_API_KEY === 'string' && PODR_RSS_API_KEY) || INLINE_RSS_API_KEY;
 
 /**
  * Apple Podcasts configuration
@@ -235,16 +203,16 @@ export async function resolveFeedUrl(feedUrl: string): Promise<string> {
 }
 
 /**
- * Constructs a URL for the RSS to JSON API with better type safety
+ * Constructs the Podr service URL that returns a feed as JSON
  * This function does NOT resolve Apple Podcasts URLs - use resolveFeedUrl first if needed
  * @param feedUrl - The RSS feed URL to convert to JSON
  * @param maxCount - Maximum number of items to return (default: 300)
- * @returns The API URL for fetching JSON feed
+ * @returns The service URL for fetching the JSON feed
  * @throws {Error} When the feedUrl is invalid
  */
 export function getFeedUrl(
   feedUrl: string,
-  maxCount: number = RSS_API_CONFIG.DEFAULT_MAX_COUNT
+  maxCount: number = FEED_CONFIG.DEFAULT_MAX_COUNT
 ): string {
   if (!feedUrl || typeof feedUrl !== 'string') {
     throw new Error('Invalid feed URL: URL must be a non-empty string');
@@ -259,15 +227,7 @@ export function getFeedUrl(
     count: maxCount.toString(),
   });
 
-  if (APP_CONFIG.API_BASE_URL !== 'https://podr-service.cascadiacollections.workers.dev') {
-    return `${APP_CONFIG.API_BASE_URL}/feed?${searchParams.toString()}`;
-  }
-
-  if (RSS_API_KEY) {
-    searchParams.set('api_key', RSS_API_KEY);
-  }
-
-  return `${RSS_API_CONFIG.BASE_URL}?${searchParams.toString()}`;
+  return `${APP_CONFIG.API_BASE_URL}/feed?${searchParams.toString()}`;
 }
 
 /**
