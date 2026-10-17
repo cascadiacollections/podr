@@ -316,4 +316,87 @@ describe('App episode fetching', () => {
 
     expect(screen.queryByText(STORED_EPISODE.title)).toBeNull();
   });
+
+  test('gives an open podcast its own address, and clears it on the way back', async () => {
+    global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    expect(new URLSearchParams(window.location.search).get('feed')).toBe(STORED_FEED.feedUrl);
+    expect(document.title).toBe(`${STORED_FEED.collectionName} · Podr`);
+
+    fireEvent.click(screen.getByRole('button', { name: /podcasts/i }));
+    await waitFor(() => {
+      expect(window.location.search).toBe('');
+    });
+  });
+
+  test('opens a shared link to a podcast it has never seen, from the feed alone', async () => {
+    localStorage.removeItem('podr_feeds');
+    window.history.replaceState(null, '', '/?feed=' + encodeURIComponent('https://example.com/shared.rss'));
+    const back = jest.spyOn(window.history, 'back');
+
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      feed: { title: 'Shared Show', author: 'Sharer', image: 'https://example.com/shared.jpg' },
+      items: [{ guid: 's1', title: 'Shared Episode' }]
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Shared Show' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Shared Episode')).toBeInTheDocument();
+    expect(document.querySelector('.podcast-hero__artwork')).toHaveAttribute('src', 'https://example.com/shared.jpg');
+
+    // Saving it keeps the name and artwork the feed supplied
+    fireEvent.click(screen.getByRole('button', { name: 'Add Shared Show to your library' }));
+    const stored = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
+    expect(stored[0]).toMatchObject({ collectionName: 'Shared Show', artworkUrl100: 'https://example.com/shared.jpg' });
+
+    // There is no browse entry behind a shared link; going back must not leave the site
+    fireEvent.click(screen.getByRole('button', { name: /podcasts/i }));
+    expect(back).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { name: 'Your library' })).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+
+    back.mockRestore();
+  });
+
+  test('opens a shared link to a library podcast under its saved name', () => {
+    window.history.replaceState(null, '', '/?feed=' + encodeURIComponent(STORED_FEED.feedUrl));
+    global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
+
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: STORED_FEED.collectionName })).toBeInTheDocument();
+  });
+
+  test('ignores a shared link that is not a web address', () => {
+    window.history.replaceState(null, '', '/?feed=' + encodeURIComponent('javascript:alert(1)'));
+    global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
+
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: 'Your library' })).toBeInTheDocument();
+  });
+
+  test('copies the podcast link where there is no share sheet', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Link copied');
+    });
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('?feed=' + encodeURIComponent(STORED_FEED.feedUrl)));
+  });
 });
