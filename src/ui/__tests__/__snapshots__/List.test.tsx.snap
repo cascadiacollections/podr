@@ -2,132 +2,130 @@
 
 exports[`List component renders empty state 1`] = `
 <div>
-  <section
+  <div
     aria-busy="false"
   >
-    <table
-      class="episodes-table"
+    <div
+      class="empty-state"
     >
-      <caption>
-        Podcast Episodes
-      </caption>
-      <tbody>
-        <tr
-          class="empty-row"
-        >
-          <td
-            colspan="3"
-          >
-            <div
-              class="empty-state"
-            >
-              <p
-                class="empty-message"
-              >
-                Pick a podcast above to see its episodes.
-              </p>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+      <p
+        class="empty-message"
+      >
+        This podcast has no episodes yet.
+      </p>
+    </div>
+  </div>
 </div>
 `;
 
 exports[`List component renders with results 1`] = `
 <div>
-  <section
+  <div
     aria-busy="false"
   >
-    <table
-      class="episodes-table"
+    <ol
+      aria-label="Episodes"
+      class="episode-list"
     >
-      <caption>
-        Podcast Episodes
-      </caption>
-      <thead>
-        <tr>
-          <th
-            scope="col"
-          >
-            Episode
-          </th>
-          <th
-            class="date-column"
-            scope="col"
-          >
-            Date
-          </th>
-          <th
-            class="duration-column"
-            scope="col"
-          >
-            Duration
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="episode-row"
+      <li
+        class="episode"
+      >
+        <button
+          aria-describedby="P0-0"
+          aria-label="Play episode: Test Episode 1"
+          class="episode__button"
+          type="button"
         >
-          <td
-            class="episode-title-cell"
+          <span
+            aria-hidden="true"
+            class="episode__play"
           >
-            <button
-              aria-label="Play episode: Test Episode 1"
-              class="episode-title"
-              type="button"
+            ▶
+          </span>
+          <span
+            class="episode__body"
+          >
+            <span
+              class="episode__title"
             >
               Test Episode 1
-            </button>
-          </td>
-          <td
-            class="date-column"
-          >
-            <time
-              datetime="2023-05-15T12:00:00Z"
+            </span>
+            <span
+              class="episode__meta"
+              id="P0-0"
             >
-              May 15, 2023
-            </time>
-          </td>
-          <td
-            class="duration-column"
-          >
-            01:00:00
-          </td>
-        </tr>
-        <tr
-          class="episode-row"
+              <time
+                datetime="2023-05-15T12:00:00Z"
+              >
+                May 15, 2023
+              </time>
+              <span
+                aria-hidden="true"
+              >
+                 · 
+              </span>
+              <span>
+                1 hr
+              </span>
+            </span>
+            <span
+              class="episode__summary"
+            >
+              Description 1
+            </span>
+          </span>
+        </button>
+      </li>
+      <li
+        class="episode"
+      >
+        <button
+          aria-describedby="P0-1"
+          aria-label="Play episode: Test Episode 2"
+          class="episode__button"
+          type="button"
         >
-          <td
-            class="episode-title-cell"
+          <span
+            aria-hidden="true"
+            class="episode__play"
           >
-            <button
-              aria-label="Play episode: Test Episode 2"
-              class="episode-title"
-              type="button"
+            ▶
+          </span>
+          <span
+            class="episode__body"
+          >
+            <span
+              class="episode__title"
             >
               Test Episode 2
-            </button>
-          </td>
-          <td
-            class="date-column"
-          >
-            <time
-              datetime="2023-05-16T12:00:00Z"
+            </span>
+            <span
+              class="episode__meta"
+              id="P0-1"
             >
-              May 16, 2023
-            </time>
-          </td>
-          <td
-            class="duration-column"
-          >
-            00:30:00
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+              <time
+                datetime="2023-05-16T12:00:00Z"
+              >
+                May 16, 2023
+              </time>
+              <span
+                aria-hidden="true"
+              >
+                 · 
+              </span>
+              <span>
+                30 min
+              </span>
+            </span>
+            <span
+              class="episode__summary"
+            >
+              Description 2
+            </span>
+          </span>
+        </button>
+      </li>
+    </ol>
+  </div>
 </div>
 `;

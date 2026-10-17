@@ -1,16 +1,22 @@
 import { effect, signal, Signal } from '@preact/signals';
-import { h, JSX } from 'preact';
+import { Fragment, h, JSX } from 'preact';
 import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
 import { trackEvent } from '../utils/analytics';
 import { APP_CONFIG, createAppState, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
-import { parseFeedResponse, parseStoredFeedItems } from '../utils/feed';
+import {
+  EMPTY_FEED_DETAILS,
+  IFeedDetails,
+  parseFeedDetails,
+  parseFeedResponse,
+  parseStoredFeedItems
+} from '../utils/feed';
 import { getFeedUrl, getSecureUrl, IResolvedFeed, resolveFeed } from '../utils/helpers';
-import { isConstrainedConnection, prefersReducedMotion, useOnlineStatus } from '../utils/network';
+import { isConstrainedConnection, useOnlineStatus } from '../utils/network';
 import { readStoredJson, writeStoredJson } from '../utils/storage';
-import { List } from './List';
 import { INowPlaying, PlayerBar } from './PlayerBar';
 import { PodcastCard } from './PodcastCard';
+import { PodcastView } from './PodcastView';
 import { IFeedItem } from './Result';
 import { Search } from './Search';
 
@@ -42,6 +48,53 @@ const OFFLINE_MESSAGE =
 const MAX_PERSISTED_EPISODES = 60;
 
 /**
+ * Characters of each episode description kept in local storage: enough for the
+ * two-line summary the list shows, without persisting entire show notes.
+ */
+const MAX_PERSISTED_DESCRIPTION = 280;
+
+/**
+ * Which podcast the loaded episodes belong to, and what its feed says about
+ * itself. Kept beside the episodes so neither is ever shown under another
+ * podcast's name.
+ */
+interface IResultsFeed extends IFeedDetails {
+  readonly feedUrl: string;
+}
+
+const NO_RESULTS_FEED: IResultsFeed = Object.freeze({ ...EMPTY_FEED_DETAILS, feedUrl: '' });
+
+const parseResultsFeed = (value: unknown): IResultsFeed => {
+  const feedUrl = (value as { feedUrl?: unknown } | null)?.feedUrl;
+
+  return typeof feedUrl === 'string' && feedUrl
+    ? Object.freeze({ ...parseFeedDetails(value), feedUrl })
+    : NO_RESULTS_FEED;
+};
+
+/**
+ * The history entry for an open podcast. Carrying the whole feed lets Back,
+ * Forward and a reload reopen it without looking anything up.
+ */
+interface IPodcastHistoryState {
+  readonly podrFeed: IFeed;
+}
+
+const getHistoryFeed = (state: unknown): IFeed | null => {
+  const feed = (state as Partial<IPodcastHistoryState> | null)?.podrFeed;
+
+  return feed && typeof feed.feedUrl === 'string' && feed.feedUrl ? feed : null;
+};
+
+const scrollToPosition = (top: number): void => {
+  try {
+    window.scrollTo({ top, behavior: 'auto' });
+  } catch {
+    // Not every environment implements scrolling; position is a nicety
+  }
+};
+
+/**
  * Cards whose artwork loads eagerly: roughly the first row on a phone, so the top
  * of a grid is never blank while the rest streams in lazily.
  */
@@ -66,14 +119,17 @@ const useLocalStorage = <T,>(
 };
 
 /**
- * Trims the episode list before it is persisted, dropping the descriptions the UI
- * never renders.
+ * Trims the episode list before it is persisted, keeping only as much of each
+ * description as the list's summary shows.
  */
 const toPersistedEpisodes = (items: ReadonlyArray<IFeedItem>): ReadonlyArray<unknown> =>
   items.slice(0, MAX_PERSISTED_EPISODES).map((item: IFeedItem) => ({
     guid: item.guid,
     title: item.title,
     pubDate: item.pubDate,
+    description: item.description.length > MAX_PERSISTED_DESCRIPTION
+      ? `${item.description.slice(0, MAX_PERSISTED_DESCRIPTION).trimEnd()}…`
+      : item.description,
     enclosure: item.enclosure
   }));
 
@@ -135,16 +191,19 @@ const toFeed = (podcast: ITopPodcast, preferSmall: boolean): IFeed => {
   const artwork = getTopPodcastArtwork(podcast, preferSmall);
 
   return {
-    collectionName: podcast.title.label,
+    // The title is "<name> - <artist>"; the separate fields read better on a card
+    collectionName: podcast['im:name']?.label || podcast.title.label,
     feedUrl: podcast.id.label,
     artworkUrl100: artwork,
-    artworkUrl600: artwork
+    artworkUrl600: artwork,
+    artistName: podcast['im:artist']?.label
   };
 };
 
 export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const episodesRef = useRef<HTMLElement>(null);
+  // Where the browse view was scrolled to when a podcast was opened
+  const browseScrollRef = useRef(0);
   const isOnline = useOnlineStatus();
 
   const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
@@ -156,8 +215,11 @@ export const App = (): JSX.Element => {
   );
 
   // Presentation state, kept local to the component rather than in shared app state
-  const { isFeedLoading, isSearching, feedError, selectedFeed, nowPlaying } = useMemo(
+  const { isFeedLoading, isSearching, feedError, selectedFeed, nowPlaying, resultsFeed } = useMemo(
     () => ({
+      resultsFeed: signal<IResultsFeed>(
+        parseResultsFeed(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_FEED_KEY, null))
+      ),
       isFeedLoading: signal(false),
       isSearching: signal(false),
       feedError: signal<IFeedError | null>(null),
@@ -178,6 +240,7 @@ export const App = (): JSX.Element => {
 
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds);
   useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results, toPersistedEpisodes);
+  useLocalStorage(APP_CONFIG.LOCAL_STORAGE.RESULTS_FEED_KEY, resultsFeed);
 
   // Abandon in-flight requests when the app goes away
   useEffect(() => {
@@ -256,6 +319,13 @@ export const App = (): JSX.Element => {
     isFeedLoading.value = true;
     feedError.value = null;
 
+    // Episodes kept from another podcast must not appear under this one's name.
+    // Those of the same podcast stay, so a reopen - or an offline one - is instant.
+    if (resultsFeed.value.feedUrl !== feed.feedUrl) {
+      results.value = EMPTY_ARRAY;
+      resultsFeed.value = { ...EMPTY_FEED_DETAILS, feedUrl: feed.feedUrl };
+    }
+
     try {
       // Resolve the feed URL (converts Apple Podcasts URLs to RSS feed URLs)
       const resolved = await resolveFeed(feed.feedUrl);
@@ -266,6 +336,11 @@ export const App = (): JSX.Element => {
 
       if (repaired !== feed) {
         selectedFeed.value = repaired;
+
+        if (getHistoryFeed(window.history.state)?.feedUrl === repaired.feedUrl) {
+          window.history.replaceState({ podrFeed: repaired }, '');
+        }
+
         favorited.value = new Set(
           Array.from(favorited.value).map((candidate: IFeed) =>
             candidate.feedUrl === repaired.feedUrl ? repaired : candidate
@@ -282,7 +357,8 @@ export const App = (): JSX.Element => {
 
       // Throws when the response is not a feed, so a wrong-but-successful
       // response surfaces as an error rather than an empty episode list
-      const feedResults = parseFeedResponse(await response.json());
+      const payload: unknown = await response.json();
+      const feedResults = parseFeedResponse(payload);
 
       // A newer request has since started; its results win
       if (!isCurrentRequest()) {
@@ -290,6 +366,7 @@ export const App = (): JSX.Element => {
       }
 
       results.value = feedResults;
+      resultsFeed.value = { ...parseFeedDetails(payload), feedUrl: feed.feedUrl };
     } catch (err: unknown) {
       // Handle errors from resolveFeedUrl, fetch, and response parsing
       const error = err as Error;
@@ -423,15 +500,69 @@ export const App = (): JSX.Element => {
   }, []);
 
   const openPodcast = useCallback((feed: IFeed) => {
-    void tryFetchFeed(feed);
+    browseScrollRef.current = window.scrollY;
 
-    // The episode list sits below the grids, so bring it into view rather than
-    // leaving the listener wondering whether the click registered
-    episodesRef.current?.scrollIntoView?.({
-      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      block: 'start'
-    });
+    // A history entry per podcast, so the browser's Back returns to browsing
+    window.history.pushState({ podrFeed: feed } satisfies IPodcastHistoryState, '');
+
+    void tryFetchFeed(feed);
+    scrollToPosition(0);
   }, [tryFetchFeed]);
+
+  /**
+   * Leaves the podcast view without touching history; the caller decides
+   * whether an entry is being popped or never existed
+   */
+  const showBrowse = useCallback(() => {
+    // Nobody is waiting on that feed any more
+    feedRequestId.current++;
+    feedAbortRef.current?.abort();
+    isFeedLoading.value = false;
+    feedError.value = null;
+    selectedFeed.value = null;
+    scrollToPosition(browseScrollRef.current);
+  }, []);
+
+  const closePodcast = useCallback(() => {
+    if (getHistoryFeed(window.history.state)) {
+      // popstate below finishes the job, exactly as the browser's Back would
+      window.history.back();
+    } else {
+      showBrowse();
+    }
+  }, [showBrowse]);
+
+  // Results are listed on the browse view, so a search leaves the podcast
+  const onSearchFromAnyView = useCallback((searchQuery: string, limit?: number) => {
+    if (searchQuery && selectedFeed.value) {
+      closePodcast();
+    }
+
+    onSearch(searchQuery, limit);
+  }, [closePodcast, onSearch]);
+
+  // Back, Forward and reload move between browsing and a podcast
+  useEffect(() => {
+    const restored = getHistoryFeed(window.history.state);
+
+    if (restored) {
+      void tryFetchFeed(restored);
+    }
+
+    const onPopState = (event: PopStateEvent): void => {
+      const feed = getHistoryFeed(event.state);
+
+      if (feed) {
+        void tryFetchFeed(feed);
+        scrollToPosition(0);
+      } else {
+        showBrowse();
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [tryFetchFeed, showBrowse]);
 
   const toggleSelectedFavorite = useCallback(() => {
     const feed = selectedFeed.value;
@@ -447,12 +578,13 @@ export const App = (): JSX.Element => {
   );
 
   const selected = selectedFeed.value;
+  // Marked in the grids, so returning from a podcast shows where you were
+  const lastOpenedUrl = resultsFeed.value.feedUrl;
   const isSelectedFavorite = selected ? favoriteUrls.has(selected.feedUrl) : false;
   const topFeeds = useMemo(
     () => topResults.value.map((podcast: ITopPodcast) => toFeed(podcast, preferSmallArtwork)),
     [topResults.value, preferSmallArtwork]
   );
-  const episodeCount = results.value.length;
   // A first visit leads with discovery; once the library has entries it leads instead
   const hasLibrary = feeds.value.length > 0;
 
@@ -473,7 +605,7 @@ export const App = (): JSX.Element => {
               onOpen={openPodcast}
               onToggleFavorite={toggleFavorite}
               isFavorite
-              isCurrent={selected?.feedUrl === result.feedUrl}
+              isCurrent={lastOpenedUrl === result.feedUrl}
               lazy={index >= EAGER_ARTWORK_COUNT}
             />
           ))}
@@ -501,7 +633,7 @@ export const App = (): JSX.Element => {
               onOpen={openPodcast}
               onToggleFavorite={toggleFavorite}
               isFavorite={favoriteUrls.has(feed.feedUrl)}
-              isCurrent={selected?.feedUrl === feed.feedUrl}
+              isCurrent={lastOpenedUrl === feed.feedUrl}
               lazy={index >= EAGER_ARTWORK_COUNT}
             />
           ))}
@@ -528,7 +660,7 @@ export const App = (): JSX.Element => {
             <span>Podr</span>
           </a>
         </h1>
-        <Search onSearch={onSearch} querySignal={query} isLoading={isSearching.value} />
+        <Search onSearch={onSearchFromAnyView} querySignal={query} isLoading={isSearching.value} />
       </header>
 
       <main className="app-main">
@@ -536,87 +668,51 @@ export const App = (): JSX.Element => {
           <p className="notice notice--offline" role="status">{OFFLINE_MESSAGE}</p>
         ) : null}
 
-        {searchResults.value.length > 0 ? (
-          <section className="section" aria-labelledby="search-results-heading">
-            <div className="section__header">
-              <h2 className="section__title" id="search-results-heading">
-                Results for “{query.value}”
-              </h2>
-              <span className="section__count">{searchResults.value.length}</span>
-            </div>
-            <ul className="card-grid">
-              {searchResults.value.map((result: IFeed, index: number) => (
-                <PodcastCard
-                  key={result.feedUrl}
-                  feed={result}
-                  onOpen={openPodcast}
-                  onToggleFavorite={toggleFavorite}
-                  isFavorite={favoriteUrls.has(result.feedUrl)}
-                  isCurrent={selected?.feedUrl === result.feedUrl}
-                  lazy={index >= EAGER_ARTWORK_COUNT}
-                />
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {hasLibrary ? librarySection : discoverSection}
-        {hasLibrary ? discoverSection : librarySection}
-
-        <section className="section" aria-labelledby="episodes-heading" ref={episodesRef}>
-          <div className="section__header">
-            <h2 className="section__title" id="episodes-heading">Episodes</h2>
-            {episodeCount > 0 ? <span className="section__count">{episodeCount}</span> : null}
-          </div>
-
-          {selected ? (
-            <div className="now-playing">
-              <img
-                className="now-playing__artwork"
-                src={selected.artworkUrl100}
-                width={64}
-                height={64}
-                alt=""
-                decoding="async"
-              />
-              <div className="now-playing__text">
-                <div className="now-playing__title">{selected.collectionName}</div>
-                <div className="now-playing__meta">
-                  {isFeedLoading.value
-                    ? 'Loading episodes…'
-                    : `${episodeCount} ${episodeCount === 1 ? 'episode' : 'episodes'}`}
-                </div>
-              </div>
-              <button
-                type="button"
-                className={isSelectedFavorite ? 'icon-button icon-button--active' : 'icon-button'}
-                onClick={toggleSelectedFavorite}
-                aria-pressed={isSelectedFavorite}
-              >
-                <span aria-hidden="true">{isSelectedFavorite ? '★' : '☆'}</span>
-                <span className="visually-hidden">
-                  {isSelectedFavorite
-                    ? `Remove ${selected.collectionName} from your library`
-                    : `Add ${selected.collectionName} to your library`}
-                </span>
-              </button>
-            </div>
-          ) : null}
-
-          {feedError.value ? (
-            <p className="notice notice--error" role="alert">
-              <span>{isOnline ? feedError.value.message : OFFLINE_MESSAGE}</span>
-              {isOnline ? <span className="notice__reason">{feedError.value.reason}</span> : null}
-            </p>
-          ) : null}
-
-          <List
-            results={results.value}
-            onClick={onPlayEpisode}
+        {selected ? (
+          <PodcastView
+            feed={selected}
+            details={resultsFeed.value.feedUrl === selected.feedUrl ? resultsFeed.value : EMPTY_FEED_DETAILS}
+            episodes={results.value}
             isLoading={isFeedLoading.value}
+            isFavorite={isSelectedFavorite}
+            error={feedError.value
+              ? isOnline ? feedError.value : { message: OFFLINE_MESSAGE }
+              : undefined}
             currentGuid={nowPlaying.value?.guid}
+            onBack={closePodcast}
+            onToggleFavorite={toggleSelectedFavorite}
+            onPlay={onPlayEpisode}
           />
-        </section>
+        ) : (
+          <Fragment>
+            {searchResults.value.length > 0 ? (
+              <section className="section" aria-labelledby="search-results-heading">
+                <div className="section__header">
+                  <h2 className="section__title" id="search-results-heading">
+                    Results for “{query.value}”
+                  </h2>
+                  <span className="section__count">{searchResults.value.length}</span>
+                </div>
+                <ul className="card-grid">
+                  {searchResults.value.map((result: IFeed, index: number) => (
+                    <PodcastCard
+                      key={result.feedUrl}
+                      feed={result}
+                      onOpen={openPodcast}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={favoriteUrls.has(result.feedUrl)}
+                      isCurrent={lastOpenedUrl === result.feedUrl}
+                      lazy={index >= EAGER_ARTWORK_COUNT}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {hasLibrary ? librarySection : discoverSection}
+            {hasLibrary ? discoverSection : librarySection}
+          </Fragment>
+        )}
       </main>
 
       <PlayerBar audioRef={audioRef} nowPlaying={nowPlaying.value} />

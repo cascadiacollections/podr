@@ -27,7 +27,7 @@ export interface IPodcastCardProps {
 }
 
 /**
- * A podcast in a grid: artwork, name, and an explicit favorite toggle.
+ * A podcast in a grid: artwork, name, who makes it, and an explicit favorite toggle.
  *
  * The toggle replaces a double-click gesture that was undiscoverable and had no
  * keyboard equivalent. Handlers take the feed as an argument so the parent can
@@ -58,6 +58,7 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
             draggable={false}
           />
           <span className="podcast-card__name">{feed.collectionName}</span>
+          {feed.artistName ? <span className="podcast-card__artist">{feed.artistName}</span> : null}
         </button>
         <button
           type="button"
@@ -77,6 +78,7 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
   (prevProps: IPodcastCardProps, nextProps: IPodcastCardProps): boolean =>
     prevProps.feed.feedUrl === nextProps.feed.feedUrl &&
     prevProps.feed.collectionName === nextProps.feed.collectionName &&
+    prevProps.feed.artistName === nextProps.feed.artistName &&
     prevProps.feed.artworkUrl100 === nextProps.feed.artworkUrl100 &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isCurrent === nextProps.isCurrent &&

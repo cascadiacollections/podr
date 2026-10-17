@@ -6,6 +6,20 @@ import { IFeedItem } from '../ui/Result';
 const EMPTY_ITEMS: readonly IFeedItem[] = Object.freeze([]);
 
 /**
+ * Whether a description could hold markup or character references at all.
+ * Most stored descriptions are already plain, and skip the parse entirely.
+ */
+const MARKUP_PATTERN = /[<&]/;
+
+/**
+ * Closing tags that separate blocks of text; they become spaces so adjacent
+ * paragraphs do not run together once the markup is gone
+ */
+const BLOCK_BOUNDARY_PATTERN = /<(?:br|\/p|\/div|\/li|\/h[1-6])\b[^>]*>/gi;
+
+let descriptionParser: DOMParser | undefined;
+
+/**
  * Duration parsing configuration
  */
 const SECONDS_PER_MINUTE = 60 as const;
@@ -48,6 +62,35 @@ function toText(value: unknown, fallback: string = ''): string {
   }
 
   return fallback;
+}
+
+/**
+ * Reduces a feed description to plain text for display.
+ *
+ * Descriptions are frequently HTML (paragraphs, links, sponsor lists). They are
+ * rendered as text, never markup, so only the text is kept, with character
+ * references decoded and whitespace collapsed to keep a clamped summary dense.
+ * @param value - The raw description
+ * @returns The description as a single line of plain text
+ */
+export function toPlainText(value: string): string {
+  if (!value) {
+    return '';
+  }
+
+  let text = value;
+
+  if (MARKUP_PATTERN.test(text)) {
+    // A parsed document is inert - scripts do not run and images do not load -
+    // and its textContent has every character reference decoded. Only text
+    // leaves this function, and it is rendered as text.
+    descriptionParser ??= new DOMParser();
+    text = descriptionParser
+      .parseFromString(text.replace(BLOCK_BOUNDARY_PATTERN, ' $&'), 'text/html')
+      .body.textContent ?? '';
+  }
+
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -115,7 +158,7 @@ function toFeedItem(entry: Record<string, unknown>, index: number): IFeedItem {
   return {
     guid: toText(entry.guid) || link || identity || `item-${index}`,
     title,
-    description: toText(entry.description),
+    description: toPlainText(toText(entry.description)),
     pubDate,
     enclosure: {
       link,
@@ -174,6 +217,43 @@ export function parseFeedResponse(payload: unknown): readonly IFeedItem[] {
   }
 
   return Object.freeze(entries.filter(isRecord).map(toFeedItem));
+}
+
+/**
+ * What the feed says about the podcast itself, as opposed to its episodes
+ */
+export interface IFeedDetails {
+  readonly title: string;
+  readonly author: string;
+  readonly description: string;
+}
+
+export const EMPTY_FEED_DETAILS: IFeedDetails = Object.freeze({
+  title: '',
+  author: '',
+  description: '',
+});
+
+/**
+ * Reads the podcast's own details from a feed response or a persisted copy of
+ * them. Never throws: the details are a nicety, and a feed without them still
+ * has episodes worth listing.
+ * @param payload - A feed response (`{ feed: {...}, items }`) or bare details
+ * @returns The details, with absent fields empty
+ */
+export function parseFeedDetails(payload: unknown): IFeedDetails {
+  if (!isRecord(payload)) {
+    return EMPTY_FEED_DETAILS;
+  }
+
+  const source = isRecord(payload.feed) ? payload.feed : payload;
+  const title = toText(source.title);
+  const author = toText(source.author);
+  const description = toPlainText(toText(source.description));
+
+  return title || author || description
+    ? Object.freeze({ title, author, description })
+    : EMPTY_FEED_DETAILS;
 }
 
 /**

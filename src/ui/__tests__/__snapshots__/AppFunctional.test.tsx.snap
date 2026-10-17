@@ -139,51 +139,6 @@ exports[`App component loads top podcasts on mount 1`] = `
           </p>
         </div>
       </section>
-      <section
-        aria-labelledby="episodes-heading"
-        class="section"
-      >
-        <div
-          class="section__header"
-        >
-          <h2
-            class="section__title"
-            id="episodes-heading"
-          >
-            Episodes
-          </h2>
-        </div>
-        <section
-          aria-busy="false"
-        >
-          <table
-            class="episodes-table"
-          >
-            <caption>
-              Podcast Episodes
-            </caption>
-            <tbody>
-              <tr
-                class="empty-row"
-              >
-                <td
-                  colspan="3"
-                >
-                  <div
-                    class="empty-state"
-                  >
-                    <p
-                      class="empty-message"
-                    >
-                      Pick a podcast above to see its episodes.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </section>
     </main>
     <div
       aria-hidden="true"
@@ -356,51 +311,6 @@ exports[`App component renders without crashing 1`] = `
             Star a podcast to keep it here, ready to open offline.
           </p>
         </div>
-      </section>
-      <section
-        aria-labelledby="episodes-heading"
-        class="section"
-      >
-        <div
-          class="section__header"
-        >
-          <h2
-            class="section__title"
-            id="episodes-heading"
-          >
-            Episodes
-          </h2>
-        </div>
-        <section
-          aria-busy="false"
-        >
-          <table
-            class="episodes-table"
-          >
-            <caption>
-              Podcast Episodes
-            </caption>
-            <tbody>
-              <tr
-                class="empty-row"
-              >
-                <td
-                  colspan="3"
-                >
-                  <div
-                    class="empty-state"
-                  >
-                    <p
-                      class="empty-message"
-                    >
-                      Pick a podcast above to see its episodes.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
       </section>
     </main>
     <div
