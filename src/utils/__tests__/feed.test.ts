@@ -179,3 +179,17 @@ describe('parseFeedDetails', () => {
     expect(parseFeedDetails({ feed: 'nope' })).toEqual({ title: '', author: '', description: '' });
   });
 });
+
+describe('toPlainText with hostile markup', () => {
+  test('keeps only text from script and nested tag tricks', () => {
+    const text = toPlainText('<scr<script>ipt>alert(1)</script>Hi <img src=x onerror=alert(1)>there');
+
+    expect(text).not.toMatch(/<script/i);
+    expect(text).not.toMatch(/<img/i);
+    expect(text).toContain('Hi there');
+  });
+
+  test('passes plain text through without parsing it', () => {
+    expect(toPlainText('  Already   plain  ')).toBe('Already plain');
+  });
+});

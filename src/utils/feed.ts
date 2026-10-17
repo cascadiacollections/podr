@@ -6,24 +6,18 @@ import { IFeedItem } from '../ui/Result';
 const EMPTY_ITEMS: readonly IFeedItem[] = Object.freeze([]);
 
 /**
- * Character references feeds commonly leave in their descriptions. Anything
- * rarer is left as written rather than pulling in a full HTML decoder.
+ * Whether a description could hold markup or character references at all.
+ * Most stored descriptions are already plain, and skip the parse entirely.
  */
-const NAMED_ENTITIES: Readonly<Record<string, string>> = Object.freeze({
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-  hellip: '…',
-  mdash: '—',
-  ndash: '–',
-  rsquo: '’',
-  lsquo: '‘',
-  rdquo: '”',
-  ldquo: '“',
-});
+const MARKUP_PATTERN = /[<&]/;
+
+/**
+ * Closing tags that separate blocks of text; they become spaces so adjacent
+ * paragraphs do not run together once the markup is gone
+ */
+const BLOCK_BOUNDARY_PATTERN = /<(?:br|\/p|\/div|\/li|\/h[1-6])\b[^>]*>/gi;
+
+let descriptionParser: DOMParser | undefined;
 
 /**
  * Duration parsing configuration
@@ -74,8 +68,8 @@ function toText(value: unknown, fallback: string = ''): string {
  * Reduces a feed description to plain text for display.
  *
  * Descriptions are frequently HTML (paragraphs, links, sponsor lists). They are
- * rendered as text, never markup, so tags are dropped, the common character
- * references decoded, and whitespace collapsed to keep a clamped summary dense.
+ * rendered as text, never markup, so only the text is kept, with character
+ * references decoded and whitespace collapsed to keep a clamped summary dense.
  * @param value - The raw description
  * @returns The description as a single line of plain text
  */
@@ -84,24 +78,19 @@ export function toPlainText(value: string): string {
     return '';
   }
 
-  return value
-    .replace(/<(?:br|\/p|\/div|\/li)\b[^>]*>/gi, ' ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (match: string, entity: string) => {
-      if (entity[0] === '#') {
-        const codePoint = entity[1] === 'x' || entity[1] === 'X'
-          ? Number.parseInt(entity.slice(2), 16)
-          : Number.parseInt(entity.slice(1), 10);
+  let text = value;
 
-        return Number.isFinite(codePoint) && codePoint > 0 && codePoint <= 0x10ffff
-          ? String.fromCodePoint(codePoint)
-          : match;
-      }
+  if (MARKUP_PATTERN.test(text)) {
+    // A parsed document is inert - scripts do not run and images do not load -
+    // and its textContent has every character reference decoded. Only text
+    // leaves this function, and it is rendered as text.
+    descriptionParser ??= new DOMParser();
+    text = descriptionParser
+      .parseFromString(text.replace(BLOCK_BOUNDARY_PATTERN, ' $&'), 'text/html')
+      .body.textContent ?? '';
+  }
 
-      return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
-    })
-    .replace(/\s+/g, ' ')
-    .trim();
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 /**
