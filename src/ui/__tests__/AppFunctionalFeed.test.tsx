@@ -60,6 +60,7 @@ describe('App episode fetching', () => {
 
     localStorage.setItem('podr_feeds', JSON.stringify([STORED_FEED]));
     localStorage.setItem('podr_results', JSON.stringify([STORED_EPISODE]));
+    localStorage.setItem('podr_results_feed', JSON.stringify({ feedUrl: STORED_FEED.feedUrl }));
   });
 
   test('renders episodes returned by the feed service', async () => {
@@ -83,8 +84,8 @@ describe('App episode fetching', () => {
       expect(screen.getByText('Fresh Episode')).toBeInTheDocument();
     });
 
-    // Clock-notation durations are converted to HH:MM:SS rather than dropped
-    expect(screen.getByText('00:42:15')).toBeInTheDocument();
+    // Clock-notation durations are understood rather than dropped
+    expect(screen.getByText('42 min')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -92,9 +93,10 @@ describe('App episode fetching', () => {
     global.fetch = mockFetchWithFeed(OPENAPI_SCHEMA_RESPONSE);
 
     render(<App />);
-    expect(screen.getByText(STORED_EPISODE.title)).toBeInTheDocument();
-
     fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    // The episodes saved for this podcast show at once, before the fetch settles
+    expect(screen.getByText(STORED_EPISODE.title)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/could not load episodes/i);
@@ -199,7 +201,13 @@ describe('App episode fetching', () => {
 
     fireEvent.click(screen.getByRole('button', { name: legacyFeed.collectionName }));
 
-    // Resolution supplies the real name and artwork, and the entry keeps its place
+    // Resolution supplies the real name and artwork...
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'The Daily' })).toBeInTheDocument();
+    });
+
+    // ...and back in the library, the entry keeps its place
+    fireEvent.click(screen.getByRole('button', { name: /podcasts/i }));
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'The Daily' })).toBeInTheDocument();
     });
@@ -244,5 +252,68 @@ describe('App episode fetching', () => {
       expect(feedCall).not.toContain('api_key');
       expect(feedCall).toContain(encodeURIComponent(STORED_FEED.feedUrl));
     });
+  });
+
+  test('opens a podcast on its own page with what its feed says about it', async () => {
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      feed: {
+        title: 'My Show',
+        author: 'Show Maker',
+        description: '<p>A show about <b>things</b> &amp; stuff.</p>'
+      },
+      items: [{ guid: 'e1', title: 'Episode One', description: '<p>First &amp; best</p>' }]
+    });
+
+    render(<App />);
+    expect(screen.getByRole('heading', { name: 'Your library' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Show Maker')).toBeInTheDocument();
+    });
+
+    // The browse grids give way to the podcast, so its episodes stand alone
+    expect(screen.getByRole('heading', { name: 'My Show' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Your library' })).toBeNull();
+
+    // Descriptions are shown as text, without the feed's markup
+    expect(screen.getByText('A show about things & stuff.')).toBeInTheDocument();
+    expect(screen.getByText('First & best')).toBeInTheDocument();
+  });
+
+  test('returns to browsing with the back button and with browser history', async () => {
+    global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+    expect(screen.getByRole('heading', { name: STORED_FEED.collectionName })).toBeInTheDocument();
+
+    // The in-page button goes through history, as the browser's Back would
+    fireEvent.click(screen.getByRole('button', { name: /podcasts/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Your library' })).toBeInTheDocument();
+    });
+
+    // Forward reopens the podcast from the state in the history entry
+    window.dispatchEvent(new PopStateEvent('popstate', { state: { podrFeed: STORED_FEED } }));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: STORED_FEED.collectionName })).toBeInTheDocument();
+    });
+  });
+
+  test('never lists one podcast\'s saved episodes under another', async () => {
+    localStorage.setItem('podr_results_feed', JSON.stringify({ feedUrl: 'https://example.com/other.rss' }));
+    global.fetch = mockFetchWithFeed(OPENAPI_SCHEMA_RESPONSE);
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(STORED_EPISODE.title)).toBeNull();
   });
 });

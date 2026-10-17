@@ -19,16 +19,11 @@ export interface IListProps {
  * List configuration constants
  */
 const LIST_CONFIG = {
-  DEFAULT_EMPTY_MESSAGE: 'Pick a podcast above to see its episodes.',
+  DEFAULT_EMPTY_MESSAGE: 'This podcast has no episodes yet.',
   LOADING_MESSAGE: 'Loading episodes…',
-  TABLE_CAPTION: 'Podcast Episodes',
-  COLUMNS: {
-    EPISODE: 'Episode',
-    DATE: 'Date',
-    DURATION: 'Duration',
-  },
+  LIST_LABEL: 'Episodes',
   CSS_CLASSES: {
-    TABLE: 'episodes-table',
+    LIST: 'episode-list',
   },
   /**
    * Rows rendered before the listener asks for more. A feed can carry hundreds of
@@ -41,8 +36,8 @@ const LIST_CONFIG = {
 } as const;
 
 /**
- * List component that renders a table of podcast episodes with performance optimizations
- * Uses semantic HTML and memoization for optimal rendering performance
+ * The episodes of one podcast, newest first, as an ordered list. Each entry
+ * carries a summary, which a table's fixed columns had no room for.
  */
 export const List: FunctionComponent<IListProps> = memo(
   ({
@@ -83,40 +78,21 @@ export const List: FunctionComponent<IListProps> = memo(
     }, [visibleResults, onClick, currentGuid]);
 
     return (
-      <section aria-busy={isLoading ? 'true' : 'false'}>
-        <table className={LIST_CONFIG.CSS_CLASSES.TABLE}>
-          <caption>{LIST_CONFIG.TABLE_CAPTION}</caption>
-          {/* Column headings describe rows, so they stay out of the way when there are none */}
-          {results.length > 0 ? (
-            <thead>
-              <tr>
-                <th scope="col">{LIST_CONFIG.COLUMNS.EPISODE}</th>
-                <th scope="col" className="date-column">{LIST_CONFIG.COLUMNS.DATE}</th>
-                <th scope="col" className="duration-column">{LIST_CONFIG.COLUMNS.DURATION}</th>
-              </tr>
-            </thead>
-          ) : null}
-          <tbody>
-            {results.length > 0 ? (
-              renderedResults
-            ) : (
-              <tr className="empty-row">
-                <td colSpan={3}>
-                  {isLoading ? (
-                    <div className="loading-container">
-                      <span className="loading-spinner" aria-hidden="true" />
-                      <span>{LIST_CONFIG.LOADING_MESSAGE}</span>
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <p className="empty-message">{emptyMessage}</p>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div aria-busy={isLoading ? 'true' : 'false'}>
+        {results.length > 0 ? (
+          <ol className={LIST_CONFIG.CSS_CLASSES.LIST} aria-label={LIST_CONFIG.LIST_LABEL}>
+            {renderedResults}
+          </ol>
+        ) : isLoading ? (
+          <div className="loading-container">
+            <span className="loading-spinner" aria-hidden="true" />
+            <span>{LIST_CONFIG.LOADING_MESSAGE}</span>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p className="empty-message">{emptyMessage}</p>
+          </div>
+        )}
         {hiddenCount > 0 ? (
           <div className="episodes-footer">
             <button type="button" className="button-quiet" onClick={showMore}>
@@ -125,7 +101,7 @@ export const List: FunctionComponent<IListProps> = memo(
             </button>
           </div>
         ) : null}
-      </section>
+      </div>
     );
   },
   // Enhanced comparison function for better memoization performance

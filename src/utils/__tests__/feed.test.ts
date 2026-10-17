@@ -1,4 +1,4 @@
-import { FeedResponseError, parseDuration, parseFeedResponse, parseStoredFeedItems } from '../feed';
+import { FeedResponseError, parseDuration, parseFeedResponse, parseStoredFeedItems, parseFeedDetails, toPlainText } from '../feed';
 
 /**
  * The rss2json envelope for a single well-formed episode
@@ -137,5 +137,59 @@ describe('parseStoredFeedItems', () => {
   it('returns an empty list rather than throwing on corrupt data', () => {
     expect(parseStoredFeedItems(undefined)).toEqual([]);
     expect(parseStoredFeedItems({ unexpected: true })).toEqual([]);
+  });
+});
+
+describe('toPlainText', () => {
+  test('drops tags, decodes common references and collapses whitespace', () => {
+    expect(toPlainText('<p>Hello&nbsp;<a href="x">world</a></p>\n\n<p>Tom &amp; Jerry&#39;s &#x2014; &hellip;</p>'))
+      .toBe("Hello world Tom & Jerry's — …");
+  });
+
+  test('keeps block boundaries as spaces so words do not run together', () => {
+    expect(toPlainText('<p>One</p><p>Two</p>line<br/>break')).toBe('One Two line break');
+  });
+
+  test('leaves unknown references as written', () => {
+    expect(toPlainText('a &unknown; b &#xZZ; c')).toBe('a &unknown; b &#xZZ; c');
+  });
+
+  test('returns an empty string for empty input', () => {
+    expect(toPlainText('')).toBe('');
+  });
+});
+
+describe('parseFeedDetails', () => {
+  test('reads the feed envelope', () => {
+    expect(parseFeedDetails({
+      status: 'ok',
+      feed: { title: ' Show ', author: 'Maker', description: '<b>About</b>' },
+      items: []
+    })).toEqual({ title: 'Show', author: 'Maker', description: 'About' });
+  });
+
+  test('reads bare, previously persisted details', () => {
+    expect(parseFeedDetails({ feedUrl: 'u', title: 'Show', author: '', description: '' }))
+      .toEqual({ title: 'Show', author: '', description: '' });
+  });
+
+  test('never throws on junk', () => {
+    expect(parseFeedDetails(null)).toEqual({ title: '', author: '', description: '' });
+    expect(parseFeedDetails([1, 2])).toEqual({ title: '', author: '', description: '' });
+    expect(parseFeedDetails({ feed: 'nope' })).toEqual({ title: '', author: '', description: '' });
+  });
+});
+
+describe('toPlainText with hostile markup', () => {
+  test('keeps only text from script and nested tag tricks', () => {
+    const text = toPlainText('<scr<script>ipt>alert(1)</script>Hi <img src=x onerror=alert(1)>there');
+
+    expect(text).not.toMatch(/<script/i);
+    expect(text).not.toMatch(/<img/i);
+    expect(text).toContain('Hi there');
+  });
+
+  test('passes plain text through without parsing it', () => {
+    expect(toPlainText('  Already   plain  ')).toBe('Already plain');
   });
 });

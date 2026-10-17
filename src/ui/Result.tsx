@@ -1,73 +1,73 @@
 import { h, FunctionComponent } from 'preact';
-import { useCallback, useMemo } from 'preact/hooks';
+import { useCallback, useId, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 
-/**
- * Duration formatting configuration
- */
-const DURATION_CONFIG = {
-  HOURS_PER_MINUTE: 60,
-  MINUTES_PER_HOUR: 60,
-  SECONDS_PER_MINUTE: 60,
-  PAD_LENGTH: 2,
-  PAD_CHAR: '0',
-  SEPARATOR: ':',
-  FALLBACK_DURATION: '00:00:00',
-} as const;
+const SECONDS_PER_MINUTE = 60 as const;
+const MINUTES_PER_HOUR = 60 as const;
 
 /**
- * Date formatting options for consistent display
+ * Date formatting for episodes from this year, where the year is noise
  */
 const DATE_FORMAT_OPTIONS = {
-  year: 'numeric',
   month: 'short',
   day: 'numeric',
 } as const satisfies Intl.DateTimeFormatOptions;
 
 /**
- * Format a duration in seconds to HH:MM:SS format with better performance
- * @param duration - Duration in seconds
- * @returns Formatted duration string
+ * Date formatting for older episodes
  */
-function formatDuration(duration: number): string {
-  if (!duration || !Number.isFinite(duration) || duration < 0) {
-    return DURATION_CONFIG.FALLBACK_DURATION;
+const DATED_FORMAT_OPTIONS = {
+  ...DATE_FORMAT_OPTIONS,
+  year: 'numeric',
+} as const satisfies Intl.DateTimeFormatOptions;
+
+/**
+ * Formats a duration the way people say it: "1 hr 5 min", "42 min".
+ * @param duration - Duration in seconds
+ * @returns The formatted duration, or an empty string when it is unknown
+ */
+export function formatDuration(duration: number): string {
+  if (!duration || !Number.isFinite(duration) || duration <= 0) {
+    return '';
   }
 
-  const hours = Math.floor(duration / (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE));
-  const minutes = Math.floor((duration % (DURATION_CONFIG.MINUTES_PER_HOUR * DURATION_CONFIG.SECONDS_PER_MINUTE)) / DURATION_CONFIG.SECONDS_PER_MINUTE);
-  const seconds = Math.floor(duration % DURATION_CONFIG.SECONDS_PER_MINUTE);
+  const totalMinutes = Math.round(duration / SECONDS_PER_MINUTE);
 
-  const formatPart = (value: number): string =>
-    value.toString().padStart(DURATION_CONFIG.PAD_LENGTH, DURATION_CONFIG.PAD_CHAR);
+  if (totalMinutes < 1) {
+    return '< 1 min';
+  }
 
-  return [
-    formatPart(hours),
-    formatPart(minutes),
-    formatPart(seconds),
-  ].join(DURATION_CONFIG.SEPARATOR);
+  const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
+  const minutes = totalMinutes % MINUTES_PER_HOUR;
+
+  if (hours === 0) {
+    return `${minutes} min`;
+  }
+
+  return minutes === 0 ? `${hours} hr` : `${hours} hr ${minutes} min`;
 }
 
 /**
- * Format an ISO date string to a readable date string with caching
- * @param isoString - ISO date string
- * @returns Formatted date string
+ * Formats a publication date, leaving out the year for this year's episodes
+ * @param isoString - The date as given by the feed
+ * @param now - The current time, for deciding whether the year is needed
+ * @returns The formatted date, or an empty string when there is none to show
  */
-function formatPubDate(isoString: string): string {
+export function formatPubDate(isoString: string, now: Date = new Date()): string {
   if (!isoString || typeof isoString !== 'string') {
-    return 'Unknown date';
+    return '';
   }
 
-  try {
-    const date = new Date(isoString);
-    if (!Number.isFinite(date.getTime())) {
-      return 'Invalid date';
-    }
+  const date = new Date(isoString);
 
-    return date.toLocaleDateString(undefined, DATE_FORMAT_OPTIONS);
-  } catch {
-    return 'Invalid date';
+  if (!Number.isFinite(date.getTime())) {
+    return '';
   }
+
+  return date.toLocaleDateString(
+    undefined,
+    date.getFullYear() === now.getFullYear() ? DATE_FORMAT_OPTIONS : DATED_FORMAT_OPTIONS
+  );
 }
 
 /**
@@ -100,55 +100,61 @@ export interface IResultProps {
 }
 
 /**
- * Result component that displays a podcast episode with optimized rendering
+ * An episode in the list: what it is, when it came out, how long it runs, and
+ * enough of its description to tell it apart from its neighbours.
  *
- * The title is the row's single interactive element: it is a real button, so it
- * carries keyboard activation and focus for free. The row itself is no longer a
- * button wrapping a link - nesting interactive elements left keyboard and screen
- * reader users with two overlapping targets and one unreachable action.
+ * The whole row is a single button, so the target is large and there is one
+ * action per episode. Everything inside it is phrasing content, as a button
+ * requires.
  */
 export const Result: FunctionComponent<IResultProps> = memo(
   ({ onClick, result, isCurrent = false }: IResultProps) => {
-    const { title, pubDate, enclosure } = result;
+    const { title, pubDate, enclosure, description } = result;
 
     // Feeds routinely omit the enclosure on trailer and note-only entries
     const isPlayable = Boolean(enclosure?.link);
     const enclosureDuration = enclosure?.duration ?? 0;
 
-    // Memoize callback to prevent unnecessary re-renders
+    // The label names the action; the date and length are read as its description
+    const metaId = useId();
+
     const handleClick = useCallback(() => {
       onClick(result);
     }, [result, onClick]);
 
-    // Memoize formatted values for better performance
     const formattedDate = useMemo(() => formatPubDate(pubDate), [pubDate]);
     const formattedDuration = useMemo(() => formatDuration(enclosureDuration), [enclosureDuration]);
 
-    // Memoize aria label for accessibility
     const ariaLabel = useMemo(
       () => (isPlayable ? `Play episode: ${title}` : `${title} (no audio available)`),
       [title, isPlayable]
     );
 
     return (
-      <tr className={isCurrent ? 'episode-row episode-row--current' : 'episode-row'}>
-        <td className="episode-title-cell">
-          <button
-            type="button"
-            className="episode-title"
-            onClick={handleClick}
-            disabled={!isPlayable}
-            aria-label={ariaLabel}
-            aria-current={isCurrent ? 'true' : undefined}
-          >
-            {title}
-          </button>
-        </td>
-        <td className="date-column">
-          <time dateTime={pubDate}>{formattedDate}</time>
-        </td>
-        <td className="duration-column">{formattedDuration}</td>
-      </tr>
+      <li className={isCurrent ? 'episode episode--current' : 'episode'}>
+        <button
+          type="button"
+          className="episode__button"
+          onClick={handleClick}
+          disabled={!isPlayable}
+          aria-label={ariaLabel}
+          aria-current={isCurrent ? 'true' : undefined}
+          aria-describedby={formattedDate || formattedDuration ? metaId : undefined}
+        >
+          <span className="episode__play" aria-hidden="true">{isCurrent ? '♪' : '▶'}</span>
+          <span className="episode__body">
+            <span className="episode__title">{title}</span>
+            {formattedDate || formattedDuration ? (
+              <span className="episode__meta" id={metaId}>
+                {formattedDate ? <time dateTime={pubDate}>{formattedDate}</time> : null}
+                {formattedDate && formattedDuration ? <span aria-hidden="true"> · </span> : null}
+                {formattedDuration ? <span>{formattedDuration}</span> : null}
+              </span>
+            ) : null}
+            {description ? <span className="episode__summary">{description}</span> : null}
+          </span>
+        </button>
+      </li>
     );
   },
   // Enhanced comparison function for better memoization
@@ -173,6 +179,7 @@ export const Result: FunctionComponent<IResultProps> = memo(
 
     return (
       prevResult.title === nextResult.title &&
+      prevResult.description === nextResult.description &&
       prevResult.pubDate === nextResult.pubDate &&
       prevResult.enclosure?.duration === nextResult.enclosure?.duration &&
       prevResult.enclosure?.link === nextResult.enclosure?.link
