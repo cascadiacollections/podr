@@ -28,6 +28,8 @@ podr.example.org {
 	@revalidate path /sw.js /service-worker.js /site.webmanifest /manifest.json *.html /
 
 	# ---- Security headers ---------------------------------------------------
+	# Kept in step with netlify.toml and deploy/nginx/snippets/
+	# podr-security-headers.conf by config/__tests__/securityHeaders.test.js.
 	# Content-Security-Policy notes:
 	#   media-src   episode audio is served from whichever CDN a podcast uses,
 	#               and without it playback falls back to default-src 'self' and

@@ -27,7 +27,10 @@
   to = "/index.html"
   status = 200
 
-# Security headers
+# Security headers. Self-hosted copies live in
+# deploy/nginx/snippets/podr-security-headers.conf and deploy/caddy/Caddyfile, and
+# config/__tests__/securityHeaders.test.js fails if they drift. Anything only this
+# site needs (Google Analytics, the hosted API origin) must be declared there.
 [[headers]]
   for = "/*"
   [headers.values]
