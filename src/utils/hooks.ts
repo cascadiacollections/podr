@@ -67,7 +67,7 @@ export function useLocalStorageSignal<T>(
     throw new Error('localStorage key must be a non-empty string');
   }
 
-  const signalRef = useRef<Signal<T>>();
+  const signalRef = useRef<Signal<T> | undefined>(undefined);
   
   if (!signalRef.current) {
     signalRef.current = signal<T>(defaultValue);
@@ -110,7 +110,7 @@ export function useLocalStorageSignal<T>(
  */
 export function useAudio(initialSrc?: string) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const state = useRef<Signal<AudioControlState>>();
+  const state = useRef<Signal<AudioControlState> | undefined>(undefined);
   
   if (!state.current) {
     state.current = signal<AudioControlState>({
@@ -247,7 +247,7 @@ export function useFetch<T>(
   url: string | null, 
   options: RequestInit & { timeout?: number } = {}
 ): FetchState<T> & { refetch: () => Promise<void> } {
-  const state = useRef<Signal<FetchState<T>>>();
+  const state = useRef<Signal<FetchState<T>> | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
   const cacheRef = useRef<Map<string, { data: T; timestamp: number }>>(new Map());
   
