@@ -39,7 +39,7 @@
     #     without it playback falls back to default-src 'self' and is blocked
     #   connect-src: the podcast APIs, plus the Analytics collect endpoints
     #   no cdn.jsdelivr.net: styles and fonts now ship with the bundle
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://api.rss2json.com https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev https://*.google-analytics.com https://*.analytics.google.com; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev https://*.google-analytics.com https://*.analytics.google.com; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     # Security headers
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"

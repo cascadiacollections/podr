@@ -229,7 +229,7 @@ describe('App episode fetching', () => {
     });
   });
 
-  test('requests episodes from the RSS to JSON service, not the Podr worker', async () => {
+  test('requests episodes from the Podr service feed route', async () => {
     global.fetch = mockFetchWithFeed({ status: 'ok', items: [] });
 
     render(<App />);
@@ -240,7 +240,8 @@ describe('App episode fetching', () => {
         .map(([url]) => String(url))
         .find((url) => url.includes('rss_url'));
 
-      expect(feedCall).toContain('https://api.rss2json.com/v1/api.json');
+      expect(feedCall).toContain('https://podr-service.cascadiacollections.workers.dev/feed?');
+      expect(feedCall).not.toContain('api_key');
       expect(feedCall).toContain(encodeURIComponent(STORED_FEED.feedUrl));
     });
   });

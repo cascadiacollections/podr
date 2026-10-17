@@ -45,23 +45,20 @@ describe('helpers', () => {
   });
 
   describe('getFeedUrl', () => {
-    it('should construct valid RSS feed URL with default count', () => {
+    it('should construct the hosted service feed URL with default count', () => {
       const feedUrl = 'https://example.com/feed.rss';
       const result = getFeedUrl(feedUrl);
 
-      expect(result).toContain('https://api.rss2json.com/v1/api.json?');
+      expect(result).toContain('https://podr-service.cascadiacollections.workers.dev/feed?');
       expect(result).toContain('rss_url=https%3A%2F%2Fexample.com%2Ffeed.rss');
       expect(result).toContain('count=300');
     });
 
-    it('should send an api key so the full feed is returned', () => {
-      // The inlined key applies when no build-time override was configured.
-      // Without a key rss2json ignores `count` and drops to anonymous limits.
-      expect(getFeedUrl('https://example.com/feed.rss')).toContain('api_key=');
-    });
-
-    it('should not target the Podr worker, which has no RSS to JSON route', () => {
-      expect(getFeedUrl('https://example.com/feed.rss')).not.toContain('workers.dev');
+    it('should never send an API key or call rss2json from the browser', () => {
+      // The service holds any upstream key (#133).
+      const result = getFeedUrl('https://example.com/feed.rss');
+      expect(result).not.toContain('api_key=');
+      expect(result).not.toContain('rss2json');
     });
 
     it('uses the configured self-hosted service feed route', () => {
