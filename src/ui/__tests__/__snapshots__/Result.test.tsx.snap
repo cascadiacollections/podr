@@ -2,76 +2,93 @@
 
 exports[`Result component renders correctly 1`] = `
 <div>
-  <table>
-    <tbody>
-      <tr
-        class="episode-row"
+  <ol>
+    <li
+      class="episode"
+    >
+      <button
+        aria-describedby="P0-0"
+        aria-label="Play episode: Test Episode Title"
+        class="episode__button"
+        type="button"
       >
-        <td
-          class="episode-title-cell"
+        <span
+          aria-hidden="true"
+          class="episode__play"
         >
-          <button
-            aria-label="Play episode: Test Episode Title"
-            class="episode-title"
-            type="button"
+          ▶
+        </span>
+        <span
+          class="episode__body"
+        >
+          <span
+            class="episode__title"
           >
             Test Episode Title
-          </button>
-        </td>
-        <td
-          class="date-column"
-        >
-          <time
-            datetime="2023-05-15T12:00:00Z"
+          </span>
+          <span
+            class="episode__meta"
+            id="P0-0"
           >
-            May 15, 2023
-          </time>
-        </td>
-        <td
-          class="duration-column"
-        >
-          01:00:00
-        </td>
-      </tr>
-    </tbody>
-  </table>
+            <time
+              datetime="2023-05-15T12:00:00Z"
+            >
+              May 15, 2023
+            </time>
+            <span
+              aria-hidden="true"
+            >
+               · 
+            </span>
+            <span>
+              1 hr
+            </span>
+          </span>
+          <span
+            class="episode__summary"
+          >
+            This is a test episode description
+          </span>
+        </span>
+      </button>
+    </li>
+  </ol>
 </div>
 `;
 
 exports[`Result component renders with empty duration and date 1`] = `
 <div>
-  <table>
-    <tbody>
-      <tr
-        class="episode-row"
+  <ol>
+    <li
+      class="episode"
+    >
+      <button
+        aria-label="Play episode: Test Episode Title"
+        class="episode__button"
+        type="button"
       >
-        <td
-          class="episode-title-cell"
+        <span
+          aria-hidden="true"
+          class="episode__play"
         >
-          <button
-            aria-label="Play episode: Test Episode Title"
-            class="episode-title"
-            type="button"
+          ▶
+        </span>
+        <span
+          class="episode__body"
+        >
+          <span
+            class="episode__title"
           >
             Test Episode Title
-          </button>
-        </td>
-        <td
-          class="date-column"
-        >
-          <time
-            datetime=""
+          </span>
+          <span
+            class="episode__summary"
           >
-            Unknown date
-          </time>
-        </td>
-        <td
-          class="duration-column"
-        >
-          00:00:00
-        </td>
-      </tr>
-    </tbody>
-  </table>
+            This is a test episode description
+          </span>
+        </span>
+      </button>
+    </li>
+  </ol>
 </div>
 `;

@@ -34,6 +34,8 @@ export interface IFeed {
   readonly feedUrl: string;
   readonly artworkUrl100: string;
   readonly artworkUrl600: string;
+  /** Who makes the podcast, shown under its name. Absent on older saved favorites. */
+  readonly artistName?: string;
 }
 
 /**
@@ -41,6 +43,13 @@ export interface IFeed {
  */
 export interface ITopPodcast {
   readonly title: {
+    readonly label: string;
+  };
+  /** The podcast's own name; `title` is "<name> - <artist>" */
+  readonly 'im:name'?: {
+    readonly label: string;
+  };
+  readonly 'im:artist'?: {
     readonly label: string;
   };
   readonly id: {
@@ -76,6 +85,7 @@ export const APP_CONFIG = {
   LOCAL_STORAGE: {
     FEEDS_KEY: 'podr_feeds',
     RESULTS_KEY: 'podr_results',
+    RESULTS_FEED_KEY: 'podr_results_feed',
   },
   SEARCH: {
     DEFAULT_LIMIT: 14,
@@ -90,6 +100,8 @@ export const APP_CONFIG = {
   LOCAL_STORAGE: {
     FEEDS_KEY: string;
     RESULTS_KEY: string;
+    /** Which podcast the persisted episodes belong to, with its details */
+    RESULTS_FEED_KEY: string;
   };
   SEARCH: {
     DEFAULT_LIMIT: number;

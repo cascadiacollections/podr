@@ -6,6 +6,26 @@ import { IFeedItem } from '../ui/Result';
 const EMPTY_ITEMS: readonly IFeedItem[] = Object.freeze([]);
 
 /**
+ * Character references feeds commonly leave in their descriptions. Anything
+ * rarer is left as written rather than pulling in a full HTML decoder.
+ */
+const NAMED_ENTITIES: Readonly<Record<string, string>> = Object.freeze({
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  hellip: '…',
+  mdash: '—',
+  ndash: '–',
+  rsquo: '’',
+  lsquo: '‘',
+  rdquo: '”',
+  ldquo: '“',
+});
+
+/**
  * Duration parsing configuration
  */
 const SECONDS_PER_MINUTE = 60 as const;
@@ -48,6 +68,40 @@ function toText(value: unknown, fallback: string = ''): string {
   }
 
   return fallback;
+}
+
+/**
+ * Reduces a feed description to plain text for display.
+ *
+ * Descriptions are frequently HTML (paragraphs, links, sponsor lists). They are
+ * rendered as text, never markup, so tags are dropped, the common character
+ * references decoded, and whitespace collapsed to keep a clamped summary dense.
+ * @param value - The raw description
+ * @returns The description as a single line of plain text
+ */
+export function toPlainText(value: string): string {
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .replace(/<(?:br|\/p|\/div|\/li)\b[^>]*>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (match: string, entity: string) => {
+      if (entity[0] === '#') {
+        const codePoint = entity[1] === 'x' || entity[1] === 'X'
+          ? Number.parseInt(entity.slice(2), 16)
+          : Number.parseInt(entity.slice(1), 10);
+
+        return Number.isFinite(codePoint) && codePoint > 0 && codePoint <= 0x10ffff
+          ? String.fromCodePoint(codePoint)
+          : match;
+      }
+
+      return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -115,7 +169,7 @@ function toFeedItem(entry: Record<string, unknown>, index: number): IFeedItem {
   return {
     guid: toText(entry.guid) || link || identity || `item-${index}`,
     title,
-    description: toText(entry.description),
+    description: toPlainText(toText(entry.description)),
     pubDate,
     enclosure: {
       link,
@@ -174,6 +228,43 @@ export function parseFeedResponse(payload: unknown): readonly IFeedItem[] {
   }
 
   return Object.freeze(entries.filter(isRecord).map(toFeedItem));
+}
+
+/**
+ * What the feed says about the podcast itself, as opposed to its episodes
+ */
+export interface IFeedDetails {
+  readonly title: string;
+  readonly author: string;
+  readonly description: string;
+}
+
+export const EMPTY_FEED_DETAILS: IFeedDetails = Object.freeze({
+  title: '',
+  author: '',
+  description: '',
+});
+
+/**
+ * Reads the podcast's own details from a feed response or a persisted copy of
+ * them. Never throws: the details are a nicety, and a feed without them still
+ * has episodes worth listing.
+ * @param payload - A feed response (`{ feed: {...}, items }`) or bare details
+ * @returns The details, with absent fields empty
+ */
+export function parseFeedDetails(payload: unknown): IFeedDetails {
+  if (!isRecord(payload)) {
+    return EMPTY_FEED_DETAILS;
+  }
+
+  const source = isRecord(payload.feed) ? payload.feed : payload;
+  const title = toText(source.title);
+  const author = toText(source.author);
+  const description = toPlainText(toText(source.description));
+
+  return title || author || description
+    ? Object.freeze({ title, author, description })
+    : EMPTY_FEED_DETAILS;
 }
 
 /**
