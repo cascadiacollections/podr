@@ -78,7 +78,75 @@ const parseResultsFeed = (value: unknown): IResultsFeed => {
  */
 interface IPodcastHistoryState {
   readonly podrFeed: IFeed;
+  /**
+   * Whether the app pushed this entry over a browse entry. A podcast opened from
+   * a shared link has no browse entry behind it, and going back from it must not
+   * leave the site.
+   */
+  readonly podrPushed?: boolean;
 }
+
+/**
+ * The query parameter that makes a podcast linkable: `/?feed=<feed URL>`.
+ * A query rather than a path, so every deployment's single-page fallback
+ * serves it without new rewrite rules.
+ */
+const FEED_PARAM = 'feed';
+
+const HTTP_URL_PATTERN = /^https?:\/\//i;
+
+/**
+ * The page URL with the podcast parameter set, or removed for the browse view.
+ * Other parameters, such as `?debug=`, are kept.
+ */
+const getPageUrl = (feedUrl?: string): string => {
+  const url = new URL(window.location.href);
+
+  if (feedUrl) {
+    url.searchParams.set(FEED_PARAM, feedUrl);
+  } else {
+    url.searchParams.delete(FEED_PARAM);
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
+};
+
+/**
+ * The feed a shared link points at, if it names a web URL
+ */
+const getLinkedFeedUrl = (): string | null => {
+  const feedUrl = new URLSearchParams(window.location.search).get(FEED_PARAM)?.trim();
+
+  return feedUrl && HTTP_URL_PATTERN.test(feedUrl) ? feedUrl : null;
+};
+
+/**
+ * Fills a feed's missing name, artwork and maker from what the feed says about
+ * itself - all a podcast opened from a link has to go on. Returns the original
+ * feed when nothing is missing.
+ */
+const withFeedDetails = (feed: IFeed, details: IFeedDetails): IFeed => {
+  const needsName = !feed.collectionName || HTTP_URL_PATTERN.test(feed.collectionName);
+  const collectionName = needsName && details.title ? details.title : feed.collectionName;
+  const artworkUrl100 = feed.artworkUrl100 || details.image;
+  const artistName = feed.artistName || details.author || undefined;
+
+  if (
+    collectionName === feed.collectionName &&
+    artworkUrl100 === feed.artworkUrl100 &&
+    artistName === feed.artistName
+  ) {
+    return feed;
+  }
+
+  return {
+    ...feed,
+    collectionName,
+    artworkUrl100,
+    artworkUrl600: feed.artworkUrl600 || details.image,
+    artistName
+  };
+};
 
 const getHistoryFeed = (state: unknown): IFeed | null => {
   const feed = (state as Partial<IPodcastHistoryState> | null)?.podrFeed;
@@ -204,6 +272,8 @@ export const App = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   // Where the browse view was scrolled to when a podcast was opened
   const browseScrollRef = useRef(0);
+  // The page's own title, put back when the listener returns to browsing
+  const documentTitleRef = useRef(document.title);
   const isOnline = useOnlineStatus();
 
   const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
@@ -302,6 +372,26 @@ export const App = (): JSX.Element => {
     return () => window.clearTimeout(refreshTimer);
   }, [fetchTopPodcastsFromAPI, preferSmallArtwork, topResults]);
 
+  /**
+   * Puts a better-described copy of the open podcast everywhere the old one is
+   * kept: the view, the library, and the history entry
+   */
+  const applyRepairedFeed = useCallback((repaired: IFeed): void => {
+    selectedFeed.value = repaired;
+
+    const state = window.history.state as IPodcastHistoryState | null;
+
+    if (getHistoryFeed(state)?.feedUrl === repaired.feedUrl) {
+      window.history.replaceState({ ...state, podrFeed: repaired }, '');
+    }
+
+    favorited.value = new Set(
+      Array.from(favorited.value).map((candidate: IFeed) =>
+        candidate.feedUrl === repaired.feedUrl ? repaired : candidate
+      )
+    );
+  }, []);
+
   const tryFetchFeed = useCallback(async (feed: IFeed): Promise<void> => {
     if (!feed.feedUrl) {
       return;
@@ -335,17 +425,7 @@ export const App = (): JSX.Element => {
       const repaired = withResolvedMetadata(feed, resolved);
 
       if (repaired !== feed) {
-        selectedFeed.value = repaired;
-
-        if (getHistoryFeed(window.history.state)?.feedUrl === repaired.feedUrl) {
-          window.history.replaceState({ podrFeed: repaired }, '');
-        }
-
-        favorited.value = new Set(
-          Array.from(favorited.value).map((candidate: IFeed) =>
-            candidate.feedUrl === repaired.feedUrl ? repaired : candidate
-          )
-        );
+        applyRepairedFeed(repaired);
       }
 
       // Fetch the feed data
@@ -365,8 +445,21 @@ export const App = (): JSX.Element => {
         return;
       }
 
+      const details = parseFeedDetails(payload);
+
       results.value = feedResults;
-      resultsFeed.value = { ...parseFeedDetails(payload), feedUrl: feed.feedUrl };
+      resultsFeed.value = { ...details, feedUrl: feed.feedUrl };
+
+      // A podcast opened from a link learns its name and artwork here
+      const current = selectedFeed.value;
+
+      if (current?.feedUrl === feed.feedUrl) {
+        const completed = withFeedDetails(current, details);
+
+        if (completed !== current) {
+          applyRepairedFeed(completed);
+        }
+      }
     } catch (err: unknown) {
       // Handle errors from resolveFeedUrl, fetch, and response parsing
       const error = err as Error;
@@ -503,7 +596,11 @@ export const App = (): JSX.Element => {
     browseScrollRef.current = window.scrollY;
 
     // A history entry per podcast, so the browser's Back returns to browsing
-    window.history.pushState({ podrFeed: feed } satisfies IPodcastHistoryState, '');
+    window.history.pushState(
+      { podrFeed: feed, podrPushed: true } satisfies IPodcastHistoryState,
+      '',
+      getPageUrl(feed.feedUrl)
+    );
 
     void tryFetchFeed(feed);
     scrollToPosition(0);
@@ -524,10 +621,13 @@ export const App = (): JSX.Element => {
   }, []);
 
   const closePodcast = useCallback(() => {
-    if (getHistoryFeed(window.history.state)) {
+    if ((window.history.state as IPodcastHistoryState | null)?.podrPushed) {
       // popstate below finishes the job, exactly as the browser's Back would
       window.history.back();
     } else {
+      // Opened from a link: there is no browse entry to return to, so this
+      // entry becomes one
+      window.history.replaceState(null, '', getPageUrl());
       showBrowse();
     }
   }, [showBrowse]);
@@ -544,9 +644,22 @@ export const App = (): JSX.Element => {
   // Back, Forward and reload move between browsing and a podcast
   useEffect(() => {
     const restored = getHistoryFeed(window.history.state);
+    const linkedFeedUrl = restored ? null : getLinkedFeedUrl();
 
     if (restored) {
       void tryFetchFeed(restored);
+    } else if (linkedFeedUrl) {
+      // A shared link carries only the feed URL. A podcast already known here
+      // opens complete; any other is filled in from its own feed.
+      const linked: IFeed = feeds.value.find((feed: IFeed) => feed.feedUrl === linkedFeedUrl) ?? {
+        collectionName: '',
+        feedUrl: linkedFeedUrl,
+        artworkUrl100: '',
+        artworkUrl600: ''
+      };
+
+      window.history.replaceState({ podrFeed: linked } satisfies IPodcastHistoryState, '');
+      void tryFetchFeed(linked);
     }
 
     const onPopState = (event: PopStateEvent): void => {
@@ -578,6 +691,17 @@ export const App = (): JSX.Element => {
   );
 
   const selected = selectedFeed.value;
+  // The tab, history and any shared link's preview name the open podcast
+  const selectedName = selected
+    ? (resultsFeed.value.feedUrl === selected.feedUrl && resultsFeed.value.title) || selected.collectionName
+    : '';
+
+  useEffect(() => {
+    const browseTitle = documentTitleRef.current;
+
+    document.title = selectedName ? `${selectedName} · Podr` : browseTitle;
+  }, [selectedName]);
+
   // Marked in the grids, so returning from a podcast shows where you were
   const lastOpenedUrl = resultsFeed.value.feedUrl;
   const isSelectedFavorite = selected ? favoriteUrls.has(selected.feedUrl) : false;

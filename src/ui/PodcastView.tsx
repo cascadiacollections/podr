@@ -1,5 +1,5 @@
 import { FunctionComponent, h } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 import { IFeed } from '../utils/AppContext';
 import { IFeedDetails } from '../utils/feed';
@@ -10,6 +10,39 @@ import { IFeedItem } from './Result';
  * Artwork shown at 160px, so the 600px source covers high-density displays
  */
 const HERO_ARTWORK_SIZE = 160 as const;
+
+/**
+ * How long "Link copied" stays on the share button
+ */
+const COPIED_CONFIRMATION_MS = 2000;
+
+type ShareState = 'idle' | 'copied' | 'failed';
+
+/**
+ * Hands the podcast's link to the platform share sheet where there is one,
+ * and to the clipboard otherwise
+ * @returns What happened, for the button to report
+ */
+const sharePodcast = async (title: string, url: string): Promise<ShareState> => {
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share({ title, url });
+      return 'idle';
+    } catch (error: unknown) {
+      // Dismissing the share sheet is a choice, not a failure
+      if ((error as Error).name === 'AbortError') {
+        return 'idle';
+      }
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    return 'copied';
+  } catch {
+    return 'failed';
+  }
+};
 
 export interface IPodcastViewProps {
   readonly feed: IFeed;
@@ -47,6 +80,7 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
   onPlay
 }: IPodcastViewProps) => {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [shareState, setShareState] = useState<ShareState>('idle');
 
   // A new page deserves a new reading position: move focus to its heading so
   // keyboard and screen reader users start at the podcast, not the old grid
@@ -56,9 +90,29 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
 
   // The feed's own title is the podcast's name without the publisher appended,
   // which top-chart entries carry
-  const name = details.title || feed.collectionName;
+  // A podcast opened from a link has no name until its feed answers
+  const name = details.title || feed.collectionName || (isLoading ? 'Loading podcast…' : 'Podcast');
   const author = details.author || feed.artistName || '';
   const episodeCount = episodes.length;
+
+  const handleShare = useCallback(() => {
+    // The address bar already carries the podcast, via ?feed=
+    void sharePodcast(name, window.location.href).then(setShareState);
+  }, [name]);
+
+  useEffect(() => {
+    if (shareState === 'idle') {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setShareState('idle'), COPIED_CONFIRMATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [shareState]);
+
+  // A new podcast starts without the last one's confirmation
+  useEffect(() => {
+    setShareState('idle');
+  }, [feed.feedUrl]);
 
   return (
     <article className="podcast-view" aria-labelledby="podcast-heading">
@@ -93,6 +147,13 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
               <span aria-hidden="true">{isFavorite ? '★' : '☆'}</span>
               {isFavorite ? ' In your library' : ' Add to library'}
             </button>
+            <button type="button" className="pill-button" onClick={handleShare}>
+              <span aria-hidden="true">↗</span> Share
+            </button>
+            {/* Announced without moving focus, and kept out of the button's name */}
+            <span className="podcast-hero__status" role="status">
+              {shareState === 'copied' ? 'Link copied' : shareState === 'failed' ? 'Could not copy the link' : ''}
+            </span>
           </div>
         </div>
       </header>

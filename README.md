@@ -131,8 +131,8 @@ yarn start
 | Command | Description | Usage |
 |---------|-------------|-------|
 | `yarn start` | 🔥 Start dev server with hot reload | Development |
-| `yarn build` | 📦 Build for production | Local testing |
-| `yarn build:ci` | 🚀 Optimized CI/production build | Deployment |
+| `yarn build` | 📦 Development build (unminified, includes the debug tooling) | Local testing |
+| `yarn build:ci` | 🚀 Production build, as deployed | Deployment |
 | `yarn test` | 🧪 Run all tests | Validation |
 | `yarn test:watch` | 👀 Tests in watch mode | Development |
 | `yarn test:coverage` | 📊 Coverage report | Quality check |
@@ -435,7 +435,7 @@ git checkout -b feature/amazing-feature
 
 # 4. ✅ Verify quality
 yarn test                    # Run tests
-yarn build                   # Ensure it builds
+yarn build:ci                # Ensure the production build passes
 
 # 5. 📝 Commit with clear message
 git commit -m "feat: add amazing feature that does X"
