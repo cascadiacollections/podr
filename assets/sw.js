@@ -12,7 +12,7 @@
  *   navigation      network first, falling back to the cached app shell
  *   app assets      stale while revalidate (instant paint, refreshed in background)
  *   podcast APIs    network first, falling back to the last good response
- *   artwork         cache first, in a size-capped cache
+ *   artwork         left to the browser (see the fetch handler)
  *   audio           never cached (episodes are large; the browser handles ranges)
  */
 
@@ -25,20 +25,15 @@ const CACHE_VERSION = self.__PODR_BUILD_ID__ || 'dev';
 const SHELL_CACHE = `podr-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `podr-assets-${CACHE_VERSION}`;
 const DATA_CACHE = `podr-data-${CACHE_VERSION}`;
-const IMAGE_CACHE = `podr-images-${CACHE_VERSION}`;
 
-const CURRENT_CACHES = [SHELL_CACHE, ASSET_CACHE, DATA_CACHE, IMAGE_CACHE];
+// Artwork used to be cached here too; leaving it out of this list lets activate
+// delete the podr-images-* caches older builds created
+const CURRENT_CACHES = [SHELL_CACHE, ASSET_CACHE, DATA_CACHE];
 
 /**
  * Cached up front so a cold, offline start still renders the app
  */
 const SHELL_URLS = ['/', '/index.html', '/top-podcasts.json', '/site.webmanifest'];
-
-/**
- * Upper bound on cached artwork entries. Podcast art is small but unbounded in
- * count, and eviction on a phone should not be left to chance.
- */
-const MAX_IMAGE_ENTRIES = 120;
 
 /**
  * Hosts whose responses are podcast data worth keeping for offline reads
@@ -91,12 +86,6 @@ self.addEventListener('activate', (event) => {
 });
 
 /**
- * Trims a cache to its newest entries. Cache order is insertion order, so
- * dropping from the front removes the least recently added.
- * @param {string} cacheName
- * @param {number} maxEntries
- */
-/**
  * Writes to a cache without ever letting the failure reach the page.
  *
  * A cache write can reject for reasons that have nothing to do with whether the
@@ -131,17 +120,6 @@ function runInBackground(event, work) {
   if (event && typeof event.waitUntil === 'function') {
     event.waitUntil(settled);
   }
-}
-
-async function trimCache(cacheName, maxEntries) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-
-  if (keys.length <= maxEntries) {
-    return;
-  }
-
-  await Promise.all(keys.slice(0, keys.length - maxEntries).map((key) => cache.delete(key)));
 }
 
 /**
@@ -206,35 +184,6 @@ async function networkFirst(request, cacheName, event) {
 }
 
 /**
- * Serves from cache when present, otherwise fetches and stores.
- * @param {Request} request
- * @param {string} cacheName
- * @returns {Promise<Response>}
- */
-async function cacheFirst(request, cacheName, event) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-
-  if (cached) {
-    return cached;
-  }
-
-  const response = await fetch(request);
-
-  // Stored in the background: the response is handed to the page either way
-  if (response && (response.ok || response.type === 'opaque')) {
-    runInBackground(
-      event,
-      putSafely(cacheName, request, response.clone()).then(() =>
-        trimCache(cacheName, MAX_IMAGE_ENTRIES)
-      )
-    );
-  }
-
-  return response;
-}
-
-/**
  * Network first with the app shell as the offline fallback
  * @param {Request} request
  * @param {FetchEvent} [event]
@@ -281,10 +230,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (request.destination === 'image' && url.origin !== self.location.origin) {
-    event.respondWith(cacheFirst(request, IMAGE_CACHE, event));
-    return;
-  }
+  // Cross-origin artwork is not intercepted. A fetch() made here is checked
+  // against this worker's connect-src, which lists the APIs and not the
+  // arbitrary CDNs podcast art lives on, so every image failed once the worker
+  // took control - that is, from the second visit on. The page's own request is
+  // governed by img-src instead, and the artwork hosts send long max-age
+  // headers, so the HTTP cache keeps it for offline use.
 
   if (url.origin === self.location.origin) {
     if (url.pathname === '/top-podcasts.json') {
