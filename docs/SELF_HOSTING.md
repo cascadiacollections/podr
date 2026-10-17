@@ -51,9 +51,10 @@ same public origin as Podr, then use that origin above.
 The API service needs to provide Podr's search (`/?q=`), top-podcasts
 (`/?q=toppodcasts`), podcast-detail (`/podcast/<id>`), and feed-conversion
 (`GET /feed?rss_url=<encoded URL>&count=<number>`) endpoints. The feed route
-returns the rss2json `{ status, feed, items }` envelope; the hosted service
-produces it by calling rss2json server-side with its own key, so the browser
-never talks to rss2json or holds a key
+downloads and parses the RSS or Atom feed server-side and returns
+`{ status, feed, items }`, items newest first, each with `title`, `pubDate`,
+`guid` and `enclosure { link, duration }`. The browser never fetches feeds or
+talks to a third-party converter
 ([#133](https://github.com/cascadiacollections/podr/issues/133)).
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
