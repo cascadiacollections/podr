@@ -124,11 +124,7 @@ function createWebpackConfig({ production }) {
       } : false
     },
     plugins: [
-      // Inject the optional RSS API key at build time. It is read from the
-      // PODR_RSS_API_KEY environment variable and is never committed to source;
-      // when unset the client omits the api_key parameter entirely.
       new webpack.DefinePlugin({
-        PODR_RSS_API_KEY: JSON.stringify(process.env.PODR_RSS_API_KEY || ''),
         // Which analytics provider trackEvent dispatches to. Paired with the
         // script tag injected into the HTML template below.
         PODR_ANALYTICS_PROVIDER: JSON.stringify(analytics.provider),

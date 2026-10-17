@@ -29,8 +29,6 @@ const NETLIFY_ONLY_SOURCES = {
     'https://www.googletagmanager.com',
   ],
   'connect-src': [
-    // Episode feeds, until they move behind the Podr worker (#133).
-    'https://api.rss2json.com',
     // The hosted Podr API; self-hosted builds serve it same-origin.
     'https://podr-service.cascadiacollections.workers.dev',
     // Google Analytics collect endpoints.
