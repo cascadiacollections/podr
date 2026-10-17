@@ -61,8 +61,7 @@ function createWebpackConfig({ production }) {
       ]
     },
     entry: {
-      app: path.join(__dirname, 'lib', 'index.js'),
-      vendor: ['react', 'react-dom']
+      app: path.join(__dirname, 'lib', 'index.js')
     },
     output: {
       path: path.join(__dirname, 'dist'),

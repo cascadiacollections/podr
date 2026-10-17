@@ -1,4 +1,4 @@
-import { render, renderHook, screen } from '@testing-library/preact';
+import { act, render, renderHook, screen } from '@testing-library/preact';
 import { createElement, createRef, FunctionComponent, VNode } from 'preact';
 import { ClassListProvider, createEnhancedElement, enhancedJSX, h, OptimizedClassList, setClassList, toggleClassList, unsetClassList, useClassList, useClassListSelector, useConditionalClassList, useElementClassList, useOptimizedClassList, useToggleClassListSelector, withClassList } from '../hooks';
 
@@ -432,7 +432,7 @@ describe('Preact Idiomatic classList APIs', () => {
       });
 
       // Unmount should remove classes
-      unmount();
+      act(() => unmount());
 
       buttons.forEach(button => {
         expect(button.classList.contains('btn--temporary')).toBe(false);
@@ -573,7 +573,7 @@ describe('Preact Idiomatic classList APIs', () => {
 
       expect(button.classList.contains('cleanup-test')).toBe(true);
 
-      unmount();
+      act(() => unmount());
 
       expect(button.classList.contains('cleanup-test')).toBe(false);
     });
@@ -670,7 +670,7 @@ describe('Preact Idiomatic classList APIs', () => {
       expect(modal.classList.contains('cleanup--class1')).toBe(true);
       expect(modal.classList.contains('cleanup--class2')).toBe(true);
 
-      unmount();
+      act(() => unmount());
 
       expect(modal.classList.contains('cleanup--class1')).toBe(false);
       expect(modal.classList.contains('cleanup--class2')).toBe(false);
