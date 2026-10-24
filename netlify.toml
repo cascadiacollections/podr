@@ -9,6 +9,9 @@
   ignore = "bash scripts/netlify-ignore.sh"
 
 [build.environment]
+  # Pin Node.js to match .nvmrc / .node-version and package.json engines, so
+  # the project setting (defaulting to Node 20) never takes over
+  NODE_VERSION = "24"
   # Build optimizations
   NODE_ENV = "production"
   NODE_OPTIONS = "--max-old-space-size=4096"
