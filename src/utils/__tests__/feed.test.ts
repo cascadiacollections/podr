@@ -1,4 +1,12 @@
-import { FeedResponseError, parseDuration, parseFeedResponse, parseStoredFeedItems, parseFeedDetails, toPlainText } from '../feed';
+import {
+  FeedResponseError,
+  parseDuration,
+  parseFeedRedirect,
+  parseFeedResponse,
+  parseStoredFeedItems,
+  parseFeedDetails,
+  toPlainText
+} from '../feed';
 
 /**
  * The rss2json envelope for a single well-formed episode
@@ -182,6 +190,28 @@ describe('parseFeedDetails', () => {
     expect(parseFeedDetails(null)).toEqual({ title: '', author: '', description: '', image: '' });
     expect(parseFeedDetails([1, 2])).toEqual({ title: '', author: '', description: '', image: '' });
     expect(parseFeedDetails({ feed: 'nope' })).toEqual({ title: '', author: '', description: '', image: '' });
+  });
+});
+
+describe('parseFeedRedirect', () => {
+  test('reads where a feed has permanently moved', () => {
+    expect(parseFeedRedirect({
+      status: 'ok',
+      feed: { url: 'https://old.example.com/rss', redirectedUrl: ' https://new.example.com/rss ' },
+      items: []
+    })).toBe('https://new.example.com/rss');
+  });
+
+  test('is empty when the feed has not moved, as older services report', () => {
+    expect(parseFeedRedirect({ status: 'ok', feed: { url: 'https://e.com/rss' }, items: [] })).toBe('');
+    expect(parseFeedRedirect({ status: 'ok', items: [] })).toBe('');
+  });
+
+  test('ignores anything that is not a web address', () => {
+    expect(parseFeedRedirect({ feed: { redirectedUrl: 'javascript:alert(1)' } })).toBe('');
+    expect(parseFeedRedirect({ feed: { redirectedUrl: 42 } })).toBe('');
+    expect(parseFeedRedirect(null)).toBe('');
+    expect(parseFeedRedirect({ feed: 'nope' })).toBe('');
   });
 });
 
