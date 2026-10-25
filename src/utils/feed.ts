@@ -274,3 +274,20 @@ export function parseStoredFeedItems(payload: unknown): readonly IFeedItem[] {
     return EMPTY_ITEMS;
   }
 }
+
+/**
+ * Where a feed has permanently moved, as reported by the feed service when the
+ * publisher answered with a 301 or 308. Readers should store the new address so
+ * the old one can eventually be retired.
+ * @param payload - A feed response (`{ feed: { redirectedUrl }, items }`)
+ * @returns The feed's new web URL, or an empty string when it has not moved
+ */
+export function parseFeedRedirect(payload: unknown): string {
+  if (!isRecord(payload) || !isRecord(payload.feed)) {
+    return '';
+  }
+
+  const redirectedUrl = toText(payload.feed.redirectedUrl);
+
+  return /^https?:\/\//i.test(redirectedUrl) ? redirectedUrl : '';
+}

@@ -8,6 +8,7 @@ import {
   EMPTY_FEED_DETAILS,
   IFeedDetails,
   parseFeedDetails,
+  parseFeedRedirect,
   parseFeedResponse,
   parseStoredFeedItems
 } from '../utils/feed';
@@ -374,21 +375,39 @@ export const App = (): JSX.Element => {
 
   /**
    * Puts a better-described copy of the open podcast everywhere the old one is
-   * kept: the view, the library, and the history entry
+   * kept: the view, the library, and the history entry. A feed that has moved
+   * passes its old URL, and every copy - the page address included - takes the new one.
    */
-  const applyRepairedFeed = useCallback((repaired: IFeed): void => {
+  const applyRepairedFeed = useCallback((repaired: IFeed, previousUrl: string = repaired.feedUrl): void => {
     selectedFeed.value = repaired;
 
     const state = window.history.state as IPodcastHistoryState | null;
+    const hasMoved = previousUrl !== repaired.feedUrl;
 
-    if (getHistoryFeed(state)?.feedUrl === repaired.feedUrl) {
-      window.history.replaceState({ ...state, podrFeed: repaired }, '');
+    if (getHistoryFeed(state)?.feedUrl === previousUrl) {
+      window.history.replaceState(
+        { ...state, podrFeed: repaired },
+        '',
+        hasMoved ? getPageUrl(repaired.feedUrl) : undefined
+      );
     }
 
+    // The library may already hold the new address too; it keeps one entry
+    let replaced = false;
+
     favorited.value = new Set(
-      Array.from(favorited.value).map((candidate: IFeed) =>
-        candidate.feedUrl === repaired.feedUrl ? repaired : candidate
-      )
+      Array.from(favorited.value).flatMap((candidate: IFeed) => {
+        if (candidate.feedUrl !== previousUrl && candidate.feedUrl !== repaired.feedUrl) {
+          return [candidate];
+        }
+
+        if (replaced) {
+          return [];
+        }
+
+        replaced = true;
+        return [repaired];
+      })
     );
   }, []);
 
@@ -446,18 +465,25 @@ export const App = (): JSX.Element => {
       }
 
       const details = parseFeedDetails(payload);
+      // A feed that permanently moved is kept under its new address from now on.
+      // One saved as an Apple Podcasts page keeps that; it is resolved afresh each time.
+      const movedTo = resolved.feedUrl === feed.feedUrl ? parseFeedRedirect(payload) : '';
+      const feedUrl = movedTo || feed.feedUrl;
 
       results.value = feedResults;
-      resultsFeed.value = { ...details, feedUrl: feed.feedUrl };
+      resultsFeed.value = { ...details, feedUrl };
 
       // A podcast opened from a link learns its name and artwork here
       const current = selectedFeed.value;
 
       if (current?.feedUrl === feed.feedUrl) {
-        const completed = withFeedDetails(current, details);
+        const completed = withFeedDetails(
+          feedUrl === current.feedUrl ? current : { ...current, feedUrl },
+          details
+        );
 
         if (completed !== current) {
-          applyRepairedFeed(completed);
+          applyRepairedFeed(completed, feed.feedUrl);
         }
       }
     } catch (err: unknown) {

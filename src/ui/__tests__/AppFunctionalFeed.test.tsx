@@ -224,6 +224,66 @@ describe('App episode fetching', () => {
     expect(stored[0].feedUrl).toBe(legacyFeed.feedUrl);
   });
 
+  test('keeps a podcast whose feed permanently moved under its new address', async () => {
+    const movedUrl = 'https://new.example.com/feed.rss';
+
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      feed: { url: STORED_FEED.feedUrl, redirectedUrl: movedUrl, title: 'My Show' },
+      items: [{ guid: 'm1', title: 'Moved Episode' }]
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).get('feed')).toBe(movedUrl);
+    });
+
+    expect(window.history.state.podrFeed.feedUrl).toBe(movedUrl);
+    expect(window.history.state.podrPushed).toBe(true);
+    expect(screen.getByText('Moved Episode')).toBeInTheDocument();
+
+    // The library keeps one entry, under the new address, and still counts it a favorite
+    const stored = JSON.parse(localStorage.getItem('podr_feeds') || '[]');
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({ collectionName: STORED_FEED.collectionName, feedUrl: movedUrl });
+    expect(JSON.parse(localStorage.getItem('podr_results_feed') || '{}').feedUrl).toBe(movedUrl);
+    expect(screen.getByRole('button', { name: /Remove My Show from your library/i })).toBeInTheDocument();
+
+    // The next open asks for the new address
+    fireEvent.click(screen.getByRole('button', { name: /podcasts/i }));
+    await waitFor(() => {
+      expect(window.location.search).toBe('');
+    });
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining(`rss_url=${encodeURIComponent(movedUrl)}`),
+        expect.anything()
+      );
+    });
+  });
+
+  test('keeps the saved address when the feed reports no move', async () => {
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      feed: { url: STORED_FEED.feedUrl, title: 'My Show' },
+      items: [{ guid: 'f1', title: 'Fresh Episode' }]
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Fresh Episode')).toBeInTheDocument();
+    });
+
+    expect(new URLSearchParams(window.location.search).get('feed')).toBe(STORED_FEED.feedUrl);
+    expect(window.history.state.podrFeed.feedUrl).toBe(STORED_FEED.feedUrl);
+    expect(JSON.parse(localStorage.getItem('podr_feeds') || '[]')[0].feedUrl).toBe(STORED_FEED.feedUrl);
+  });
+
   test('reports the underlying cause of a feed failure', async () => {
     global.fetch = mockFetchWithFeed(OPENAPI_SCHEMA_RESPONSE);
 
