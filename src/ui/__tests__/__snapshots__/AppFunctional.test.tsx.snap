@@ -140,6 +140,20 @@ exports[`App component loads top podcasts on mount 1`] = `
         </div>
       </section>
     </main>
+    <footer
+      class="app-footer"
+    >
+      <a
+        href="/privacy"
+      >
+        Privacy policy
+      </a>
+      <a
+        href="https://github.com/cascadiacollections/podr"
+      >
+        Source code
+      </a>
+    </footer>
     <div
       aria-hidden="true"
       aria-label="Episode player"
@@ -313,6 +327,20 @@ exports[`App component renders without crashing 1`] = `
         </div>
       </section>
     </main>
+    <footer
+      class="app-footer"
+    >
+      <a
+        href="/privacy"
+      >
+        Privacy policy
+      </a>
+      <a
+        href="https://github.com/cascadiacollections/podr"
+      >
+        Source code
+      </a>
+    </footer>
     <div
       aria-hidden="true"
       aria-label="Episode player"

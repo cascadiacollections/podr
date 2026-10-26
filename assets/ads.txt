@@ -1,0 +1,6 @@
+# Authorized digital sellers for podrapp.com (https://iabtechlab.com/ads-txt/)
+#
+# PLACEHOLDER: replace pub-XXXXXXXXXXXXXXXX with the AdSense publisher ID shown
+# under Account > Settings > Account information before ads go live. AdSense
+# reports ads.txt as "Not found" or "Unauthorized" until it matches.
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
