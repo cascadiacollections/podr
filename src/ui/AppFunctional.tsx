@@ -20,6 +20,7 @@ import { PodcastCard } from './PodcastCard';
 import { PodcastView } from './PodcastView';
 import { IFeedItem } from './Result';
 import { Search } from './Search';
+import { SiteFooter } from './SiteFooter';
 
 declare global {
   interface Window {
@@ -864,6 +865,8 @@ export const App = (): JSX.Element => {
           </Fragment>
         )}
       </main>
+
+      <SiteFooter />
 
       <PlayerBar audioRef={audioRef} nowPlaying={nowPlaying.value} />
     </div>

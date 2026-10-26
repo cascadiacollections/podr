@@ -23,17 +23,38 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
  * Sources only the hosted site allows, by CSP directive. A self-hosted build
  * talks to its own same-origin API and ships no analytics by default.
  */
+/**
+ * Google AdSense, its ad vendors and the Funding Choices consent prompt. Ads run
+ * on podrapp.com only.
+ */
+const ADSENSE_SOURCES = [
+  'https://pagead2.googlesyndication.com',
+  'https://*.googlesyndication.com',
+  'https://*.doubleclick.net',
+  'https://adservice.google.com',
+  'https://fundingchoicesmessages.google.com',
+];
+
 const NETLIFY_ONLY_SOURCES = {
   'script-src': [
     // Google Analytics (gtag), configured for podrapp.com only.
     'https://www.googletagmanager.com',
+    ...ADSENSE_SOURCES,
   ],
+  'img-src': ADSENSE_SOURCES,
   'connect-src': [
     // The hosted Podr API; self-hosted builds serve it same-origin.
     'https://podr-service.cascadiacollections.workers.dev',
     // Google Analytics collect endpoints.
     'https://*.google-analytics.com',
     'https://*.analytics.google.com',
+    ...ADSENSE_SOURCES,
+  ],
+  'frame-src': [
+    ...ADSENSE_SOURCES,
+    // Ad creatives render in frames served from these two.
+    'https://googleads.g.doubleclick.net',
+    'https://tpc.googlesyndication.com',
   ],
 };
 

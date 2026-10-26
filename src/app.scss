@@ -227,8 +227,54 @@ button {
   max-width: var(--content-width);
   margin: 0 auto;
   padding: var(--space-5) var(--space-4);
-  /* Room for the player bar so it never covers the last row */
+}
+
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-5);
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-4);
+  /* Room for the player bar so it never covers the footer */
   padding-bottom: calc(var(--player-bar-height) + var(--space-6));
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.app-footer a {
+  color: inherit;
+}
+
+.app-footer a:hover {
+  color: var(--text);
+}
+
+.legal {
+  max-width: 44rem;
+  line-height: 1.6;
+}
+
+.legal h1 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.75rem;
+}
+
+.legal h2 {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: 1.125rem;
+}
+
+.legal a {
+  color: var(--accent-strong);
+}
+
+.legal__updated {
+  margin-top: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .section {

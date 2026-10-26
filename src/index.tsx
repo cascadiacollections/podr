@@ -7,6 +7,7 @@ import { h, render } from 'preact';
 // Import modern functional component instead of class component
 import { App } from './ui/AppFunctional';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { PRIVACY_PATH, PrivacyPolicy } from './ui/PrivacyPolicy';
 import { registerServiceWorker, unregisterServiceWorker } from './utils/registerSW';
 
 const rootEl: HTMLElement | null = document.getElementById('root');
@@ -14,7 +15,8 @@ const rootEl: HTMLElement | null = document.getElementById('root');
 if (typeof window !== 'undefined' && rootEl) {
   render(
     <ErrorBoundary>
-      <App />
+      {/* The one other page: a full load from the footer link, so no router */}
+      {window.location.pathname.replace(/\/+$/, '') === PRIVACY_PATH ? <PrivacyPolicy /> : <App />}
     </ErrorBoundary>,
     rootEl
   );

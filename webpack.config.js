@@ -129,8 +129,8 @@ function createWebpackConfig({ production }) {
         PODR_ANALYTICS_PROVIDER: JSON.stringify(analytics.provider),
         PODR_API_BASE_URL: JSON.stringify(api.baseUrl)
       }),
-      // The manifest, its icons, and the service worker are fetched by URL at
-      // runtime, so they have to be emitted rather than imported
+      // The manifest, its icons, the service worker, and ads.txt are fetched by
+      // URL, so they have to be emitted rather than imported
       new CopyAssetsPlugin({
         from: 'assets',
         injectManifestInto: 'sw.js',
@@ -143,7 +143,9 @@ function createWebpackConfig({ production }) {
           'maskable-icon-512x512.png',
           'apple-touch-icon.png',
           'favicon-16x16.png',
-          'favicon-32x32.png'
+          'favicon-32x32.png',
+          // Read by ad exchanges at the site root; see assets/ads.txt
+          'ads.txt'
         ]
       }),
       new HtmlWebpackPlugin({
@@ -152,6 +154,8 @@ function createWebpackConfig({ production }) {
         // Consumed by assets/index.html. Empty for an unconfigured build, which
         // is what keeps a default Podr build free of third-party requests.
         analyticsSnippet: analytics.snippet,
+        // Google Consent Mode defaults ship only alongside gtag
+        analyticsProvider: analytics.provider,
         minify: production ? {
           collapseWhitespace: true,
           removeComments: true,

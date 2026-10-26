@@ -41,8 +41,10 @@
     #   media-src: episode audio is served from whichever CDN a podcast uses, and
     #     without it playback falls back to default-src 'self' and is blocked
     #   connect-src: the podcast APIs, plus the Analytics collect endpoints
+    #   script-src/img-src/connect-src/frame-src: Google AdSense, its ad vendors
+    #     (doubleclick) and the Funding Choices consent prompt
     #   no cdn.jsdelivr.net: styles and fonts now ship with the bundle
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev https://*.google-analytics.com https://*.analytics.google.com; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob: https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev https://*.google-analytics.com https://*.analytics.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; manifest-src 'self'; worker-src 'self'; frame-src 'self' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     # Security headers
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
@@ -70,6 +72,15 @@
   for = "/@(manifest.json|site.webmanifest|sw.js|service-worker.js)"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# ads.txt is read by ad exchange crawlers, which expect plain text. The file
+# exists in dist/, so Netlify serves it ahead of the SPA "/*" rewrite above
+# (that rule is not forced).
+[[headers]]
+  for = "/ads.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
 
 # HTML should not be cached to ensure users get the latest version
 [[headers]]
