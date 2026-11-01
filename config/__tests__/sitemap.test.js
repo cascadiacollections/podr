@@ -224,9 +224,12 @@ describe('search-file hosting', () => {
     }));
 
     expect(redirects).toEqual([
+      { from: '/sitemap.xml', to: '/podr-sitemap.xml', status: 200, forceTrue: true },
       { from: '/*', to: '/index.html', status: 200, forceTrue: false }
     ]);
-    expect(blocks(toml, 'redirects')[0]).toMatch(/^\s*force = false\s*$/m);
+    expect(redirects.filter((rule) => rule.to === '/index.html').every((rule) => !rule.forceTrue)).toBe(
+      true
+    );
 
     const headers = Object.fromEntries(
       blocks(toml, 'headers').map((body) => {
@@ -239,6 +242,9 @@ describe('search-file hosting', () => {
     expect(headers['/robots.txt']).toBe('text/plain; charset=utf-8');
     expect(headers['/ads.txt']).toBe('text/plain; charset=utf-8');
     expect(headers['/sitemap.xml']).toBe('application/xml; charset=utf-8');
+    expect(headers['/podr-sitemap.xml']).toBe('application/xml; charset=utf-8');
+    expect(toml).toContain('filePath = "netlify-plugin-sitemap.xml"');
+    expect(toml).toContain('baseUrl = "https://podrapp.com"');
   });
 
   it('keeps the service worker from treating those files as the app shell', () => {
@@ -247,6 +253,7 @@ describe('search-file hosting', () => {
     expect(sw).toContain("url.pathname === '/robots.txt'");
     expect(sw).toContain("url.pathname === '/ads.txt'");
     expect(sw).toContain("url.pathname === '/sitemap.xml'");
+    expect(sw).toContain("url.pathname === '/podr-sitemap.xml'");
   });
 
   it('emits sitemap.xml, robots.txt, and a rewritten ads.txt', () => {
@@ -317,9 +324,11 @@ describe('search-file hosting', () => {
 
     const dist = path.join(directory, 'dist');
     const sitemap = fs.readFileSync(path.join(dist, 'sitemap.xml'), 'utf8');
+    const published = fs.readFileSync(path.join(dist, 'podr-sitemap.xml'), 'utf8');
     const robots = fs.readFileSync(path.join(dist, 'robots.txt'), 'utf8');
     const ads = fs.readFileSync(path.join(dist, 'ads.txt'), 'utf8');
 
+    expect(published).toBe(sitemap);
     expect(sitemap).toContain('https://podrapp.com/?feed=');
     expect(sitemap).toContain('the-daily');
     expect(sitemap).not.toContain('netlify.app');

@@ -70,9 +70,12 @@ placeholder in the built `ads.txt`. Leave it unset to keep the placeholder.
 The hosted site still needs the real AdSense publisher id before ads.txt will
 authorize the domain.
 
-`robots.txt`, `ads.txt`, and `sitemap.xml` are files in `dist/`. The nginx and
-Caddy templates serve an existing file before falling back to `index.html`.
-Do not replace that with a rewrite that always returns the app shell.
+`robots.txt`, `ads.txt`, and `sitemap.xml` are files in `dist/`. The same
+sitemap is also written to `podr-sitemap.xml`. The nginx and Caddy templates
+serve an existing file before falling back to `index.html`. Do not replace
+that with a rewrite that always returns the app shell. Netlify is the
+exception: its sitemap plugin overwrites `sitemap.xml` after the build, so
+`netlify.toml` forces `/sitemap.xml` to `/podr-sitemap.xml`.
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
 nginx or Caddy virtual host.

@@ -221,7 +221,8 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname === '/robots.txt' ||
     url.pathname === '/ads.txt' ||
-    url.pathname === '/sitemap.xml'
+    url.pathname === '/sitemap.xml' ||
+    url.pathname === '/podr-sitemap.xml'
   ) {
     return;
   }
