@@ -56,6 +56,23 @@ downloads and parses the RSS or Atom feed server-side and returns
 `guid` and `enclosure { link, duration }`. The browser never fetches feeds or
 talks to a third-party converter
 ([#133](https://github.com/cascadiacollections/podr/issues/133)).
+
+### Canonical origin and ads.txt
+
+`PODR_SITE_ORIGIN` is the origin written into `sitemap.xml` and `robots.txt`.
+It defaults to `https://podrapp.com`. Set it to the HTTPS origin of a
+self-hosted site so the sitemap does not send crawlers to podrapp.com. The
+sitemap lists `/`, `/privacy`, and one `/?feed=` URL per top podcast from the
+build's top-podcasts payload.
+
+`PODR_ADSENSE_PUBLISHER_ID`, when set to `pub-` plus 16 digits, replaces the
+placeholder in the built `ads.txt`. Leave it unset to keep the placeholder.
+The hosted site still needs the real AdSense publisher id before ads.txt will
+authorize the domain.
+
+`robots.txt`, `ads.txt`, and `sitemap.xml` are files in `dist/`. The nginx and
+Caddy templates serve an existing file before falling back to `index.html`.
+Do not replace that with a rewrite that always returns the app shell.
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
 nginx or Caddy virtual host.

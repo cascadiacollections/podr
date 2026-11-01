@@ -9,9 +9,10 @@ import {
 } from '../feed';
 
 /**
- * The rss2json envelope for a single well-formed episode
+ * The Podr service feed envelope for a single well-formed episode.
+ * rss2json used to return this shape; the client does not call it.
  */
-const rss2jsonResponse = {
+const serviceFeedResponse = {
   status: 'ok',
   feed: { title: 'Test Podcast' },
   items: [
@@ -39,8 +40,8 @@ const openApiSchemaResponse = {
 };
 
 describe('parseFeedResponse', () => {
-  it('parses the rss2json envelope', () => {
-    const items = parseFeedResponse(rss2jsonResponse);
+  it('parses the service feed envelope', () => {
+    const items = parseFeedResponse(serviceFeedResponse);
 
     expect(items).toHaveLength(1);
     expect(items[0]).toEqual({
@@ -56,11 +57,11 @@ describe('parseFeedResponse', () => {
   });
 
   it('parses a bare array of items', () => {
-    expect(parseFeedResponse(rss2jsonResponse.items)).toHaveLength(1);
+    expect(parseFeedResponse(serviceFeedResponse.items)).toHaveLength(1);
   });
 
   it('parses items nested under feed', () => {
-    expect(parseFeedResponse({ feed: { items: rss2jsonResponse.items } })).toHaveLength(1);
+    expect(parseFeedResponse({ feed: { items: serviceFeedResponse.items } })).toHaveLength(1);
   });
 
   it('returns an empty list for a feed with no episodes', () => {
@@ -107,7 +108,7 @@ describe('parseFeedResponse', () => {
   });
 
   it('skips entries that are not objects', () => {
-    expect(parseFeedResponse({ items: [null, 'nope', rss2jsonResponse.items[0]] })).toHaveLength(1);
+    expect(parseFeedResponse({ items: [null, 'nope', serviceFeedResponse.items[0]] })).toHaveLength(1);
   });
 });
 
@@ -139,7 +140,7 @@ describe('parseDuration', () => {
 
 describe('parseStoredFeedItems', () => {
   it('parses a persisted episode list', () => {
-    expect(parseStoredFeedItems(rss2jsonResponse.items)).toHaveLength(1);
+    expect(parseStoredFeedItems(serviceFeedResponse.items)).toHaveLength(1);
   });
 
   it('returns an empty list rather than throwing on corrupt data', () => {

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
+const { applyAdsPublisherId } = require('../config/ads');
 
 const PLUGIN_NAME = 'CopyAssetsPlugin';
 
@@ -29,7 +30,7 @@ const PRECACHE_PATTERN = /\.(?:js|css)$/;
 
 class CopyAssetsPlugin {
   /**
-   * @param {{ from?: string, files?: string[], injectManifestInto?: string, apiHost?: string }} options
+   * @param {{ from?: string, files?: string[], injectManifestInto?: string, apiHost?: string, publisherId?: string | null }} options
    *   from - directory the files are read from, relative to the project root
    *   files - file names to copy, emitted at the root of the output directory
    *   injectManifestInto - a copied file whose PRECACHE/BUILD_ID placeholders are
@@ -38,12 +39,15 @@ class CopyAssetsPlugin {
    *     back to whatever the HTTP cache happens to have kept.
    *   apiHost - hostname of the configured Podr API service, injected into the
    *     service worker's data cache allowlist
+   *   publisherId - AdSense publisher id written into ads.txt, or null to keep
+   *     the placeholder that ships in the source file
    */
   constructor(options = {}) {
     this.from = options.from || 'assets';
     this.files = options.files || [];
     this.injectManifestInto = options.injectManifestInto;
     this.apiHost = options.apiHost;
+    this.publisherId = options.publisherId || null;
   }
 
   apply(compiler) {
@@ -74,7 +78,15 @@ class CopyAssetsPlugin {
               continue;
             }
 
-            compilation.emitAsset(file, new webpack.sources.RawSource(fs.readFileSync(sourcePath)));
+            let contents = fs.readFileSync(sourcePath);
+
+            if (file === 'ads.txt') {
+              contents = Buffer.from(
+                applyAdsPublisherId(contents.toString('utf8'), this.publisherId)
+              );
+            }
+
+            compilation.emitAsset(file, new webpack.sources.RawSource(contents));
           }
         }
       );

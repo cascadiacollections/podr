@@ -66,7 +66,9 @@ podr.example.org {
 
 	# ---- Static files and the SPA fallback ----------------------------------
 	# precompressed serves the .gz files webpack's CompressionPlugin already
-	# emitted rather than compressing on every request.
+	# emitted rather than compressing on every request. try_files serves a
+	# real file before index.html, which is what keeps /robots.txt, /ads.txt,
+	# and /sitemap.xml from being answered with the app shell.
 	try_files {path} {path}/ /index.html
 	file_server {
 		precompressed gzip

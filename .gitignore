@@ -31,6 +31,9 @@ lib-cov
 coverage
 *.lcov
 
+# Jest JSON report written by CI (`yarn test --json --outputFile=test-report.json`)
+test-report.json
+
 # nyc test coverage
 .nyc_output
 
