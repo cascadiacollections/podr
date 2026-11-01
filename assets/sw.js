@@ -215,6 +215,18 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
+  // Crawler and ad-exchange files are real responses, not app routes. Leaving
+  // them unhandled also keeps a visit from being stored as the offline shell:
+  // handleNavigation caches every successful navigation under /index.html.
+  if (
+    url.pathname === '/robots.txt' ||
+    url.pathname === '/ads.txt' ||
+    url.pathname === '/sitemap.xml' ||
+    url.pathname === '/podr-sitemap.xml'
+  ) {
+    return;
+  }
+
   // Range requests and audio streams are left to the browser
   if (request.headers.has('range') || AUDIO_PATTERN.test(url.pathname)) {
     return;

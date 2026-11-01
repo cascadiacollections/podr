@@ -24,11 +24,28 @@
   PODR_ANALYTICS_PROVIDER = "gtag"
   PODR_ANALYTICS_SITE_ID = "G-19Z3SPSJPY"
 
-# SPA redirect - handle client-side routing
+# The Netlify site has @netlify/plugin-sitemap enabled in the UI. After the
+# build it overwrites dist/sitemap.xml with a one-URL sitemap on the Netlify
+# hostname (https://podr.netlify.app/). podr-sitemap.xml is the same document
+# the build wrote, under a name that plugin does not touch. Forcing this
+# rewrite makes /sitemap.xml that file. robots.txt points at /sitemap.xml.
+# Self-hosted nginx and Caddy have no such plugin and serve dist/sitemap.xml.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/podr-sitemap.xml"
+  status = 200
+  force = true
+
+# SPA fallback for client-side routes such as /privacy and /?feed=<podcast>.
+# status 200 is a shadowing rewrite: Netlify serves a real file at that path
+# instead, and this rule must not be forced. force = true would answer
+# /robots.txt, /ads.txt, and /sitemap.xml with index.html. ads.txt is copied
+# from assets/; robots.txt and both sitemap files are emitted by SitemapPlugin.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
 # Security headers. Self-hosted copies live in
 # deploy/nginx/snippets/podr-security-headers.conf and deploy/caddy/Caddyfile, and
@@ -73,17 +90,48 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# ads.txt is read by ad exchange crawlers, which expect plain text. The file
-# exists in dist/, so Netlify serves it ahead of the SPA "/*" rewrite above
-# (that rule is not forced).
+# ads.txt, robots.txt, and sitemap.xml are fetched by crawlers that expect
+# the file itself, not the SPA shell. The unforced rewrite above already
+# prefers these files when they exist in dist/; the types below keep a proxy
+# from guessing.
 [[headers]]
   for = "/ads.txt"
   [headers.values]
     Content-Type = "text/plain; charset=utf-8"
     Cache-Control = "public, max-age=3600"
 
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/podr-sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # HTML should not be cached to ensure users get the latest version
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Inputs override the UI-installed sitemap plugin so it does not replace
+# dist/sitemap.xml with a one-URL file on the Netlify hostname. The package is
+# resolved from that UI install; this block only changes its inputs. The forced
+# /sitemap.xml rewrite above still serves podr-sitemap.xml if the plugin runs
+# with its old inputs.
+[[plugins]]
+  package = "@netlify/plugin-sitemap"
+
+  [plugins.inputs]
+  baseUrl = "https://podrapp.com"
+  filePath = "netlify-plugin-sitemap.xml"

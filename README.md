@@ -13,7 +13,7 @@
 
 *Discover trending podcasts, save your favorites, and enjoy a clean listening experience*
 
-[🚀 **Try Live Demo**](https://podr.netlify.app) • [📖 Documentation](docs/) • [🐛 Report Bug](../../issues) • [💡 Request Feature](../../issues)
+[🚀 **Open podrapp.com**](https://podrapp.com) • [📖 Documentation](docs/) • [🐛 Report Bug](../../issues) • [💡 Request Feature](../../issues)
 
 </div>
 
@@ -47,7 +47,7 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 
 ### �️ **Developer Ready**
 - 🔧 **Modern Stack** - Preact + TypeScript + cutting-edge tooling
-- 🧪 **Fully Tested** - Comprehensive test suite with 90%+ coverage
+- 🧪 **Tested** - `yarn test` runs the suite. Coverage is whatever `yarn test:coverage` prints; there is no 90% gate
 - � **Security First** - CSP headers, HTTPS, and secure dependencies
 - 🌐 **PWA Ready** - Offline capabilities and installable experience
 
@@ -147,6 +147,8 @@ yarn start
 | `PODR_ANALYTICS_PROVIDER` | Which analytics provider to report to: `none` (default), `umami`, `plausible`, `goatcounter`, or `gtag`. A default build injects no analytics script and reports nothing. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md#analytics-without-a-third-party). |
 | `PODR_ANALYTICS_HOST` | Origin of your self-hosted analytics instance, e.g. `https://stats.example.org`. Required for `umami`, `plausible`, and `goatcounter`. |
 | `PODR_ANALYTICS_SITE_ID` | Umami website id, Plausible domain, or GA measurement id. Unused by `goatcounter`. |
+| `PODR_SITE_ORIGIN` | Canonical origin written into `sitemap.xml` and `robots.txt`. Defaults to `https://podrapp.com`. Set this to your own HTTPS origin when self-hosting. |
+| `PODR_ADSENSE_PUBLISHER_ID` | Optional AdSense publisher id (`pub-` and 16 digits). When set, the build writes it into `ads.txt`. Unset leaves the `pub-XXXXXXXXXXXXXXXX` placeholder, which AdSense will not authorize. |
 
 ### 🔄 Development Workflow
 
@@ -165,7 +167,7 @@ yarn lint:fix           # Auto-fix problems
 yarn test:watch         # Run tests continuously
 
 # 5. Check code quality
-yarn test:coverage      # Ensure coverage targets met
+yarn test:coverage      # Write a report under coverage/
 ```
 
 Development builds load `preact/debug` and can trace re-renders and signal
@@ -309,7 +311,7 @@ yarn type-check         # TypeScript validation
 **Comprehensive testing** ensures reliability and prevents regressions:
 
 ### 🎯 Testing Philosophy
-- **💯 High Coverage** - Target 90%+ code coverage
+- **Coverage** - `yarn test:coverage` prints statement, branch, and function totals and writes `coverage/` (gitignored). A run of this tree reported 83.73% statements and 71.95% branches, which is under 90%, and nothing fails the build when that number moves. Re-run the command for the current totals.
 - **🧩 Component Focus** - Test behavior, not implementation
 - **⚡ Fast Feedback** - Sub-second test execution
 - **🔄 Continuous** - Tests run on every commit
@@ -338,7 +340,7 @@ yarn test --testNamePattern="search" # Test names containing "search"
 - ✅ **API Integration** - Mock external dependencies
 - ✅ **Error Boundaries** - Graceful error handling
 
-> 📊 **Coverage Reports** are automatically generated and stored in `coverage/` directory
+> 📊 **Coverage reports** come from `yarn test:coverage`, which writes `coverage/` (gitignored). `yarn test` and CI do not generate that report.
 
 ## 🚀 Deployment & CI/CD
 
@@ -351,7 +353,7 @@ graph LR
     A[Push to main] --> B[GitHub Actions]
     B --> C[Build & Test]
     C --> D[Deploy to Netlify]
-    D --> E[Live on podr.netlify.app]
+    D --> E[Live on podrapp.com]
 ```
 
 ### 🎯 Deployment Features
@@ -459,7 +461,7 @@ gh pr create --title "Add amazing feature" --body "Description of changes"
 ### 📋 Contribution Guidelines
 
 - ✅ **Follow Code Style** - ESLint + Prettier enforced
-- ✅ **Write Tests** - Maintain 90%+ coverage
+- ✅ **Write Tests** - Add or update tests for the behavior you change
 - ✅ **Update Docs** - Keep README and comments current
 - ✅ **Small PRs** - Focused, reviewable changes
 - ✅ **Clear Commits** - Use conventional commit format

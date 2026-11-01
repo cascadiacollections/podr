@@ -170,8 +170,9 @@ function toFeedItem(entry: Record<string, unknown>, index: number): IFeedItem {
 /**
  * Extracts the raw entry list from a feed response envelope.
  *
- * Handles a bare array, the rss2json `{ status, feed, items }` envelope, and a
- * nested `{ feed: { items } }` shape.
+ * Handles a bare array, the Podr service's `{ status, feed, items }` envelope,
+ * and a nested `{ feed: { items } }` shape. The client does not call rss2json;
+ * that service used to return the same envelope (issue #133).
  * @param payload - The parsed JSON response
  * @returns The raw entries, or undefined when no list is present
  */
