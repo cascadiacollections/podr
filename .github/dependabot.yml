@@ -66,6 +66,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    cooldown:
+      default-days: 7
 
   # 🚨 Security Updates - Immediate Priority
   - package-ecosystem: "npm"
@@ -93,6 +95,11 @@ updates:
         update-types: ["security"]
       - dependency-type: "indirect"
         update-types: ["security"]
+    groups:
+      npm:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
 
   # ⚡ GitHub Actions - Automated CI/CD Updates
   - package-ecosystem: "github-actions"
@@ -132,6 +139,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    cooldown:
+      default-days: 7
 
   # 🐳 Docker Dependencies (if any)
   - package-ecosystem: "docker"
@@ -153,3 +162,8 @@ updates:
       prefix: "docker"
       include: "scope"
     open-pull-requests-limit: 2
+    groups:
+      docker:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
