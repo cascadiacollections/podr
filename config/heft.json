@@ -15,13 +15,7 @@
     "build": {
       "cleanFiles": [{ "includeGlobs": ["dist", "temp", "lib", "lib-commonjs"] }],
       "tasksByName": {
-        "sass": {
-          "taskPlugin": {
-            "pluginPackage": "@rushstack/heft-sass-plugin"
-          }
-        },
         "typescript": {
-          "taskDependencies": ["sass"],
           "taskPlugin": {
             "pluginPackage": "@rushstack/heft-typescript-plugin"
           }

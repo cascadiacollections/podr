@@ -101,15 +101,20 @@ one directory down — a GitHub Actions artifact unpacks either way.
 
 ### FreeBSD builds
 
-FreeBSD is a good host to *serve* from and a poor one to *build* on right now.
-The Heft build compiles SCSS through `@rushstack/heft-sass-plugin`, which depends
-on `sass-embedded`, and `sass-embedded` publishes no FreeBSD binary — only
-Android, macOS, Linux (glibc and musl), and Windows. `@parcel/watcher` and
-`@unrs/resolver`, the other native dependencies in the tree, do ship
-`freebsd-x64` builds and are fine.
+The build no longer needs a native Sass compiler, so FreeBSD can build Podr as
+well as serve it. SCSS is compiled only by webpack's `sass-loader` with `sass`
+(Dart Sass compiled to pure JavaScript), which runs anywhere Node does.
 
-So build the artifact on Linux (or in a Linux jail) and deploy it to FreeBSD.
-Serving has no such constraint: the artifact is just files.
+Until #139, Heft also ran `@rushstack/heft-sass-plugin`. That task only generated
+a `.d.ts` for `src/app.scss`, which nothing reads, and it needed `sass-embedded`,
+which publishes no FreeBSD binary. `src/types/scss.d.ts` now declares `*.scss`
+imports instead. `sass-embedded` is still installed, pulled in through
+`@rushstack/heft-web-rig`. It has no install script, so it installs on FreeBSD
+without its platform binary, and the build never calls it. `@parcel/watcher` and
+`@unrs/resolver`, the native dependencies the build does use, ship `freebsd-x64`
+builds.
+
+Building on Linux and deploying the artifact still works, and is what CI does.
 
 ## Deploy
 
