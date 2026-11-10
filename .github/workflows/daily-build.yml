@@ -22,12 +22,12 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 1 # Shallow clone for faster checkout
     
     - name: Setup Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: 24
         cache: 'yarn'
@@ -45,7 +45,7 @@ jobs:
       run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
     
     - name: Cache Yarn dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       id: yarn-cache
       with:
         path: |
@@ -85,7 +85,7 @@ jobs:
         NODE_ENV: production
     
     - name: Cache build output
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ./dist
         key: ${{ runner.os }}-build-${{ github.sha }}
@@ -102,7 +102,7 @@ jobs:
     
     - name: Deploy to Netlify
       id: netlify-deploy
-      uses: nwtgck/actions-netlify@v2.0
+      uses: nwtgck/actions-netlify@v4.0
       with:
         publish-dir: './dist'
         production-branch: main
