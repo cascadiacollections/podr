@@ -41,14 +41,14 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 
 ### 🎨 **Beautiful Experience**
 - 📱 **Responsive Design** - Pixel-perfect on mobile, tablet, and desktop
-- � **Modern UI** - Clean, intuitive interface with smooth animations
+- 🎨 **Modern UI** - Clean, intuitive interface with smooth animations
 - ⚡ **Lightning Search** - Find any podcast in milliseconds
 - ⭐ **Smart Favorites** - One-click bookmarking with persistent storage
 
-### �️ **Developer Ready**
+### 🛠️ **Developer Ready**
 - 🔧 **Modern Stack** - Preact + TypeScript + cutting-edge tooling
 - 🧪 **Tested** - `yarn test` runs the suite. Coverage is whatever `yarn test:coverage` prints; there is no 90% gate
-- � **Security First** - CSP headers, HTTPS, and secure dependencies
+- 🔒 **Security First** - CSP headers, HTTPS, and secure dependencies
 - 🌐 **PWA Ready** - Offline capabilities and installable experience
 
 ## 🛠️ Tech Stack
@@ -474,9 +474,9 @@ gh pr create --title "Add amazing feature" --body "Description of changes"
 We take security seriously. If you discover a security vulnerability:
 - **DO NOT** open a public issue
 - See [SECURITY.md](SECURITY.md) for responsible disclosure instructions
-- Email: kevintcoughlin@users.noreply.github.com
+- Report it privately through [GitHub private vulnerability reporting](https://github.com/cascadiacollections/podr/security/advisories/new)
 
-## � Project Stats
+## 📊 Project Stats
 
 <div align="center">
 
@@ -489,7 +489,7 @@ We take security seriously. If you discover a security vulnerability:
 
 ---
 
-## �📄 License
+## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 

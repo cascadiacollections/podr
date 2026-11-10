@@ -1,13 +1,17 @@
-# 🤖 Dependabot Configuration - 2025 Edition
-# Automated dependency management with security-first approach
-# 📚 Documentation: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+# Dependabot version updates
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#
+# Each ecosystem is grouped into one PR and waits 7 days before proposing a new
+# release. Security updates are raised by GitHub independently of this file and
+# are neither grouped nor delayed by it.
 
 version: 2
 
 updates:
-  # 📦 Production Dependencies - High Priority
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/packages/webpack-api-inliner-plugin"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -15,93 +19,21 @@ updates:
       timezone: "America/Los_Angeles"
     assignees:
       - "kevintcoughlin"
-    reviewers:
-      - "kevintcoughlin"
     labels:
       - "dependencies"
       - "npm"
-      - "production"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
       include: "scope"
     open-pull-requests-limit: 10
-    target-branch: "main"
     versioning-strategy: "increase"
-    # 🔒 Security updates take priority
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-    # 🚀 Group frontend framework updates
-    groups:
-      preact-ecosystem:
-        patterns:
-          - "preact*"
-          - "@preact/*"
-        update-types:
-          - "minor"
-          - "patch"
-      build-tools:
-        patterns:
-          - "webpack*"
-          - "@rushstack/*"
-          - "heft*"
-        update-types:
-          - "minor"
-          - "patch"
-      testing-tools:
-        patterns:
-          - "jest*"
-          - "@testing-library/*"
-          - "@types/jest"
-        update-types:
-          - "minor"
-          - "patch"
-      css-tools:
-        patterns:
-          - "postcss*"
-          - "sass*"
-          - "autoprefixer"
-          - "cssnano"
-        update-types:
-          - "minor"
-          - "patch"
-    cooldown:
-      default-days: 7
-
-  # 🚨 Security Updates - Immediate Priority
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "06:00"
-      timezone: "America/Los_Angeles"
-    assignees:
-      - "kevintcoughlin"
-    reviewers:
-      - "kevintcoughlin"
-    labels:
-      - "security"
-      - "critical"
-      - "dependencies"
-    commit-message:
-      prefix: "security"
-      include: "scope"
-    open-pull-requests-limit: 5
-    target-branch: "main"
-    # 🔥 Only security updates for this configuration
-    allow:
-      - dependency-type: "direct"
-        update-types: ["security"]
-      - dependency-type: "indirect"
-        update-types: ["security"]
     groups:
       npm:
         patterns: ["*"]
     cooldown:
       default-days: 7
 
-  # ⚡ GitHub Actions - Automated CI/CD Updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -111,8 +43,6 @@ updates:
       timezone: "America/Los_Angeles"
     assignees:
       - "kevintcoughlin"
-    reviewers:
-      - "kevintcoughlin"
     labels:
       - "dependencies"
       - "github-actions"
@@ -121,30 +51,16 @@ updates:
       prefix: "ci"
       include: "scope"
     open-pull-requests-limit: 3
-    target-branch: "main"
-    # 🎯 Group related actions together
     groups:
-      node-actions:
-        patterns:
-          - "actions/setup-node"
-          - "actions/cache"
-        update-types:
-          - "major"
-          - "minor"
-          - "patch"
-      deployment-actions:
-        patterns:
-          - "peaceiris/actions-gh-pages"
-          - "netlify/actions/*"
-        update-types:
-          - "minor"
-          - "patch"
+      github-actions:
+        patterns: ["*"]
     cooldown:
       default-days: 7
 
-  # 🐳 Docker Dependencies (if any)
-  - package-ecosystem: "docker"
-    directory: "/.devcontainer"
+  # The dev container uses an image reference in devcontainer.json (no
+  # Dockerfile), which the docker ecosystem cannot read.
+  - package-ecosystem: "devcontainers"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -152,18 +68,15 @@ updates:
       timezone: "America/Los_Angeles"
     assignees:
       - "kevintcoughlin"
-    reviewers:
-      - "kevintcoughlin"
     labels:
       - "dependencies"
-      - "docker"
       - "devcontainer"
     commit-message:
       prefix: "docker"
       include: "scope"
     open-pull-requests-limit: 2
     groups:
-      docker:
+      devcontainers:
         patterns: ["*"]
     cooldown:
       default-days: 7

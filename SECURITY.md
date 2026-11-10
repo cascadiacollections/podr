@@ -7,7 +7,7 @@ We take the security of Podr seriously. If you discover a security vulnerability
 ### 🚨 For Critical Vulnerabilities
 
 1. **DO NOT** open a public GitHub issue
-2. Email security details to: [kevintcoughlin@users.noreply.github.com](mailto:kevintcoughlin@users.noreply.github.com)
+2. Report it privately through [GitHub private vulnerability reporting](https://github.com/cascadiacollections/podr/security/advisories/new)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -16,9 +16,7 @@ We take the security of Podr seriously. If you discover a security vulnerability
 
 ### 📝 For Non-Critical Issues
 
-For less critical security concerns:
-- Open a [GitHub Security Advisory](https://github.com/cascadiacollections/podr/security/advisories/new)
-- Or create a private issue using the security label
+For less critical security concerns, use the same [private vulnerability report form](https://github.com/cascadiacollections/podr/security/advisories/new).
 
 ## ⏱️ Response Timeline
 
@@ -98,7 +96,7 @@ We appreciate security researchers who responsibly disclose vulnerabilities. Con
 
 ## 📞 Contact
 
-- **Email**: kevintcoughlin@users.noreply.github.com
+- **Private report**: [Report a vulnerability](https://github.com/cascadiacollections/podr/security/advisories/new)
 - **GitHub**: [@kevintcoughlin](https://github.com/kevintcoughlin)
 - **Security Advisories**: [View all advisories](https://github.com/cascadiacollections/podr/security/advisories)
 
