@@ -19,10 +19,10 @@ jobs:
       contents: read
       security-events: write # For security scanning
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Setup Node
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: 24
         cache: 'yarn'
@@ -32,7 +32,7 @@ jobs:
       run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
     - name: Cache Yarn dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       id: yarn-cache
       with:
         path: |
