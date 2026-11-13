@@ -10153,10 +10153,10 @@ postcss@8.5.32, postcss@^8.3.5, postcss@^8.4.40, postcss@^8.4.5, postcss@~8.5.10
     picocolors "^1.1.1"
     source-map-js "^1.2.2"
 
-preact@11.1.1:
-  version "11.1.1"
-  resolved "https://registry.yarnpkg.com/preact/-/preact-11.1.1.tgz#8f4c2dd333c0ba0d36b68ca4d8998d09854c02ec"
-  integrity sha512-vpFVfai437pbuLri7XVeslCPfrEZX6Z1S2gV+MOFrA/kji+NKUXvH7y01EnVjA1guLigfkVp77Sqipd4SIllCg==
+preact@11.2.0:
+  version "11.2.0"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-11.2.0.tgz#8667ca0531eb0efa529208892321313d8d3fc8d4"
+  integrity sha512-/HfHI/7N84e6GrWBJ3J280z3mLaRJiDcSvj/A+y/4AbLnND/1UlGHe1sR6oYuTGwId0nP7dqDU9OnLxMPZ7xBg==
 
 prelude-ls@^1.2.1:
   version "1.2.1"
@@ -10752,10 +10752,10 @@ sass-loader@~12.4.0:
     klona "^2.0.4"
     neo-async "^2.6.2"
 
-sass@1.107.1:
-  version "1.107.1"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.107.1.tgz#a8a461744666e31f8973041a6b9ae7fcb265befd"
-  integrity sha512-aJ1/LvxOOb04YhmiBjzZn3jVwdHKol+OVhoMV6fFl02fF9T3i+5Mg9l/CnzqtM+NX5Jn5o3lAbs/ZJivTCLHfQ==
+sass@1.108.0:
+  version "1.108.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.108.0.tgz#f459d748b3dc8885e15b9cb9304979efd68e70ab"
+  integrity sha512-9HwnefouIfwY+XuA1rS5xOhALH5vsoe3SzYICG3MEwpkMbE7tpuh5ytZFRXUKPYkxY7lKdIbqxl+DxQGo8jwQQ==
   dependencies:
     chokidar "^5.0.0"
     immutable "^5.1.5"
