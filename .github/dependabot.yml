@@ -31,6 +31,11 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+    # ts-jest and typescript-eslint need the TypeScript 6 compiler API, which
+    # TypeScript 7 (the native port) does not expose. Revisit when they support it.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 7
 
