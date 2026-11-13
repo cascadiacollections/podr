@@ -18,10 +18,9 @@ updates:
       time: "09:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "npm"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
@@ -47,11 +46,9 @@ updates:
       time: "10:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "github-actions"
-      - "ci-cd"
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -72,10 +69,9 @@ updates:
       time: "11:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "devcontainer"
     commit-message:
       prefix: "docker"
       include: "scope"
