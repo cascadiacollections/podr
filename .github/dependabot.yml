@@ -18,10 +18,9 @@ updates:
       time: "09:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "npm"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
@@ -31,6 +30,11 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+    # ts-jest and typescript-eslint need the TypeScript 6 compiler API, which
+    # TypeScript 7 (the native port) does not expose. Revisit when they support it.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 7
 
@@ -42,11 +46,9 @@ updates:
       time: "10:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "github-actions"
-      - "ci-cd"
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -67,10 +69,9 @@ updates:
       time: "11:00"
       timezone: "America/Los_Angeles"
     assignees:
-      - "kevintcoughlin"
+      - "KevinTCoughlin"
     labels:
       - "dependencies"
-      - "devcontainer"
     commit-message:
       prefix: "docker"
       include: "scope"

@@ -150,6 +150,8 @@ function createWebpackConfig({ production }) {
           'apple-touch-icon.png',
           'favicon-16x16.png',
           'favicon-32x32.png',
+          // Open Graph / Twitter card image, 1200x630
+          'og-image.png',
           // Read by ad exchanges at the site root; see assets/ads.txt
           'ads.txt'
         ],
@@ -172,7 +174,9 @@ function createWebpackConfig({ production }) {
         analyticsSnippet: analytics.snippet,
         // Google Consent Mode defaults ship only alongside gtag
         analyticsProvider: analytics.provider,
-        // Loads the Funding Choices consent prompt and AdSense when set
+        // Canonical, Open Graph and JSON-LD URLs (PODR_SITE_ORIGIN, config/site.js)
+        siteOrigin: site.origin,
+        // Loads the Funding Choices consent prompt when set
         adsPublisherId: ads.publisherId,
         consentRegions: CONSENT_REGIONS,
         minify: production ? {

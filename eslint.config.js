@@ -20,7 +20,14 @@ module.exports = [
       '**/.heft/**',
       '**/webpack.config.js',
       '**/jest.config.js',
-      '**/postcss.config.js'
+      '**/postcss.config.js',
+      // heft-lint-plugin 1.4 lints every file this config selects, not only the
+      // TypeScript program (src/). These are linted elsewhere or not at all:
+      // the published plugin package has its own build, webpack-plugins/ runs
+      // in Node at build time, and assets/sw.js is copied as is.
+      'packages/**',
+      'webpack-plugins/**',
+      'assets/**'
     ]
   },
   {
