@@ -8,7 +8,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
-const { resolveAdsConfig } = require('./config/ads');
+const { CONSENT_REGIONS, resolveAdsConfig } = require('./config/ads');
 const { resolveAnalyticsConfig } = require('./config/analytics');
 const { resolveApiConfig } = require('./config/api');
 const { SitemapPlugin } = require('./config/sitemap');
@@ -176,6 +176,9 @@ function createWebpackConfig({ production }) {
         analyticsProvider: analytics.provider,
         // Canonical, Open Graph and JSON-LD URLs (PODR_SITE_ORIGIN, config/site.js)
         siteOrigin: site.origin,
+        // Loads the Funding Choices consent prompt when set
+        adsPublisherId: ads.publisherId,
+        consentRegions: CONSENT_REGIONS,
         minify: production ? {
           collapseWhitespace: true,
           removeComments: true,
