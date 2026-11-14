@@ -20,6 +20,14 @@ describe('PrivacyPolicy', () => {
     );
   });
 
+  test('discloses the search API and what analytics events contain', () => {
+    render(<PrivacyPolicy />);
+
+    expect(screen.getByRole('heading', { name: 'Search and podcast lookups' })).toBeInTheDocument();
+    expect(screen.getByText(/Cloudflare Workers/)).toBeInTheDocument();
+    expect(screen.getByText(/not what you searched for/)).toBeInTheDocument();
+  });
+
   test('names the page in the tab title', () => {
     render(<PrivacyPolicy />);
 

@@ -28,28 +28,49 @@
     <% if (htmlWebpackPlugin.options.analyticsProvider === 'gtag') { %>
     <!--
       Google Consent Mode v2. Must run before the gtag config in the analytics
-      snippet below: every storage type starts denied, and the consent prompt
-      updates it once a visitor chooses. wait_for_update holds the first tags
-      back briefly so the prompt can apply a stored choice.
+      snippet below. In the EEA, the UK and Switzerland every storage type
+      starts denied until the consent prompt records a choice, as the privacy
+      policy promises; elsewhere storage is granted by default. wait_for_update
+      holds the first tags back briefly so the prompt can apply a stored choice.
+      Without a consent prompt (no publisher id) there is no way to grant
+      consent, so storage stays denied everywhere instead.
     -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      <% if (htmlWebpackPlugin.options.adsPublisherId) { %>
       gtag('consent', 'default', {
         ad_storage: 'denied',
         ad_user_data: 'denied',
         ad_personalization: 'denied',
         analytics_storage: 'denied',
-        wait_for_update: 500
+        wait_for_update: 500,
+        region: [<%= htmlWebpackPlugin.options.consentRegions.map(function (r) { return JSON.stringify(r); }).join(', ') %>]
       });
+      gtag('consent', 'default', {
+        ad_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
+        analytics_storage: 'granted'
+      });
+      <% } else { %>
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied'
+      });
+      <% } %>
     </script>
-    <!--
-      TODO(ads): Google CMP (Funding Choices) consent prompt. Turn it on under
-      AdSense > Privacy & messaging, then paste the script it gives here, ahead
-      of the analytics snippet, e.g.
-      <script async src="https://fundingchoicesmessages.google.com/i/pub-XXXXXXXXXXXXXXXX?ers=1"></script>
-    -->
     <% } %>
+    <% if (htmlWebpackPlugin.options.adsPublisherId) { %>
+    <!--
+      Google CMP (Funding Choices) consent prompt, enabled under AdSense >
+      Privacy & messaging. It records the visitor's choice, updates Consent
+      Mode, and offers the "Privacy and cookie settings" link the privacy policy
+      points to. Loaded ahead of the analytics snippet.
+    -->
+    <script async src="https://fundingchoicesmessages.google.com/i/<%= htmlWebpackPlugin.options.adsPublisherId %>?ers=1"></script>    <% } %>
     <%= htmlWebpackPlugin.options.analyticsSnippet || '' %>
   </head>
   <body>

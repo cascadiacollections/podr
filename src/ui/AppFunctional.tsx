@@ -523,11 +523,7 @@ export const App = (): JSX.Element => {
       return;
     }
 
-    trackEvent('search', {
-      'search_term': searchQuery,
-      transport: 'beacon'
-    });
-
+    // The search event itself is reported by Search via useAnalytics().trackSearch
     const requestId = ++searchRequestId.current;
     const controller = new AbortController();
     searchAbortRef.current = controller;
@@ -557,7 +553,8 @@ export const App = (): JSX.Element => {
         }
 
         trackEvent('exception', {
-          description: `search_fetch_${limit}_${searchQuery}_${err.message}`,
+          // No search text: the privacy policy promises it is not sent to analytics
+          description: `search_fetch_${limit}_${err.message}`,
           fatal: false
         });
       })

@@ -423,9 +423,11 @@ export function useAnalytics() {
     });
   }, []);
 
+  // Reports that a search happened, never what was searched: search text stays
+  // out of analytics, as the privacy policy states
   const trackSearch = useCallback((searchTerm: string, resultsCount?: number) => {
     const eventData: Record<string, unknown> = {
-      search_term: searchTerm,
+      search_term_length: searchTerm.length,
       transport_type: 'beacon',
     };
 

@@ -10,6 +10,18 @@
  */
 
 const ADS_TXT_PLACEHOLDER = 'pub-XXXXXXXXXXXXXXXX';
+
+/**
+ * Regions where analytics and ad storage start denied until the consent prompt
+ * records a choice: the EEA, the UK and Switzerland (ISO 3166-1 alpha-2), which
+ * is what the privacy policy promises.
+ */
+const CONSENT_REGIONS = Object.freeze([
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE',
+  'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+  'IS', 'LI', 'NO',
+  'GB', 'CH'
+]);
 const PUBLISHER_ID_PATTERN = /^pub-\d{16}$/;
 
 /**
@@ -53,4 +65,4 @@ function applyAdsPublisherId(template, publisherId) {
   return template.split(ADS_TXT_PLACEHOLDER).join(publisherId);
 }
 
-module.exports = { ADS_TXT_PLACEHOLDER, resolveAdsConfig, applyAdsPublisherId };
+module.exports = { ADS_TXT_PLACEHOLDER, CONSENT_REGIONS, resolveAdsConfig, applyAdsPublisherId };

@@ -7,7 +7,7 @@ export const PRIVACY_PATH = '/privacy';
 
 const CONTACT_EMAIL = 'kevin@cascadiacollections.com';
 const MEASUREMENT_ID = 'G-19Z3SPSJPY';
-const LAST_UPDATED = 'October 25, 2026';
+const LAST_UPDATED = 'November 13, 2026';
 
 /**
  * The privacy policy for podrapp.com. AdSense requires one that names the
@@ -40,16 +40,33 @@ export const PrivacyPolicy = (): JSX.Element => {
 
         <h2>What stays on your device</h2>
         <p>
-          Your library, recent searches and playback state are stored in your browser&apos;s
-          local storage. They are not sent to us, and clearing your site data removes them.
+          Your favorite podcasts and the episodes you last opened are stored in your
+          browser&apos;s local storage. We never receive that list, and clearing your site data
+          removes it.
+        </p>
+
+        <h2>Search and podcast lookups</h2>
+        <p>
+          To find podcasts and load their episodes, the site sends your search text, and the
+          address of each podcast feed you open, to the Podr API, which runs on Cloudflare
+          Workers. The API looks podcasts up through Apple&apos;s iTunes Search API and the
+          podcast&apos;s own feed. Like any web server it sees your IP address, which it uses to
+          rate-limit requests, and Cloudflare keeps request logs, including the requested
+          address, for a limited time. We do not use this to build a profile of you. Episode
+          audio and artwork load directly from the podcast&apos;s host and Apple, which see
+          your IP address too.
         </p>
 
         <h2>Google Analytics</h2>
         <p>
           We use Google Analytics (measurement ID {MEASUREMENT_ID}) to understand how the site
-          is used, such as which pages are visited and roughly where visitors come from. Google
-          Analytics uses cookies and similar technologies, and Google processes this data under
-          its own <a href="https://policies.google.com/privacy">privacy policy</a>. You can see{' '}
+          is used: which pages are visited, roughly where visitors come from, and events such
+          as when a search is made (but not what you searched for), which episodes are played,
+          which podcasts are added to or removed from favorites, and errors. Google Analytics
+          uses cookies and similar technologies, and Google processes this data under its own{' '}
+          <a href="https://policies.google.com/privacy">privacy policy</a>. Where analytics
+          cookies are off because you have not consented, Google may still receive these
+          events without cookies or identifiers. You can see{' '}
           <a href="https://policies.google.com/technologies/partner-sites">
             how Google uses information from sites that use its services
           </a>
@@ -59,7 +76,7 @@ export const PrivacyPolicy = (): JSX.Element => {
 
         <h2>Advertising</h2>
         <p>
-          Podr shows ads served by Google AdSense. Google and its partners use cookies to serve
+          Podr may show ads served by Google AdSense. Google and its partners use cookies to serve
           ads based on your previous visits to this and other websites. Google&apos;s use of
           advertising cookies, including the DoubleClick cookie, lets it and its partners serve
           ads to you based on those visits.
@@ -81,9 +98,10 @@ export const PrivacyPolicy = (): JSX.Element => {
             (adssettings.google.com).
           </li>
           <li>
-            Where the law requires it, such as in the EEA, the UK and Switzerland, we ask for your
-            consent before analytics or advertising cookies are set. Until you choose, they stay
-            off, and you can change your choice from the privacy prompt at any time.
+            In the EEA, the UK and Switzerland, analytics and advertising cookies stay off until
+            you agree to them in the consent prompt, and you can change your choice later from
+            the privacy and cookie settings link that prompt provides. Until the prompt is
+            available, those cookies stay off for every visitor.
           </li>
           <li>Block or delete cookies in your browser settings.</li>
         </ul>
