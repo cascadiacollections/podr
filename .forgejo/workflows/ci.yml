@@ -1,0 +1,31 @@
+# Forgejo Actions (Codeberg or a self-hosted Forgejo) counterpart of
+# .github/workflows/node.js.yml. GitHub never reads this directory. Forgejo
+# reads .github/workflows/ only when .forgejo/workflows/ is absent, so this
+# file also keeps the GitHub-only workflows (CodeQL, Copilot, Codespaces,
+# releases) from running there.
+#
+# Both hosts call scripts/ci.sh, which holds the actual commands.
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    # `docker` is the default label of a forgejo-runner; change it to match
+    # the runner you register (Codeberg's hosted runners use codeberg-tiny etc.).
+    runs-on: docker
+    container:
+      image: node:24-bookworm # ships Yarn 1.22, same as GitHub's runner
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v4
+      - run: bash scripts/ci.sh install
+      - run: bash scripts/ci.sh audit
+        continue-on-error: true
+      - run: bash scripts/ci.sh lint
+      - run: bash scripts/ci.sh test
+      - run: bash scripts/ci.sh build

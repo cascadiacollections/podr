@@ -44,14 +44,14 @@ jobs:
           ${{ runner.os }}-yarn-
 
     - name: Install dependencies
-      run: yarn install --frozen-lockfile --prefer-offline --network-timeout 100000
+      run: bash scripts/ci.sh install
 
     - name: Security audit
-      run: yarn audit --groups dependencies || echo "⚠️ Security vulnerabilities found, review required"
+      run: bash scripts/ci.sh audit
       continue-on-error: true
 
     - name: Run tests
-      run: yarn test --ci --passWithNoTests --json --outputFile=test-report.json
+      run: bash scripts/ci.sh test
 
     - name: Publish Test Report
       if: always()
@@ -62,7 +62,7 @@ jobs:
         retention-days: 7
 
     - name: Build
-      run: yarn build:ci
+      run: bash scripts/ci.sh build
 
     - name: Build summary
       if: success()

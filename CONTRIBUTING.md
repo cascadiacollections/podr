@@ -26,6 +26,10 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 - **Git**: Version 2.0+
 - **GitHub Account**: For submitting pull requests
 
+### Where the Project Lives
+
+GitHub ([cascadiacollections/podr](https://github.com/cascadiacollections/podr)) is the canonical host: issues, pull requests, releases and CI happen there. A read-only copy is mirrored nightly to [gitlab.com/cascadiacollections/podr](https://gitlab.com/cascadiacollections/podr), so the history survives losing access to one account. Don't open issues or merge requests on the mirror; they won't be seen.
+
 ### Fork and Clone
 
 1. Fork the repository on GitHub
@@ -113,7 +117,12 @@ yarn test:coverage
 
 # Build for production
 yarn build:ci
+
+# Run the same steps CI runs: install, audit, lint, test, build
+bash scripts/ci.sh
 ```
+
+`scripts/ci.sh` is the single source of truth for CI. The GitHub workflow (`.github/workflows/node.js.yml`) and the Forgejo one (`.forgejo/workflows/ci.yml`, for Codeberg or a self-hosted Forgejo) both call it, so a change to a step goes there. CodeQL, the Copilot and Codespaces workflows, and the release workflows stay GitHub-only.
 
 ## 📤 Submitting Changes
 
