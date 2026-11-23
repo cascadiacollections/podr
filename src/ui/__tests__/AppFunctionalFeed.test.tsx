@@ -52,15 +52,36 @@ const mockFetchWithFeed = (feedResponse: unknown): jest.Mock =>
       : jsonResponse(TOP_PODCASTS_RESPONSE)
   );
 
+/** Monday before the promo, so a banner never appears in these fixtures. */
+const OUTSIDE_PROMO_MS = Date.parse('2026-11-23T20:00:00Z');
+
 describe('App episode fetching', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
+    jest.useFakeTimers({
+      now: OUTSIDE_PROMO_MS,
+      doNotFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'setImmediate',
+        'clearImmediate',
+        'nextTick',
+        'queueMicrotask',
+        'performance',
+      ],
+    });
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
     localStorage.setItem('podr_feeds', JSON.stringify([STORED_FEED]));
     localStorage.setItem('podr_results', JSON.stringify([STORED_EPISODE]));
     localStorage.setItem('podr_results_feed', JSON.stringify({ feedUrl: STORED_FEED.feedUrl }));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   test('renders episodes returned by the feed service', async () => {
