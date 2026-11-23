@@ -17,6 +17,7 @@ import { isConstrainedConnection, useOnlineStatus } from '../utils/network';
 import { readStoredJson, writeStoredJson } from '../utils/storage';
 import { INowPlaying, PlayerBar } from './PlayerBar';
 import { PodcastCard } from './PodcastCard';
+import { PromoBanner } from './PromoBanner';
 import { PodcastView } from './PodcastView';
 import { IFeedItem } from './Result';
 import { Search } from './Search';
@@ -815,6 +816,8 @@ export const App = (): JSX.Element => {
         {!isOnline ? (
           <p className="notice notice--offline" role="status">{OFFLINE_MESSAGE}</p>
         ) : null}
+
+        <PromoBanner />
 
         {selected ? (
           <PodcastView

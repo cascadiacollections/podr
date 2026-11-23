@@ -17,14 +17,37 @@ const mockFetch = (data: any, status = 200) => {
   );
 };
 
+/** Monday before the promo, so the banner stays out of these snapshots all year. */
+const OUTSIDE_PROMO_MS = Date.parse('2026-11-23T20:00:00Z');
+
 describe('App component', () => {
   beforeEach(() => {
     // Clear localStorage and mocks before each test
     localStorage.clear();
     jest.clearAllMocks();
+
+    // Date is frozen outside the promo window. Timers stay real so waitFor works.
+    jest.useFakeTimers({
+      now: OUTSIDE_PROMO_MS,
+      doNotFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'setImmediate',
+        'clearImmediate',
+        'nextTick',
+        'queueMicrotask',
+        'performance',
+      ],
+    });
     
     // Mock console.error to prevent test output noise
     jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   test('renders without crashing', async () => {
@@ -53,6 +76,8 @@ describe('App component', () => {
     // Verify the app title is rendered
     const title = screen.getByText('Podr');
     expect(title).toBeInTheDocument();
+    // Outside the window the promo is absent, so the layout matches today
+    expect(screen.queryByRole('region', { name: 'Black Friday and Cyber Monday' })).not.toBeInTheDocument();
     
     // Create snapshot of initial app state
     expect(container).toMatchSnapshot();
@@ -158,5 +183,27 @@ describe('App component', () => {
     await waitFor(() => {
       expect(screen.getByText(/Results for.*test query/i)).toBeInTheDocument();
     });
+  });
+
+  test('shows the promo from ?promo=bf2026 and dismisses it without tracking', async () => {
+    global.fetch = mockFetch({ feed: { entry: [] } });
+    window.history.replaceState(null, '', '/?promo=bf2026');
+    const gtag = window.gtag as jest.Mock;
+    const callsBefore = gtag.mock.calls.length;
+
+    render(<App />);
+
+    expect(screen.getByRole('region', { name: 'Black Friday and Cyber Monday' })).toHaveTextContent(
+      'no account and no ads'
+    );
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Dismiss promotion' }), { key: 'Escape' });
+
+    expect(screen.queryByRole('region', { name: 'Black Friday and Cyber Monday' })).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveFocus();
+    // The clock is outside the window, so preview dismissal is not stored.
+    expect(localStorage.getItem('podr_promo_bf2026_dismissed')).toBeNull();
+    expect(document.cookie).toBe('');
+    expect(gtag.mock.calls.length).toBe(callsBefore);
   });
 });
