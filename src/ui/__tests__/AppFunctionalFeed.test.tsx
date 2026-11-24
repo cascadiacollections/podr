@@ -522,4 +522,47 @@ describe('App episode fetching', () => {
 
     expect(document.querySelector('audio')?.src).toContain('https://cdn.example.com/ep.mp3');
   });
+
+  test('pauses and resumes the episode that is already playing', async () => {
+    let paused = true;
+    const play = jest.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => {
+      paused = false;
+      return Promise.resolve();
+    });
+    const pause = jest.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {
+      paused = true;
+    });
+    jest.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockImplementation(() => paused);
+
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      items: [{
+        guid: 'toggle-1',
+        title: 'Toggle Episode',
+        description: 'plain',
+        pubDate: '2026-02-02',
+        enclosure: { link: 'https://cdn.example.com/toggle.mp3', duration: 60 }
+      }]
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    const episode = await screen.findByRole('button', { name: 'Play episode: Toggle Episode' });
+    fireEvent.click(episode);
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('audio')?.src).toContain('https://cdn.example.com/toggle.mp3');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Now playing: Toggle Episode' }));
+    expect(pause).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Now playing: Toggle Episode' }));
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(pause).toHaveBeenCalledTimes(1);
+
+    play.mockRestore();
+    pause.mockRestore();
+    jest.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockRestore();
+  });
 });

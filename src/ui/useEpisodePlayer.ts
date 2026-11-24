@@ -9,7 +9,7 @@ import { IFeedItem } from './Result';
 
 /**
  * Loads the chosen episode into the persistent audio element.
- * Choosing it again replaces the source, which restarts playback.
+ * Choosing that same episode again pauses it, or resumes it from where it stopped.
  */
 export const useEpisodePlayer = (
   audioRef: { readonly current: HTMLAudioElement | null },
@@ -39,6 +39,26 @@ export const useEpisodePlayer = (
       return;
     }
 
+    const audio = audioRef.current;
+    const sameEpisode = nowPlaying.value?.guid === item.guid && Boolean(audio?.getAttribute('src'));
+
+    if (audio && sameEpisode) {
+      const isPlaying = !audio.paused;
+
+      trackEvent('Audio', {
+        eventAction: isPlaying ? 'pause' : 'play',
+        eventLabel: secureUrl,
+        transport: 'beacon'
+      });
+
+      if (isPlaying) {
+        audio.pause();
+      } else {
+        void audio.play?.()?.catch(() => undefined);
+      }
+      return;
+    }
+
     trackEvent('Audio', {
       eventAction: 'play',
       eventLabel: secureUrl,
@@ -54,11 +74,11 @@ export const useEpisodePlayer = (
       artworkUrl: podcast?.artworkUrl100 ?? ''
     };
 
-    if (audioRef.current) {
-      audioRef.current.src = secureUrl;
+    if (audio) {
+      audio.src = secureUrl;
       // Playback begins from the click that chose the episode, which is also what
       // mobile browsers require of a player that does not autoplay
-      void audioRef.current.play?.()?.catch(() => undefined);
+      void audio.play?.()?.catch(() => undefined);
     }
   }, [audioRef, nowPlaying, selectedFeed]);
 };
