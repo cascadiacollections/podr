@@ -3,6 +3,7 @@ import { memo } from 'preact/compat';
 import { useCallback } from 'preact/hooks';
 
 import { IFeed } from '../utils/AppContext';
+import { toSecureHttpUrl } from '../utils/helpers';
 
 /**
  * Artwork rendered at 100px on a 1x display; the grid never shows it larger
@@ -37,6 +38,8 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
   ({ feed, onOpen, onToggleFavorite, isFavorite, isCurrent = false, lazy = true }: IPodcastCardProps) => {
     const handleOpen = useCallback(() => onOpen(feed), [feed, onOpen]);
     const handleToggleFavorite = useCallback(() => onToggleFavorite(feed), [feed, onToggleFavorite]);
+    const artwork = toSecureHttpUrl(feed.artworkUrl100);
+    const artworkLarge = toSecureHttpUrl(feed.artworkUrl600);
 
     return (
       <li className={isCurrent ? 'podcast-card podcast-card--current' : 'podcast-card'}>
@@ -48,8 +51,8 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
         >
           <img
             className="podcast-card__artwork"
-            src={feed.artworkUrl100}
-            srcSet={feed.artworkUrl600 ? `${feed.artworkUrl100} 1x, ${feed.artworkUrl600} 2x` : undefined}
+            src={artwork || undefined}
+            srcSet={artwork && artworkLarge ? `${artwork} 1x, ${artworkLarge} 2x` : undefined}
             width={ARTWORK_SIZE}
             height={ARTWORK_SIZE}
             alt=""
@@ -80,6 +83,7 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
     prevProps.feed.collectionName === nextProps.feed.collectionName &&
     prevProps.feed.artistName === nextProps.feed.artistName &&
     prevProps.feed.artworkUrl100 === nextProps.feed.artworkUrl100 &&
+    prevProps.feed.artworkUrl600 === nextProps.feed.artworkUrl600 &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isCurrent === nextProps.isCurrent &&
     prevProps.lazy === nextProps.lazy &&

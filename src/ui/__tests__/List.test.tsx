@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { render } from '@testing-library/preact';
+import { fireEvent, render } from '@testing-library/preact';
 import { List } from '../List';
 import { IFeedItem } from '../Result';
 
@@ -48,5 +48,51 @@ describe('List component', () => {
     const onClick = jest.fn();
     const { container } = render(<List results={[]} onClick={onClick} />);
     expect(container).toMatchSnapshot();
+  });
+
+  test('shows an updated title when the episode identity is unchanged', () => {
+    const onClick = jest.fn();
+    const first = mockResults[0];
+    const { rerender, getByText, queryByText } = render(<List results={[first]} onClick={onClick} />);
+
+    expect(getByText(/Test Episode 1/)).toBeInTheDocument();
+
+    rerender(<List results={[{ ...first, title: 'Renamed Episode' }]} onClick={onClick} />);
+
+    expect(queryByText(/Test Episode 1/)).not.toBeInTheDocument();
+    expect(getByText(/Renamed Episode/)).toBeInTheDocument();
+  });
+
+  test('keeps expanded rows across a refresh and resets for another podcast', () => {
+    const onClick = jest.fn();
+    const episodes: IFeedItem[] = Array.from({ length: 31 }, (_, index) => ({
+      guid: `id-${index}`,
+      title: `Episode ${index}`,
+      description: `Notes ${index}`,
+      pubDate: '2026-01-01',
+      enclosure: { duration: 60, link: 'https://example.com/episode.mp3' }
+    }));
+    const { rerender, getByRole, queryByRole, getAllByRole } = render(
+      <List results={episodes} onClick={onClick} resetKey="https://example.com/a.rss" />
+    );
+
+    expect(getAllByRole('button', { name: /Play episode/ })).toHaveLength(30);
+    expect(queryByRole('button', { name: 'Play episode: Episode 30' })).not.toBeInTheDocument();
+
+    fireEvent.click(getByRole('button', { name: /show 1 more/i }));
+    expect(getByRole('button', { name: 'Play episode: Episode 30' })).toBeInTheDocument();
+
+    rerender(
+      <List
+        results={episodes.map((item) => ({ ...item }))}
+        onClick={onClick}
+        resetKey="https://example.com/a.rss"
+      />
+    );
+    expect(getByRole('button', { name: 'Play episode: Episode 30' })).toBeInTheDocument();
+
+    rerender(<List results={episodes} onClick={onClick} resetKey="https://example.com/b.rss" />);
+    expect(queryByRole('button', { name: 'Play episode: Episode 30' })).not.toBeInTheDocument();
+    expect(getAllByRole('button', { name: /Play episode/ })).toHaveLength(30);
   });
 });

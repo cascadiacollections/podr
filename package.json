@@ -75,7 +75,6 @@
     "webpack": "5.112.2"
   },
   "dependencies": {
-    "@microsoft/load-themed-styles": "2.2.32",
     "@preact/signals": "^2.11.4",
     "preact": "11.2.0"
   },

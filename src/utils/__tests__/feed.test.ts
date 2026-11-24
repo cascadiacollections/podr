@@ -110,6 +110,18 @@ describe('parseFeedResponse', () => {
   it('skips entries that are not objects', () => {
     expect(parseFeedResponse({ items: [null, 'nope', serviceFeedResponse.items[0]] })).toHaveLength(1);
   });
+
+  it('upgrades HTTP enclosures and drops schemes that are not web URLs', () => {
+    const [httpItem, scriptItem] = parseFeedResponse({
+      items: [
+        { guid: 'a', title: 'A', enclosure: { link: 'http://cdn.example.com/a.mp3', duration: 5 } },
+        { guid: 'b', title: 'B', enclosure: { link: 'javascript:alert(1)' } }
+      ]
+    });
+
+    expect(httpItem.enclosure.link).toBe('https://cdn.example.com/a.mp3');
+    expect(scriptItem.enclosure.link).toBe('');
+  });
 });
 
 describe('parseDuration', () => {
@@ -185,6 +197,13 @@ describe('parseFeedDetails', () => {
   test('reads bare, previously persisted details', () => {
     expect(parseFeedDetails({ feedUrl: 'u', title: 'Show', author: '', description: '' }))
       .toEqual({ title: 'Show', author: '', description: '', image: '' });
+  });
+
+  test('upgrades HTTP artwork and drops every other scheme', () => {
+    expect(parseFeedDetails({ feed: { title: 'Show', image: 'http://cdn.example.com/a.jpg' } }).image)
+      .toBe('https://cdn.example.com/a.jpg');
+    expect(parseFeedDetails({ feed: { title: 'Show', image: 'javascript:alert(1)' } }).image).toBe('');
+    expect(parseFeedDetails({ feed: { image: { url: 'data:image/svg+xml,<svg></svg>' } } }).image).toBe('');
   });
 
   test('never throws on junk', () => {

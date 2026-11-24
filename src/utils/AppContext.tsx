@@ -9,23 +9,6 @@ declare const PODR_API_BASE_URL: string | undefined;
  */
 export const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
 
-// Stable empty references - prevent unnecessary re-renders
-export const EMPTY_OBJECT = Object.freeze({});
-export const EMPTY_STRING = '' as const;
-
-// Stable error response objects
-export const EMPTY_SEARCH_RESULT = Object.freeze({
-  results: EMPTY_ARRAY
-});
-
-export const EMPTY_FEED_RESULT = Object.freeze({
-  results: EMPTY_ARRAY
-});
-
-// Stable default handlers (for optional props)
-export const NOOP = () => {};
-export const NOOP_ASYNC = async () => {};
-
 /**
  * Represents a podcast feed with essential metadata
  */
@@ -128,13 +111,3 @@ export function createAppState(initialState?: Partial<Pick<AppContextType, 'favo
     topResults: signal<ReadonlyArray<ITopPodcast>>(EMPTY_ARRAY),
   } as const;
 }
-
-/**
- * @deprecated Use APP_CONFIG instead. This will be removed in a future version.
- */
-export const Constants = {
-  API_BASE_URL: APP_CONFIG.API_BASE_URL,
-  LOCAL_STORAGE_FEEDS_KEY: APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY,
-  LOCAL_STORAGE_RESULTS_KEY: APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY,
-  DEFAULT_SEARCH_LIMIT: APP_CONFIG.SEARCH.DEFAULT_LIMIT,
-} as const;

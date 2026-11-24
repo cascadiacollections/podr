@@ -480,4 +480,46 @@ describe('App episode fetching', () => {
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('?feed=' + encodeURIComponent(STORED_FEED.feedUrl)));
   });
+
+  test('does not offer playback for a non-web enclosure', async () => {
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      items: [{
+        guid: 'bad-1',
+        title: 'Hostile Episode',
+        description: '<script>alert(1)</script>Shown as text',
+        pubDate: '2026-02-02',
+        enclosure: { link: 'javascript:alert(1)', duration: 30 }
+      }]
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+
+    const play = await screen.findByRole('button', { name: 'Hostile Episode (no audio available)' });
+
+    expect(play).toBeDisabled();
+    expect(document.querySelector('audio')).not.toHaveAttribute('src');
+    expect(screen.getByText(/Shown as text/)).toBeInTheDocument();
+    expect(document.body.innerHTML).not.toContain('<script>alert(1)</script>');
+  });
+
+  test('plays an HTTP enclosure over HTTPS', async () => {
+    global.fetch = mockFetchWithFeed({
+      status: 'ok',
+      items: [{
+        guid: 'http-1',
+        title: 'HTTP Episode',
+        description: 'plain',
+        pubDate: '2026-02-02',
+        enclosure: { link: 'http://cdn.example.com/ep.mp3', duration: 60 }
+      }]
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: STORED_FEED.collectionName }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Play episode: HTTP Episode' }));
+
+    expect(document.querySelector('audio')?.src).toContain('https://cdn.example.com/ep.mp3');
+  });
 });

@@ -162,6 +162,7 @@ exports[`App component loads top podcasts on mount 1`] = `
       role="region"
     >
       <div
+        aria-live="polite"
         class="player-bar__text"
       >
         <div
@@ -349,6 +350,7 @@ exports[`App component renders without crashing 1`] = `
       role="region"
     >
       <div
+        aria-live="polite"
         class="player-bar__text"
       >
         <div

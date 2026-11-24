@@ -10,7 +10,6 @@ const SEARCH_CONFIG = {
   MIN_QUERY_LENGTH: 1,
   PLACEHOLDER_TEXT: 'Search podcasts',
   SUBMIT_BUTTON_TEXT: 'Search',
-  SEARCH_DEBOUNCE_MS: 300,
 } as const;
 
 /**
@@ -112,7 +111,8 @@ export const Search: FunctionComponent<ISearchProps> = ({
   }, [executeSearch, disabled, isLoading]);
   
   /**
-   * Handle input change if using signal with debouncing consideration
+   * Keeps an external signal in step with what the field shows.
+   * The search itself runs on submit, not on each keystroke.
    */
   const handleChange = useCallback((event: TargetedEvent<HTMLInputElement>) => {
     if (querySignal && !disabled) {

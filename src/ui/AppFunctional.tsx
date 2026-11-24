@@ -12,7 +12,15 @@ import {
   parseFeedResponse,
   parseStoredFeedItems
 } from '../utils/feed';
-import { getFeedUrl, getSecureUrl, IResolvedFeed, resolveFeed } from '../utils/helpers';
+import {
+  getFeedUrl,
+  getSecureUrl,
+  IResolvedFeed,
+  parseStoredFeeds,
+  readErrorMessage,
+  readErrorName,
+  resolveFeed
+} from '../utils/helpers';
 import { isConstrainedConnection, useOnlineStatus } from '../utils/network';
 import { readStoredJson, writeStoredJson } from '../utils/storage';
 import { INowPlaying, PlayerBar } from './PlayerBar';
@@ -281,7 +289,7 @@ export const App = (): JSX.Element => {
 
   const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
     () => createAppState({
-      favorited: signal(new Set(readStoredJson<IFeed[]>(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, []))),
+      favorited: signal(new Set(parseStoredFeeds(readStoredJson(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, [])))),
       results: signal(parseStoredFeedItems(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, EMPTY_ARRAY))),
     }),
     []
@@ -332,9 +340,9 @@ export const App = (): JSX.Element => {
         const json: { feed?: { entry?: ReadonlyArray<ITopPodcast> } } = await response.json();
         topResults.value = json?.feed?.entry ?? EMPTY_ARRAY;
       })
-      .catch((err: Error) => {
+      .catch((err: unknown) => {
         trackEvent('exception', {
-          description: `search_fetch_toppodcasts_${err.message}`,
+          description: `search_fetch_toppodcasts_${readErrorMessage(err)}`,
           fatal: false
         });
       });
@@ -358,7 +366,7 @@ export const App = (): JSX.Element => {
           const json: { feed?: { entry?: ReadonlyArray<ITopPodcast> } } = await response.json();
           topResults.value = json?.feed?.entry ?? EMPTY_ARRAY;
         })
-        .catch((err: Error) => {
+        .catch((err: unknown) => {
           console.error('Failed to load static top podcasts data:', err);
           // On failure to load static data, fall back to API
           fetchTopPodcastsFromAPI();
@@ -489,21 +497,20 @@ export const App = (): JSX.Element => {
         }
       }
     } catch (err: unknown) {
-      // Handle errors from resolveFeedUrl, fetch, and response parsing
-      const error = err as Error;
-
       // A superseded request is expected, not a failure worth reporting
-      if (error.name === 'AbortError') {
+      if (readErrorName(err) === 'AbortError') {
         return;
       }
 
+      const reason = readErrorMessage(err);
+
       // Leave any previously loaded episodes in place rather than clearing them
       if (isCurrentRequest()) {
-        feedError.value = { message: FEED_ERROR_MESSAGE, reason: error.message };
+        feedError.value = { message: FEED_ERROR_MESSAGE, reason };
       }
 
       trackEvent('exception', {
-        description: `feed_fetch_${feed.feedUrl}_${error.message}`,
+        description: `feed_fetch_${feed.feedUrl}_${reason}`,
         fatal: false
       });
     } finally {
@@ -548,14 +555,14 @@ export const App = (): JSX.Element => {
 
         searchResults.value = json?.results ?? EMPTY_ARRAY;
       })
-      .catch((err: Error) => {
-        if (err.name === 'AbortError') {
+      .catch((err: unknown) => {
+        if (readErrorName(err) === 'AbortError') {
           return;
         }
 
         trackEvent('exception', {
           // No search text: the privacy policy promises it is not sent to analytics
-          description: `search_fetch_${limit}_${err.message}`,
+          description: `search_fetch_${limit}_${readErrorMessage(err)}`,
           fatal: false
         });
       })
@@ -578,9 +585,22 @@ export const App = (): JSX.Element => {
       return;
     }
 
+    // javascript: and any other non-web scheme never become the audio source
+    let secureUrl: string;
+
+    try {
+      secureUrl = getSecureUrl(url);
+    } catch {
+      trackEvent('exception', {
+        description: `audio_unsafe_enclosure_${item.guid}`,
+        fatal: false
+      });
+      return;
+    }
+
     trackEvent('Audio', {
       eventAction: 'play',
-      eventLabel: url,
+      eventLabel: secureUrl,
       transport: 'beacon'
     });
 
@@ -594,7 +614,7 @@ export const App = (): JSX.Element => {
     };
 
     if (audioRef.current) {
-      audioRef.current.src = getSecureUrl(url);
+      audioRef.current.src = secureUrl;
       // Playback begins from the click that chose the episode, which is also what
       // mobile browsers require of a player that does not autoplay
       void audioRef.current.play?.()?.catch(() => undefined);

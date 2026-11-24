@@ -1,5 +1,7 @@
 import { FunctionComponent, h, Ref } from 'preact';
 
+import { toSecureHttpUrl } from '../utils/helpers';
+
 /**
  * The episode currently loaded into the player
  */
@@ -27,6 +29,8 @@ export interface IPlayerBarProps {
  * mobile browsers require.
  */
 export const PlayerBar: FunctionComponent<IPlayerBarProps> = ({ audioRef, nowPlaying }: IPlayerBarProps) => {
+  const artwork = toSecureHttpUrl(nowPlaying?.artworkUrl);
+
   return (
     <div
       className="player-bar"
@@ -35,17 +39,17 @@ export const PlayerBar: FunctionComponent<IPlayerBarProps> = ({ audioRef, nowPla
       role="region"
       aria-label="Episode player"
     >
-      {nowPlaying ? (
+      {artwork ? (
         <img
           className="player-bar__artwork"
-          src={nowPlaying.artworkUrl}
+          src={artwork}
           width={44}
           height={44}
           alt=""
           decoding="async"
         />
       ) : null}
-      <div className="player-bar__text">
+      <div className="player-bar__text" aria-live="polite">
         <div className="player-bar__title">{nowPlaying?.title}</div>
         <div className="player-bar__subtitle">{nowPlaying?.podcastName}</div>
       </div>

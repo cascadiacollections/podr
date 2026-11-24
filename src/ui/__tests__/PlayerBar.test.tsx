@@ -56,5 +56,35 @@ describe('PlayerBar', () => {
     expect(container.querySelector('.player-bar')).not.toHaveAttribute('hidden');
     expect(screen.getByText('The Great Fire of London')).toBeInTheDocument();
     expect(screen.getByText('The Rest Is History')).toBeInTheDocument();
+    expect(container.querySelector('.player-bar__text')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('does not assign a non-web artwork URL to the image', () => {
+    const audioRef = createRef<HTMLAudioElement>();
+    const nowPlaying = {
+      guid: 'episode-1',
+      title: 'The Great Fire of London',
+      podcastName: 'The Rest Is History',
+      artworkUrl: ''
+    };
+    const { container, rerender } = render(<PlayerBar audioRef={audioRef} nowPlaying={nowPlaying} />);
+
+    expect(container.querySelector('.player-bar__artwork')).toBeNull();
+
+    rerender(
+      <PlayerBar audioRef={audioRef} nowPlaying={{ ...nowPlaying, artworkUrl: 'javascript:alert(1)' }} />
+    );
+    expect(container.querySelector('.player-bar__artwork')).toBeNull();
+
+    rerender(
+      <PlayerBar
+        audioRef={audioRef}
+        nowPlaying={{ ...nowPlaying, artworkUrl: 'http://cdn.example.com/art.jpg' }}
+      />
+    );
+    expect(container.querySelector('.player-bar__artwork')).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/art.jpg'
+    );
   });
 });

@@ -126,8 +126,10 @@ export const Result: FunctionComponent<IResultProps> = memo(
     const formattedDuration = useMemo(() => formatDuration(enclosureDuration), [enclosureDuration]);
 
     const ariaLabel = useMemo(
-      () => (isPlayable ? `Play episode: ${title}` : `${title} (no audio available)`),
-      [title, isPlayable]
+      () => isCurrent
+        ? `Now playing: ${title}`
+        : (isPlayable ? `Play episode: ${title}` : `${title} (no audio available)`),
+      [title, isPlayable, isCurrent]
     );
 
     return (

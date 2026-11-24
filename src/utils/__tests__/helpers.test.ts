@@ -2,6 +2,10 @@ import {
   getSecureUrl, 
   getFeedUrl, 
   toArray,
+  toSecureHttpUrl,
+  readErrorMessage,
+  readErrorName,
+  parseStoredFeeds,
   isApplePodcastsUrl,
   extractApplePodcastsId,
   fetchApplePodcastsFeedUrl,
@@ -41,6 +45,83 @@ describe('helpers', () => {
 
     it('should throw error for non-string input', () => {
       expect(() => getSecureUrl(123 as any)).toThrow('Invalid URL: URL must be a non-empty string');
+    });
+
+    it('rejects schemes that are not web URLs', () => {
+      expect(() => getSecureUrl('javascript:alert(1)')).toThrow('Invalid URL: URL must use HTTP or HTTPS');
+      expect(() => getSecureUrl('data:text/html,hi')).toThrow('Invalid URL: URL must use HTTP or HTTPS');
+      expect(() => getSecureUrl('not a url')).toThrow('Invalid URL: URL must use HTTP or HTTPS');
+    });
+
+    it('trims and upgrades protocol-relative URLs', () => {
+      expect(getSecureUrl('  //cdn.example.com/ep.mp3  ')).toBe('https://cdn.example.com/ep.mp3');
+    });
+  });
+
+  describe('toSecureHttpUrl', () => {
+    it('upgrades HTTP and protocol-relative URLs', () => {
+      expect(toSecureHttpUrl('http://cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+      expect(toSecureHttpUrl('//cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+    });
+
+    it('drops non-web schemes and non-strings', () => {
+      expect(toSecureHttpUrl('javascript:alert(1)')).toBe('');
+      expect(toSecureHttpUrl('data:image/svg+xml,<svg></svg>')).toBe('');
+      expect(toSecureHttpUrl(null)).toBe('');
+      expect(toSecureHttpUrl('')).toBe('');
+    });
+
+    it('leaves scheme-less paths untouched', () => {
+      expect(toSecureHttpUrl(' artwork/cover.jpg ')).toBe('artwork/cover.jpg');
+    });
+  });
+
+  describe('readErrorName and readErrorMessage', () => {
+    it('reads an Error', () => {
+      const error = new Error('feed failed');
+      error.name = 'AbortError';
+
+      expect(readErrorName(error)).toBe('AbortError');
+      expect(readErrorMessage(error)).toBe('feed failed');
+    });
+
+    it('does not throw on values that are not errors', () => {
+      expect(readErrorName('nope')).toBe('');
+      expect(readErrorName(null)).toBe('');
+      expect(readErrorMessage('  service down  ')).toBe('service down');
+      expect(readErrorMessage(null)).toBe('Unknown error');
+      expect(readErrorMessage(new Error(''))).toBe('Unknown error');
+    });
+  });
+
+  describe('parseStoredFeeds', () => {
+    it('keeps web feeds and upgrades their artwork', () => {
+      expect(parseStoredFeeds([
+        {
+          collectionName: 'Show',
+          feedUrl: ' https://example.com/feed.rss ',
+          artworkUrl100: 'http://cdn.example.com/100.jpg',
+          artworkUrl600: 'https://cdn.example.com/600.jpg',
+          artistName: ' Maker '
+        },
+        { feedUrl: 'javascript:alert(1)', collectionName: 'Hostile' },
+        'nope'
+      ])).toEqual([
+        {
+          collectionName: 'Show',
+          feedUrl: 'https://example.com/feed.rss',
+          artworkUrl100: 'https://cdn.example.com/100.jpg',
+          artworkUrl600: 'https://cdn.example.com/600.jpg',
+          artistName: 'Maker'
+        }
+      ]);
+    });
+
+    it('returns an empty list for values that cannot be iterated as feeds', () => {
+      expect(parseStoredFeeds({ feedUrl: 'https://example.com/feed.rss' })).toEqual([]);
+      expect(parseStoredFeeds('https://example.com/feed.rss')).toEqual([]);
+      expect(parseStoredFeeds(null)).toEqual([]);
+      expect(() => new Set(parseStoredFeeds({ not: 'a list' }))).not.toThrow();
     });
   });
 

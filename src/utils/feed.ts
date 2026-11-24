@@ -1,4 +1,5 @@
 import { IFeedItem } from '../ui/Result';
+import { toSecureHttpUrl } from './helpers';
 
 /**
  * Stable empty item list, shared to keep memoized consumers from re-rendering.
@@ -152,7 +153,8 @@ function toFeedItem(entry: Record<string, unknown>, index: number): IFeedItem {
   const rawTitle = toText(entry.title);
   const title = rawTitle || 'Untitled episode';
   const pubDate = toText(entry.pubDate);
-  const link = toText(enclosure.link) || toText(entry.link);
+  // Only web URLs are playable. javascript: and other schemes never reach the player.
+  const link = toSecureHttpUrl(toText(enclosure.link) || toText(entry.link));
   const identity = rawTitle || pubDate ? `${rawTitle}-${pubDate}` : '';
 
   return {
@@ -254,8 +256,9 @@ export function parseFeedDetails(payload: unknown): IFeedDetails {
   const title = toText(source.title);
   const author = toText(source.author);
   const description = toPlainText(toText(source.description));
-  // RSS nests it as <image><url>; the service flattens it, older shapes did not
-  const image = toText(isRecord(source.image) ? source.image.url : source.image);
+  // RSS nests it as <image><url>; the service flattens it, older shapes did not.
+  // Anything other than a web URL is dropped so it cannot be assigned to an img.
+  const image = toSecureHttpUrl(toText(isRecord(source.image) ? source.image.url : source.image));
 
   return title || author || description || image
     ? Object.freeze({ title, author, description, image })

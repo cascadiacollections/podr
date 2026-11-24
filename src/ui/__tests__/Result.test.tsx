@@ -71,6 +71,19 @@ describe('Result component', () => {
     expect(describedBy).toBeTruthy();
     expect(document.getElementById(describedBy as string)?.textContent).toContain('1 hr');
   });
+
+  test('names the loaded episode as now playing', () => {
+    const { getByRole } = render(
+      <ol>
+        <Result result={mockFeedItem} onClick={jest.fn()} isCurrent />
+      </ol>
+    );
+
+    expect(getByRole('button', { name: 'Now playing: Test Episode Title' })).toHaveAttribute(
+      'aria-current',
+      'true'
+    );
+  });
 });
 
 describe('formatDuration', () => {

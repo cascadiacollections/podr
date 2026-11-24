@@ -2669,11 +2669,6 @@
     source-map "~0.6.1"
     typescript "~4.2.4"
 
-"@microsoft/load-themed-styles@2.2.32":
-  version "2.2.32"
-  resolved "https://registry.yarnpkg.com/@microsoft/load-themed-styles/-/load-themed-styles-2.2.32.tgz#f6db1b0544cd1288fec053831698e0b451c1f113"
-  integrity sha512-gT/4WCUlgdsu9CVIIbwO9zqYLWRIob9zk3c63iat8JxZ0TWxI6xttE3G1/qskfud9wxjtvm6zqJBgNPLLQL/zA==
-
 "@microsoft/rush-stack-compiler-5.3@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@microsoft/rush-stack-compiler-5.3/-/rush-stack-compiler-5.3-0.1.0.tgz#3772e75994650d0d4d0f9b08af25c62a458f857f"
