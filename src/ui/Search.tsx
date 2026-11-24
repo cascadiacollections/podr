@@ -1,6 +1,7 @@
 import { h, FunctionComponent, Fragment, TargetedEvent, TargetedKeyboardEvent } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
+import { APP_CONFIG } from '../utils/AppContext';
 import { useAnalytics } from '../utils/hooks';
 
 /**
@@ -16,7 +17,6 @@ const joinClasses = (base: string, flags: Readonly<Record<string, boolean>>): st
  * Search configuration constants
  */
 const SEARCH_CONFIG = {
-  MIN_QUERY_LENGTH: 1,
   PLACEHOLDER_TEXT: 'Search podcasts',
   SUBMIT_BUTTON_TEXT: 'Search',
 } as const;
@@ -73,7 +73,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
   const processSearchQuery = useCallback((query: string): string | null => {
     const trimmedQuery = query.trim();
 
-    if (trimmedQuery.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
+    if (trimmedQuery.length < APP_CONFIG.SEARCH.MIN_QUERY_LENGTH) {
       return null;
     }
 
