@@ -3,15 +3,14 @@ import { fireEvent, render } from '@testing-library/preact';
 import { List } from '../List';
 import { IFeedItem } from '../Result';
 
-// Mock the Result component to avoid rendering issues in tests
+// The real Result is spread first so this replacement is the one List renders.
 jest.mock('../Result', () => ({
-  Result: ({ result, onClick }: { result: IFeedItem; onClick: () => void }) => (
+  ...jest.requireActual('../Result'),
+  Result: ({ result }: { result: IFeedItem }) => (
     <li data-testid="mocked-result">
       {result.title} {result.pubDate} {result.enclosure.duration}
     </li>
   ),
-  // Re-export IFeedItem interface
-  ...jest.requireActual('../Result')
 }));
 
 describe('List component', () => {
@@ -72,15 +71,15 @@ describe('List component', () => {
       pubDate: '2026-01-01',
       enclosure: { duration: 60, link: 'https://example.com/episode.mp3' }
     }));
-    const { rerender, getByRole, queryByRole, getAllByRole } = render(
+    const { rerender, getByRole, queryByText, getByText, getAllByTestId } = render(
       <List results={episodes} onClick={onClick} resetKey="https://example.com/a.rss" />
     );
 
-    expect(getAllByRole('button', { name: /Play episode/ })).toHaveLength(30);
-    expect(queryByRole('button', { name: 'Play episode: Episode 30' })).not.toBeInTheDocument();
+    expect(getAllByTestId('mocked-result')).toHaveLength(30);
+    expect(queryByText(/Episode 30/)).not.toBeInTheDocument();
 
     fireEvent.click(getByRole('button', { name: /show 1 more/i }));
-    expect(getByRole('button', { name: 'Play episode: Episode 30' })).toBeInTheDocument();
+    expect(getByText(/Episode 30/)).toBeInTheDocument();
 
     rerender(
       <List
@@ -89,10 +88,10 @@ describe('List component', () => {
         resetKey="https://example.com/a.rss"
       />
     );
-    expect(getByRole('button', { name: 'Play episode: Episode 30' })).toBeInTheDocument();
+    expect(getByText(/Episode 30/)).toBeInTheDocument();
 
     rerender(<List results={episodes} onClick={onClick} resetKey="https://example.com/b.rss" />);
-    expect(queryByRole('button', { name: 'Play episode: Episode 30' })).not.toBeInTheDocument();
-    expect(getAllByRole('button', { name: /Play episode/ })).toHaveLength(30);
+    expect(queryByText(/Episode 30/)).not.toBeInTheDocument();
+    expect(getAllByTestId('mocked-result')).toHaveLength(30);
   });
 });
