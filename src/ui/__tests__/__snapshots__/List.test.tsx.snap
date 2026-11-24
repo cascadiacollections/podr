@@ -28,102 +28,22 @@ exports[`List component renders with results 1`] = `
       class="episode-list"
     >
       <li
-        class="episode"
+        data-testid="mocked-result"
       >
-        <button
-          aria-describedby="P0-0"
-          aria-label="Play episode: Test Episode 1"
-          class="episode__button"
-          type="button"
-        >
-          <span
-            aria-hidden="true"
-            class="episode__play"
-          >
-            ▶
-          </span>
-          <span
-            class="episode__body"
-          >
-            <span
-              class="episode__title"
-            >
-              Test Episode 1
-            </span>
-            <span
-              class="episode__meta"
-              id="P0-0"
-            >
-              <time
-                datetime="2023-05-15T12:00:00Z"
-              >
-                May 15, 2023
-              </time>
-              <span
-                aria-hidden="true"
-              >
-                 · 
-              </span>
-              <span>
-                1 hr
-              </span>
-            </span>
-            <span
-              class="episode__summary"
-            >
-              Description 1
-            </span>
-          </span>
-        </button>
+        Test Episode 1
+         
+        2023-05-15T12:00:00Z
+         
+        3600
       </li>
       <li
-        class="episode"
+        data-testid="mocked-result"
       >
-        <button
-          aria-describedby="P0-1"
-          aria-label="Play episode: Test Episode 2"
-          class="episode__button"
-          type="button"
-        >
-          <span
-            aria-hidden="true"
-            class="episode__play"
-          >
-            ▶
-          </span>
-          <span
-            class="episode__body"
-          >
-            <span
-              class="episode__title"
-            >
-              Test Episode 2
-            </span>
-            <span
-              class="episode__meta"
-              id="P0-1"
-            >
-              <time
-                datetime="2023-05-16T12:00:00Z"
-              >
-                May 16, 2023
-              </time>
-              <span
-                aria-hidden="true"
-              >
-                 · 
-              </span>
-              <span>
-                30 min
-              </span>
-            </span>
-            <span
-              class="episode__summary"
-            >
-              Description 2
-            </span>
-          </span>
-        </button>
+        Test Episode 2
+         
+        2023-05-16T12:00:00Z
+         
+        1800
       </li>
     </ol>
   </div>

@@ -2669,11 +2669,6 @@
     source-map "~0.6.1"
     typescript "~4.2.4"
 
-"@microsoft/load-themed-styles@2.2.32":
-  version "2.2.32"
-  resolved "https://registry.yarnpkg.com/@microsoft/load-themed-styles/-/load-themed-styles-2.2.32.tgz#f6db1b0544cd1288fec053831698e0b451c1f113"
-  integrity sha512-gT/4WCUlgdsu9CVIIbwO9zqYLWRIob9zk3c63iat8JxZ0TWxI6xttE3G1/qskfud9wxjtvm6zqJBgNPLLQL/zA==
-
 "@microsoft/rush-stack-compiler-5.3@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@microsoft/rush-stack-compiler-5.3/-/rush-stack-compiler-5.3-0.1.0.tgz#3772e75994650d0d4d0f9b08af25c62a458f857f"
@@ -10187,6 +10182,11 @@ prettier-plugin-organize-imports@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/prettier-plugin-organize-imports/-/prettier-plugin-organize-imports-4.3.0.tgz#e8d392e2040b3e5fc1476967d669487dde0eea76"
   integrity sha512-FxFz0qFhyBsGdIsb697f/EkvHzi5SZOhWAjxcx2dLt+Q532bAlhswcXGYB1yzjZ69kW8UoadFBw7TyNwlq96Iw==
+
+prettier@^3.6.2:
+  version "3.10.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.10.1.tgz#00b1c1872f9650ec22093d5bdafdca0fe6760f77"
+  integrity sha512-70vp3ZUYoPlFbF9uiTdXHUUCGEIp7d4+6p+8DYbkm2jP7x/3i/paXVF6dopSI3zd/CEitrZN1rc4i85xWmmXlg==
 
 pretty-error@^4.0.0:
   version "4.0.0"

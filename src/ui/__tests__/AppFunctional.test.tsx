@@ -206,4 +206,14 @@ describe('App component', () => {
     expect(document.cookie).toBe('');
     expect(gtag.mock.calls.length).toBe(callsBefore);
   });
+
+  test('starts when saved podcasts are not a list', async () => {
+    localStorage.setItem('podr_feeds', JSON.stringify({ feedUrl: 'https://example.com/feed.rss' }));
+    global.fetch = mockFetch({ feed: { entry: [] } });
+
+    render(<App />);
+
+    expect(await screen.findByText('Nothing saved yet.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Podr' })).toBeInTheDocument();
+  });
 });

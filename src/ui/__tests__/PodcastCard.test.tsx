@@ -103,4 +103,61 @@ describe('PodcastCard', () => {
       'true'
     );
   });
+
+  it('shows a sized stand-in when the podcast has no artwork', () => {
+    render(
+      <PodcastCard
+        feed={{ ...FEED, artworkUrl100: '', artworkUrl600: 'javascript:alert(1)' }}
+        onOpen={jest.fn()}
+        onToggleFavorite={jest.fn()}
+        isFavorite={false}
+      />
+    );
+
+    const open = screen.getByRole('button', { name: FEED.collectionName });
+
+    expect(open.querySelector('img')).toBeNull();
+    expect(open.querySelector('.artwork-fallback')).toBeInTheDocument();
+  });
+
+  it('upgrades artwork to HTTPS and refuses other schemes', () => {
+    render(
+      <PodcastCard
+        feed={{
+          ...FEED,
+          artworkUrl100: 'http://cdn.example.com/100.jpg',
+          artworkUrl600: 'javascript:alert(1)'
+        }}
+        onOpen={jest.fn()}
+        onToggleFavorite={jest.fn()}
+        isFavorite={false}
+      />
+    );
+
+    const artwork = screen.getByRole('button', { name: FEED.collectionName }).querySelector('img');
+
+    expect(artwork).toHaveAttribute('src', 'https://cdn.example.com/100.jpg');
+    expect(artwork).not.toHaveAttribute('srcset');
+  });
+
+  it('updates the high-resolution source when only that URL changes', () => {
+    const props = {
+      onOpen: jest.fn(),
+      onToggleFavorite: jest.fn(),
+      isFavorite: false
+    };
+    const { rerender } = render(<PodcastCard feed={FEED} {...props} />);
+    const artwork = () => screen.getByRole('button', { name: FEED.collectionName }).querySelector('img');
+
+    expect(artwork()?.getAttribute('srcset')).toContain('artwork-600.jpg');
+
+    rerender(
+      <PodcastCard
+        {...props}
+        feed={{ ...FEED, artworkUrl600: 'https://example.com/new-600.jpg' }}
+      />
+    );
+
+    expect(artwork()?.getAttribute('srcset')).toContain('new-600.jpg');
+  });
 });

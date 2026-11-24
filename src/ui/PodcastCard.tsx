@@ -3,6 +3,7 @@ import { memo } from 'preact/compat';
 import { useCallback } from 'preact/hooks';
 
 import { IFeed } from '../utils/AppContext';
+import { Artwork } from './Artwork';
 
 /**
  * Artwork rendered at 100px on a 1x display; the grid never shows it larger
@@ -46,15 +47,13 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
           onClick={handleOpen}
           aria-current={isCurrent ? 'true' : undefined}
         >
-          <img
+          <Artwork
             className="podcast-card__artwork"
             src={feed.artworkUrl100}
-            srcSet={feed.artworkUrl600 ? `${feed.artworkUrl100} 1x, ${feed.artworkUrl600} 2x` : undefined}
+            largeSrc={feed.artworkUrl600}
             width={ARTWORK_SIZE}
             height={ARTWORK_SIZE}
-            alt=""
-            loading={lazy ? 'lazy' : 'eager'}
-            decoding="async"
+            lazy={lazy}
             draggable={false}
           />
           <span className="podcast-card__name">{feed.collectionName}</span>
@@ -80,6 +79,7 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
     prevProps.feed.collectionName === nextProps.feed.collectionName &&
     prevProps.feed.artistName === nextProps.feed.artistName &&
     prevProps.feed.artworkUrl100 === nextProps.feed.artworkUrl100 &&
+    prevProps.feed.artworkUrl600 === nextProps.feed.artworkUrl600 &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isCurrent === nextProps.isCurrent &&
     prevProps.lazy === nextProps.lazy &&

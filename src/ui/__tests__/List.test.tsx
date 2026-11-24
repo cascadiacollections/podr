@@ -1,17 +1,16 @@
 import { h } from 'preact';
-import { render } from '@testing-library/preact';
+import { fireEvent, render } from '@testing-library/preact';
 import { List } from '../List';
 import { IFeedItem } from '../Result';
 
-// Mock the Result component to avoid rendering issues in tests
+// The real Result is spread first so this replacement is the one List renders.
 jest.mock('../Result', () => ({
-  Result: ({ result, onClick }: { result: IFeedItem; onClick: () => void }) => (
+  ...jest.requireActual('../Result'),
+  Result: ({ result }: { result: IFeedItem }) => (
     <li data-testid="mocked-result">
       {result.title} {result.pubDate} {result.enclosure.duration}
     </li>
   ),
-  // Re-export IFeedItem interface
-  ...jest.requireActual('../Result')
 }));
 
 describe('List component', () => {
@@ -48,5 +47,51 @@ describe('List component', () => {
     const onClick = jest.fn();
     const { container } = render(<List results={[]} onClick={onClick} />);
     expect(container).toMatchSnapshot();
+  });
+
+  test('shows an updated title when the episode identity is unchanged', () => {
+    const onClick = jest.fn();
+    const first = mockResults[0];
+    const { rerender, getByText, queryByText } = render(<List results={[first]} onClick={onClick} />);
+
+    expect(getByText(/Test Episode 1/)).toBeInTheDocument();
+
+    rerender(<List results={[{ ...first, title: 'Renamed Episode' }]} onClick={onClick} />);
+
+    expect(queryByText(/Test Episode 1/)).not.toBeInTheDocument();
+    expect(getByText(/Renamed Episode/)).toBeInTheDocument();
+  });
+
+  test('keeps expanded rows across a refresh and resets for another podcast', () => {
+    const onClick = jest.fn();
+    const episodes: IFeedItem[] = Array.from({ length: 31 }, (_, index) => ({
+      guid: `id-${index}`,
+      title: `Episode ${index}`,
+      description: `Notes ${index}`,
+      pubDate: '2026-01-01',
+      enclosure: { duration: 60, link: 'https://example.com/episode.mp3' }
+    }));
+    const { rerender, getByRole, queryByText, getByText, getAllByTestId } = render(
+      <List results={episodes} onClick={onClick} resetKey="https://example.com/a.rss" />
+    );
+
+    expect(getAllByTestId('mocked-result')).toHaveLength(30);
+    expect(queryByText(/Episode 30/)).not.toBeInTheDocument();
+
+    fireEvent.click(getByRole('button', { name: /show 1 more/i }));
+    expect(getByText(/Episode 30/)).toBeInTheDocument();
+
+    rerender(
+      <List
+        results={episodes.map((item) => ({ ...item }))}
+        onClick={onClick}
+        resetKey="https://example.com/a.rss"
+      />
+    );
+    expect(getByText(/Episode 30/)).toBeInTheDocument();
+
+    rerender(<List results={episodes} onClick={onClick} resetKey="https://example.com/b.rss" />);
+    expect(queryByText(/Episode 30/)).not.toBeInTheDocument();
+    expect(getAllByTestId('mocked-result')).toHaveLength(30);
   });
 });

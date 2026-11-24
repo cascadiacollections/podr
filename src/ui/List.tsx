@@ -13,6 +13,11 @@ export interface IListProps {
   readonly emptyMessage?: string;
   /** The episode currently loaded in the player, highlighted in the list */
   readonly currentGuid?: string;
+  /**
+   * Identity of the list, usually the podcast's feed URL. Pagination resets
+   * when this changes, not when a refresh replaces the episode array.
+   */
+  readonly resetKey?: string;
 }
 
 /**
@@ -45,14 +50,16 @@ export const List: FunctionComponent<IListProps> = memo(
     onClick,
     isLoading = false,
     emptyMessage = LIST_CONFIG.DEFAULT_EMPTY_MESSAGE,
-    currentGuid
+    currentGuid,
+    resetKey
   }: IListProps) => {
     const [visibleCount, setVisibleCount] = useState<number>(LIST_CONFIG.INITIAL_ROWS);
 
-    // A different podcast starts over at the first page of rows
+    // A different podcast starts over at the first page of rows. A refresh of
+    // the same podcast keeps the listener's place.
     useEffect(() => {
       setVisibleCount(LIST_CONFIG.INITIAL_ROWS);
-    }, [results]);
+    }, [resetKey]);
 
     const showMore = useCallback(() => {
       setVisibleCount((count: number) => count + LIST_CONFIG.ROWS_PER_PAGE);
@@ -123,6 +130,10 @@ export const List: FunctionComponent<IListProps> = memo(
       return false;
     }
 
+    if (prevProps.resetKey !== nextProps.resetKey) {
+      return false;
+    }
+
     // Check results array length first (most common change)
     if (prevProps.results.length !== nextProps.results.length) {
       return false;
@@ -133,10 +144,19 @@ export const List: FunctionComponent<IListProps> = memo(
       return true;
     }
 
-    // Deep comparison only if needed (arrays are different references but same length)
-    // Compare GUIDs for efficient comparison
+    // Same length is not the same list: a refresh keeps guids and replaces titles
     for (let i = 0; i < prevProps.results.length; i++) {
-      if (prevProps.results[i].guid !== nextProps.results[i].guid) {
+      const prev = prevProps.results[i];
+      const next = nextProps.results[i];
+
+      if (
+        prev.guid !== next.guid ||
+        prev.title !== next.title ||
+        prev.description !== next.description ||
+        prev.pubDate !== next.pubDate ||
+        prev.enclosure?.link !== next.enclosure?.link ||
+        prev.enclosure?.duration !== next.enclosure?.duration
+      ) {
         return false;
       }
     }

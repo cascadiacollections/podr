@@ -1,10 +1,12 @@
-import { APP_CONFIG } from './AppContext';
+import { APP_CONFIG, IFeed } from './AppContext';
 
 /**
  * Protocol configuration for URL security
  */
 const SECURE_PROTOCOL = 'https://' as const;
 const INSECURE_PROTOCOL_PATTERN = /^http:\/\//i;
+const WEB_URL_PATTERN = /^https?:\/\//i;
+const SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 
 /**
  * Feed conversion configuration.
@@ -26,17 +28,129 @@ const APPLE_PODCASTS_CONFIG = {
 } as const;
 
 /**
+ * Normalizes a URL for use in `src` or `href`.
+ *
+ * HTTP is upgraded to HTTPS and protocol-relative URLs become HTTPS. Any other
+ * scheme (`javascript:`, `data:`, `blob:`, …) is dropped so feed data cannot
+ * be assigned to an element. Values with no scheme are left as written, which
+ * keeps ordinary relative paths usable.
+ * @param value - A candidate URL from a feed, the API, or storage
+ * @returns An HTTPS URL, a scheme-less path, or an empty string
+ */
+export function toSecureHttpUrl(value: unknown): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  if (trimmed.startsWith('//')) {
+    return `${SECURE_PROTOCOL}${trimmed.slice(2)}`;
+  }
+
+  if (WEB_URL_PATTERN.test(trimmed)) {
+    return trimmed.replace(INSECURE_PROTOCOL_PATTERN, SECURE_PROTOCOL);
+  }
+
+  if (SCHEME_PATTERN.test(trimmed)) {
+    return '';
+  }
+
+  return trimmed;
+}
+
+/**
  * Converts an HTTP URL to HTTPS for security
  * @param url - The URL to secure
  * @returns The secured URL (HTTPS)
- * @throws {Error} When the URL is invalid
+ * @throws {Error} When the URL is invalid or not a web URL
  */
 export function getSecureUrl(url: string): string {
   if (!url || typeof url !== 'string') {
     throw new Error('Invalid URL: URL must be a non-empty string');
   }
-  
-  return url.replace(INSECURE_PROTOCOL_PATTERN, SECURE_PROTOCOL);
+
+  const secured = toSecureHttpUrl(url);
+
+  if (!WEB_URL_PATTERN.test(secured)) {
+    throw new Error('Invalid URL: URL must use HTTP or HTTPS');
+  }
+
+  return secured;
+}
+
+/**
+ * The error's name, or an empty string when the thrown value is not an Error.
+ * A bare `catch (err)` value is `unknown`; reading `.name` off it throws again.
+ */
+export function readErrorName(error: unknown): string {
+  return error instanceof Error ? error.name : '';
+}
+
+/**
+ * A message safe to show or report for any thrown value
+ */
+export function readErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim()) {
+    return error.trim();
+  }
+
+  return 'Unknown error';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Restores saved podcasts from local storage.
+ *
+ * Storage is untrusted: a failed write, a hand-edited value, or an older build
+ * can leave something that is not a list of feeds. Those values used to be
+ * passed straight to `new Set`, which throws when the value is not iterable
+ * and takes the whole app down on startup.
+ * @param payload - The parsed `podr_feeds` value
+ * @returns The feeds that are safe to keep
+ */
+export function parseStoredFeeds(payload: unknown): readonly IFeed[] {
+  if (!Array.isArray(payload)) {
+    return Object.freeze([]);
+  }
+
+  const feeds: IFeed[] = [];
+
+  for (const entry of payload) {
+    if (!isRecord(entry) || typeof entry.feedUrl !== 'string') {
+      continue;
+    }
+
+    const feedUrl = entry.feedUrl.trim();
+
+    // Only web addresses are opened or sent to the feed service
+    if (!WEB_URL_PATTERN.test(feedUrl)) {
+      continue;
+    }
+
+    const artistName = typeof entry.artistName === 'string' ? entry.artistName.trim() : '';
+    const feed: IFeed = {
+      collectionName: typeof entry.collectionName === 'string' ? entry.collectionName : '',
+      feedUrl,
+      artworkUrl100: toSecureHttpUrl(entry.artworkUrl100),
+      artworkUrl600: toSecureHttpUrl(entry.artworkUrl600),
+    };
+
+    feeds.push(artistName ? { ...feed, artistName } : feed);
+  }
+
+  return Object.freeze(feeds);
 }
 
 /**
@@ -238,8 +352,3 @@ export function getFeedUrl(
 export function toArray<T>(iterator: IterableIterator<T>): T[] {
   return [...iterator];
 }
-
-/**
- * @deprecated Use toArray instead. This will be removed in a future version.
- */
-export const ToArray = toArray;

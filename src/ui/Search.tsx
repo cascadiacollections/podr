@@ -1,16 +1,24 @@
 import { h, FunctionComponent, Fragment, TargetedEvent, TargetedKeyboardEvent } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
-import { useAnalytics, useClassNames } from '../utils/hooks';
+import { APP_CONFIG } from '../utils/AppContext';
+import { useAnalytics } from '../utils/hooks';
+
+/**
+ * Joins a base class with the names whose flags are true.
+ * Order follows the object's own key order.
+ */
+const joinClasses = (base: string, flags: Readonly<Record<string, boolean>>): string => {
+  const active = Object.keys(flags).filter((name) => flags[name]);
+  return active.length > 0 ? `${base} ${active.join(' ')}` : base;
+};
 
 /**
  * Search configuration constants
  */
 const SEARCH_CONFIG = {
-  MIN_QUERY_LENGTH: 1,
   PLACEHOLDER_TEXT: 'Search podcasts',
   SUBMIT_BUTTON_TEXT: 'Search',
-  SEARCH_DEBOUNCE_MS: 300,
 } as const;
 
 /**
@@ -65,7 +73,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
   const processSearchQuery = useCallback((query: string): string | null => {
     const trimmedQuery = query.trim();
 
-    if (trimmedQuery.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
+    if (trimmedQuery.length < APP_CONFIG.SEARCH.MIN_QUERY_LENGTH) {
       return null;
     }
 
@@ -112,7 +120,8 @@ export const Search: FunctionComponent<ISearchProps> = ({
   }, [executeSearch, disabled, isLoading]);
   
   /**
-   * Handle input change if using signal with debouncing consideration
+   * Keeps an external signal in step with what the field shows.
+   * The search itself runs on submit, not on each keystroke.
    */
   const handleChange = useCallback((event: TargetedEvent<HTMLInputElement>) => {
     if (querySignal && !disabled) {
@@ -133,15 +142,12 @@ export const Search: FunctionComponent<ISearchProps> = ({
     [isLoading]
   );
   
-  /**
-   * Optimized CSS classes using the performance-focused useClassNames hook
-   */
-  const inputClassName = useClassNames('form-control', {
+  const inputClassName = joinClasses('form-control', {
     loading: isLoading,
     disabled: disabled
   });
-  
-  const buttonClassName = useClassNames('search-button', {
+
+  const buttonClassName = joinClasses('search-button', {
     loading: isLoading,
     disabled: disabled
   });

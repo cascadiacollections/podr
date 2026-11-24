@@ -1,5 +1,7 @@
 import { Component, h, ComponentChildren } from 'preact';
 
+import { trackEvent } from '../utils/analytics';
+
 interface ErrorBoundaryProps {
   children: ComponentChildren;
   fallback?: ComponentChildren;
@@ -7,7 +9,6 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   error: Error | null;
-  errorInfo: any;
 }
 
 /**
@@ -17,23 +18,19 @@ interface ErrorBoundaryState {
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { error: null, errorInfo: null };
+    this.state = { error: null };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error): void {
     // Catch errors in any components below and re-render with error message
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
+    this.setState({ error });
+
+    // Same reporter as the rest of the app, so a build with analytics off
+    // (or a self-hosted provider) is honored here too
+    trackEvent('exception', {
+      description: `error_boundary_${error.message}`,
+      fatal: false
     });
-    
-    // Log error to analytics
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'exception', {
-        description: `error_boundary_${error.message}`,
-        fatal: false
-      });
-    }
   }
 
   render() {

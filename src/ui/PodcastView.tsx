@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 import { IFeed } from '../utils/AppContext';
 import { IFeedDetails } from '../utils/feed';
+import { toSecureHttpUrl } from '../utils/helpers';
+import { Artwork } from './Artwork';
 import { List } from './List';
 import { IFeedItem } from './Result';
 
@@ -94,6 +96,7 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
   const name = details.title || feed.collectionName || (isLoading ? 'Loading podcast…' : 'Podcast');
   const author = details.author || feed.artistName || '';
   const episodeCount = episodes.length;
+  const artwork = toSecureHttpUrl(feed.artworkUrl600) || toSecureHttpUrl(feed.artworkUrl100);
 
   const handleShare = useCallback(() => {
     // The address bar already carries the podcast, via ?feed=
@@ -121,13 +124,12 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
       </button>
 
       <header className="podcast-hero">
-        <img
+        <Artwork
           className="podcast-hero__artwork"
-          src={feed.artworkUrl600 || feed.artworkUrl100}
+          src={artwork}
           width={HERO_ARTWORK_SIZE}
           height={HERO_ARTWORK_SIZE}
-          alt=""
-          decoding="async"
+          lazy={false}
         />
         <div className="podcast-hero__text">
           <h2 className="podcast-hero__title" id="podcast-heading" ref={headingRef} tabIndex={-1}>
@@ -174,7 +176,13 @@ export const PodcastView: FunctionComponent<IPodcastViewProps> = ({
             <span className="section__count">{episodeCount}</span>
           ) : null}
         </div>
-        <List results={episodes} onClick={onPlay} isLoading={isLoading} currentGuid={currentGuid} />
+        <List
+          results={episodes}
+          onClick={onPlay}
+          isLoading={isLoading}
+          currentGuid={currentGuid}
+          resetKey={feed.feedUrl}
+        />
       </section>
     </article>
   );

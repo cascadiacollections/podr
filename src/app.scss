@@ -521,6 +521,19 @@ button {
   box-shadow: var(--shadow-low);
 }
 
+.artwork-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  line-height: 1;
+  user-select: none;
+}
+
+.player-bar__artwork.artwork-fallback {
+  font-size: 1.25rem;
+}
+
 .podcast-card__name {
   display: -webkit-box;
   -webkit-box-orient: vertical;

@@ -1,5 +1,7 @@
 import { FunctionComponent, h, Ref } from 'preact';
 
+import { Artwork } from './Artwork';
+
 /**
  * The episode currently loaded into the player
  */
@@ -36,16 +38,15 @@ export const PlayerBar: FunctionComponent<IPlayerBarProps> = ({ audioRef, nowPla
       aria-label="Episode player"
     >
       {nowPlaying ? (
-        <img
+        <Artwork
           className="player-bar__artwork"
           src={nowPlaying.artworkUrl}
           width={44}
           height={44}
-          alt=""
-          decoding="async"
+          lazy={false}
         />
       ) : null}
-      <div className="player-bar__text">
+      <div className="player-bar__text" aria-live="polite">
         <div className="player-bar__title">{nowPlaying?.title}</div>
         <div className="player-bar__subtitle">{nowPlaying?.podcastName}</div>
       </div>

@@ -54,4 +54,20 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Custom Error UI')).toBeInTheDocument();
     expect(container).toMatchSnapshot();
   });
+
+  test('reports the failure through the shared analytics reporter', () => {
+    const gtag = window.gtag as jest.Mock;
+    gtag.mockClear();
+
+    render(
+      <ErrorBoundary>
+        <ErrorThrowingComponent />
+      </ErrorBoundary>
+    );
+
+    expect(gtag).toHaveBeenCalledWith('event', 'exception', expect.objectContaining({
+      description: 'error_boundary_Test error',
+      fatal: false
+    }));
+  });
 });
