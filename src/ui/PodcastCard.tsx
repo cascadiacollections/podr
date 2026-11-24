@@ -3,7 +3,7 @@ import { memo } from 'preact/compat';
 import { useCallback } from 'preact/hooks';
 
 import { IFeed } from '../utils/AppContext';
-import { toSecureHttpUrl } from '../utils/helpers';
+import { Artwork } from './Artwork';
 
 /**
  * Artwork rendered at 100px on a 1x display; the grid never shows it larger
@@ -38,8 +38,6 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
   ({ feed, onOpen, onToggleFavorite, isFavorite, isCurrent = false, lazy = true }: IPodcastCardProps) => {
     const handleOpen = useCallback(() => onOpen(feed), [feed, onOpen]);
     const handleToggleFavorite = useCallback(() => onToggleFavorite(feed), [feed, onToggleFavorite]);
-    const artwork = toSecureHttpUrl(feed.artworkUrl100);
-    const artworkLarge = toSecureHttpUrl(feed.artworkUrl600);
 
     return (
       <li className={isCurrent ? 'podcast-card podcast-card--current' : 'podcast-card'}>
@@ -49,15 +47,13 @@ export const PodcastCard: FunctionComponent<IPodcastCardProps> = memo(
           onClick={handleOpen}
           aria-current={isCurrent ? 'true' : undefined}
         >
-          <img
+          <Artwork
             className="podcast-card__artwork"
-            src={artwork || undefined}
-            srcSet={artwork && artworkLarge ? `${artwork} 1x, ${artworkLarge} 2x` : undefined}
+            src={feed.artworkUrl100}
+            largeSrc={feed.artworkUrl600}
             width={ARTWORK_SIZE}
             height={ARTWORK_SIZE}
-            alt=""
-            loading={lazy ? 'lazy' : 'eager'}
-            decoding="async"
+            lazy={lazy}
             draggable={false}
           />
           <span className="podcast-card__name">{feed.collectionName}</span>

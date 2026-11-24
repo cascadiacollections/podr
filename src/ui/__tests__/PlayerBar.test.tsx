@@ -69,12 +69,14 @@ describe('PlayerBar', () => {
     };
     const { container, rerender } = render(<PlayerBar audioRef={audioRef} nowPlaying={nowPlaying} />);
 
-    expect(container.querySelector('.player-bar__artwork')).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('.artwork-fallback')).toBeInTheDocument();
 
     rerender(
       <PlayerBar audioRef={audioRef} nowPlaying={{ ...nowPlaying, artworkUrl: 'javascript:alert(1)' }} />
     );
-    expect(container.querySelector('.player-bar__artwork')).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('.artwork-fallback')).toBeInTheDocument();
 
     rerender(
       <PlayerBar
