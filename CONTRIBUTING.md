@@ -194,7 +194,7 @@ git push origin feature/your-feature-name
 ```typescript
 // Good ✅
 import { Search } from '@/ui/Search';
-import { useDebounce } from '@/utils/hooks';
+import { useAnalytics } from '@/utils/hooks';
 
 // Avoid ❌
 import { Search } from '../../../ui/Search';

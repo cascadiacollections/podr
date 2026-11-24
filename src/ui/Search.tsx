@@ -1,7 +1,16 @@
 import { h, FunctionComponent, Fragment, TargetedEvent, TargetedKeyboardEvent } from 'preact';
 import { useCallback, useRef, useMemo } from 'preact/hooks';
 import { Signal } from '@preact/signals';
-import { useAnalytics, useClassNames } from '../utils/hooks';
+import { useAnalytics } from '../utils/hooks';
+
+/**
+ * Joins a base class with the names whose flags are true.
+ * Order follows the object's own key order.
+ */
+const joinClasses = (base: string, flags: Readonly<Record<string, boolean>>): string => {
+  const active = Object.keys(flags).filter((name) => flags[name]);
+  return active.length > 0 ? `${base} ${active.join(' ')}` : base;
+};
 
 /**
  * Search configuration constants
@@ -133,15 +142,12 @@ export const Search: FunctionComponent<ISearchProps> = ({
     [isLoading]
   );
   
-  /**
-   * Optimized CSS classes using the performance-focused useClassNames hook
-   */
-  const inputClassName = useClassNames('form-control', {
+  const inputClassName = joinClasses('form-control', {
     loading: isLoading,
     disabled: disabled
   });
-  
-  const buttonClassName = useClassNames('search-button', {
+
+  const buttonClassName = joinClasses('search-button', {
     loading: isLoading,
     disabled: disabled
   });
