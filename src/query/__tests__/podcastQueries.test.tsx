@@ -1,9 +1,10 @@
 import { signal } from '@preact/signals';
+import { focusManager } from '@tanstack/preact-query';
 import { persistQueryClientRestore, persistQueryClientSave } from '@tanstack/preact-query-persist-client';
 import { h } from 'preact';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 
-import { APP_CONFIG, IFeed } from '../../utils/AppContext';
+import { APP_CONFIG, IFeed, ITopPodcast } from '../../utils/AppContext';
 import { createPodrQueryPersister } from '../persister';
 import {
   createPodrQueryClient,
@@ -14,6 +15,7 @@ import {
   StatusError
 } from '../queryClient';
 import { createTestQueryClient, QueryTestProvider } from '../queryWrapper';
+import { usePodcastFeedQuery } from '../usePodcastFeedQuery';
 import { usePodcastSearchQuery, useSearchTerm } from '../usePodcastSearchQuery';
 import { useTopPodcastsQuery } from '../useTopPodcastsQuery';
 
@@ -241,4 +243,126 @@ describe('podcast queries', () => {
     fireEvent.click(screen.getByRole('button', { name: 'submit' }));
     expect(screen.getByTestId('term').textContent).toBe('now');
   });
+
+  test('does not refetch an open feed when the window regains focus', async () => {
+    const selected = signal<IFeed | null>(SHOW);
+    const favorited = signal<ReadonlySet<IFeed>>(new Set());
+    const lastOpened = signal('');
+
+    function Probe() {
+      const query = usePodcastFeedQuery(selected, favorited, lastOpened);
+      return (
+        <span data-testid="feed-status" data-updated={String(query.dataUpdatedAt)}>
+          {query.fetchStatus}:{query.status}
+        </span>
+      );
+    }
+
+    global.fetch = jest.fn().mockImplementation(() => jsonResponse({
+      status: 'ok',
+      items: [{
+        guid: 'e1',
+        title: 'Episode',
+        description: 'Notes',
+        pubDate: '2026-01-01',
+        enclosure: { link: 'https://example.com/episode.mp3', duration: 60 }
+      }]
+    }));
+
+    render(<Probe />, { wrapper: QueryTestProvider });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('feed-status')).toHaveTextContent('idle:success');
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(String((global.fetch as jest.Mock).mock.calls[0][0])).toContain('/feed?');
+
+    const updatedAt = Number(screen.getByTestId('feed-status').getAttribute('data-updated'));
+    expect(updatedAt).toBeGreaterThan(0);
+    const now = agePastStaleTime(updatedAt);
+
+    try {
+      await regainFocus();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('feed-status')).toHaveTextContent('idle:success');
+    } finally {
+      now.mockRestore();
+      focusManager.setFocused(undefined);
+    }
+  });
+
+  test('refetches the chart when the window regains focus after it is stale', async () => {
+    function Probe() {
+      const query = useTopPodcastsQuery(false);
+      return (
+        <span data-testid="chart-status" data-updated={String(query.dataUpdatedAt)}>
+          {query.fetchStatus}:{query.status}
+        </span>
+      );
+    }
+
+    global.fetch = jest.fn().mockImplementation(() => jsonResponse({
+      feed: { entry: [CHART_ENTRY] }
+    }));
+
+    render(<Probe />, { wrapper: QueryTestProvider });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-status')).toHaveTextContent('idle:success');
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(String((global.fetch as jest.Mock).mock.calls[0][0])).toBe('/top-podcasts.json');
+
+    const updatedAt = Number(screen.getByTestId('chart-status').getAttribute('data-updated'));
+    expect(updatedAt).toBeGreaterThan(0);
+    const now = agePastStaleTime(updatedAt);
+
+    try {
+      await regainFocus();
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+      expect(String((global.fetch as jest.Mock).mock.calls[1][0])).toContain('q=toppodcasts');
+    } finally {
+      now.mockRestore();
+      focusManager.setFocused(undefined);
+    }
+  });
 });
+
+const SHOW: IFeed = {
+  collectionName: 'Open Show',
+  feedUrl: 'https://example.com/show.rss',
+  artworkUrl100: 'https://example.com/show-100.jpg',
+  artworkUrl600: 'https://example.com/show-600.jpg'
+};
+
+const CHART_ENTRY: ITopPodcast = {
+  title: { label: 'Chart Show' },
+  id: {
+    label: 'https://podcasts.apple.com/us/podcast/chart-show/id1',
+    attributes: { 'im:id': '1' }
+  },
+  'im:image': [{ label: 'https://example.com/chart.png' }]
+};
+
+/**
+ * Makes cached data stale without waiting out the real five minute window.
+ */
+function agePastStaleTime(updatedAt: number): jest.SpyInstance {
+  return jest.spyOn(Date, 'now').mockReturnValue(updatedAt + APP_CONFIG.PERFORMANCE.CACHE_TTL_MS + 1);
+}
+
+/**
+ * TanStack listens for focus and refetches stale queries that opted in.
+ * The refetch itself starts on the microtask after the focus notification.
+ */
+async function regainFocus(): Promise<void> {
+  await act(async () => {
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}

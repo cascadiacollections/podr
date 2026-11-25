@@ -96,6 +96,11 @@ function rememberFeed(next: IFeed, previousUrl: string, favorited: Signal<Readon
  * show. A failed refresh keeps whatever this show already loaded, which is
  * Query's own behavior when the cache has data. The abort signal cancels the
  * request when the listener goes back.
+ *
+ * Focus does not refetch: a feed is hundreds of episodes, and downloading it
+ * again because the window regained focus hits the service and reparses every
+ * description. Reopening the podcast after the cache goes stale still refreshes
+ * it, and so does reconnecting. The chart is the query that refreshes on focus.
  */
 export function usePodcastFeedQuery(
   selectedFeed: Signal<IFeed | null>,
@@ -124,6 +129,7 @@ export function usePodcastFeedQuery(
       return fetchPodcastFeed(feed, signal);
     },
     enabled: Boolean(feedUrl),
+    refetchOnWindowFocus: false,
     initialData: hasStored
       ? {
           episodes: stored.episodes,
