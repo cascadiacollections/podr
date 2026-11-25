@@ -1,5 +1,6 @@
 import { IFeedItem } from '../ui/Result';
 import { toSecureHttpUrl } from './helpers';
+import { readHtmlText } from './htmlText';
 
 /**
  * Stable empty item list, shared to keep memoized consumers from re-rendering.
@@ -19,6 +20,30 @@ const MARKUP_PATTERN = /[<&]/;
 const BLOCK_BOUNDARY_PATTERN = /<(?:br|\/p|\/div|\/li|\/h[1-6])\b[^>]*>/gi;
 
 let descriptionParser: DOMParser | undefined;
+
+/**
+ * Recent plain-text results. Opening a podcast reads each visible description
+ * once for the row and again when the trimmed copy is saved; the second read
+ * is the stored string. The cap keeps a long session from retaining every
+ * show-notes string after the listener has moved on.
+ */
+const PLAIN_TEXT_CACHE_LIMIT = 64;
+const plainTextCache = new Map<string, string>();
+
+function rememberPlainText(value: string, text: string): string {
+  if (plainTextCache.has(value)) {
+    plainTextCache.delete(value);
+  } else if (plainTextCache.size >= PLAIN_TEXT_CACHE_LIMIT) {
+    const oldest = plainTextCache.keys().next().value;
+
+    if (oldest !== undefined) {
+      plainTextCache.delete(oldest);
+    }
+  }
+
+  plainTextCache.set(value, text);
+  return text;
+}
 
 /**
  * Duration parsing configuration
@@ -71,6 +96,12 @@ function toText(value: unknown, fallback: string = ''): string {
  * Descriptions are frequently HTML (paragraphs, links, sponsor lists). They are
  * rendered as text, never markup, so only the text is kept, with character
  * references decoded and whitespace collapsed to keep a clamped summary dense.
+ *
+ * Ordinary markup is read as a string. Building a document per episode is what
+ * janks a feed of long show notes, and a worker cannot host DOMParser. Markup
+ * the string reader will not claim (script, style, svg, an unfamiliar entity)
+ * still goes through DOMParser, which is inert: scripts do not run and images
+ * do not load. Only text leaves this function.
  * @param value - The raw description
  * @returns The description as a single line of plain text
  */
@@ -79,19 +110,53 @@ export function toPlainText(value: string): string {
     return '';
   }
 
+  const cached = plainTextCache.get(value);
+
+  if (cached !== undefined) {
+    return rememberPlainText(value, cached);
+  }
+
   let text = value;
 
   if (MARKUP_PATTERN.test(text)) {
-    // A parsed document is inert - scripts do not run and images do not load -
-    // and its textContent has every character reference decoded. Only text
-    // leaves this function, and it is rendered as text.
-    descriptionParser ??= new DOMParser();
-    text = descriptionParser
-      .parseFromString(text.replace(BLOCK_BOUNDARY_PATTERN, ' $&'), 'text/html')
-      .body.textContent ?? '';
+    // A space before a block tag survives as text once the tag is gone, so
+    // adjacent paragraphs do not run together. The same adjustment feeds both
+    // readers, which is what keeps their results the same.
+    BLOCK_BOUNDARY_PATTERN.lastIndex = 0;
+    const prepared = text.replace(BLOCK_BOUNDARY_PATTERN, ' $&');
+    const scanned = readHtmlText(prepared);
+
+    if (scanned !== null) {
+      text = scanned;
+    } else {
+      descriptionParser ??= new DOMParser();
+      text = descriptionParser.parseFromString(prepared, 'text/html').body.textContent ?? '';
+    }
   }
 
-  return text.replace(/\s+/g, ' ').trim();
+  return rememberPlainText(value, text.replace(/\s+/g, ' ').trim());
+}
+
+/**
+ * Attaches `description` so the plain text is computed the first time it is read.
+ *
+ * A feed can carry hundreds of episodes. Scanning every show notes string
+ * before the list paints blocks the main thread for notes the listener has
+ * not asked to see. The list mounts a page of rows, and saving keeps a short
+ * prefix of the first sixty; both read `description` and pay for those only.
+ * Spread would read the getter immediately, so the property is defined here.
+ * The value is the same plain text `toPlainText` has always returned.
+ */
+function defineLazyDescription<T extends object>(
+  target: T,
+  raw: string
+): T & { readonly description: string } {
+  return Object.defineProperty(target, 'description', {
+    enumerable: true,
+    get(): string {
+      return raw ? toPlainText(raw) : '';
+    },
+  }) as T & { readonly description: string };
 }
 
 /**
@@ -157,16 +222,18 @@ function toFeedItem(entry: Record<string, unknown>, index: number): IFeedItem {
   const link = toSecureHttpUrl(toText(enclosure.link) || toText(entry.link));
   const identity = rawTitle || pubDate ? `${rawTitle}-${pubDate}` : '';
 
-  return {
-    guid: toText(entry.guid) || link || identity || `item-${index}`,
-    title,
-    description: toPlainText(toText(entry.description)),
-    pubDate,
-    enclosure: {
-      link,
-      duration: parseDuration(enclosure.duration ?? entry.duration),
+  return defineLazyDescription(
+    {
+      guid: toText(entry.guid) || link || identity || `item-${index}`,
+      title,
+      pubDate,
+      enclosure: {
+        link,
+        duration: parseDuration(enclosure.duration ?? entry.duration),
+      },
     },
-  };
+    toText(entry.description)
+  );
 }
 
 /**
@@ -255,14 +322,22 @@ export function parseFeedDetails(payload: unknown): IFeedDetails {
   const source = isRecord(payload.feed) ? payload.feed : payload;
   const title = toText(source.title);
   const author = toText(source.author);
-  const description = toPlainText(toText(source.description));
+  const rawDescription = toText(source.description);
   // RSS nests it as <image><url>; the service flattens it, older shapes did not.
   // Anything other than a web URL is dropped so it cannot be assigned to an img.
   const image = toSecureHttpUrl(toText(isRecord(source.image) ? source.image.url : source.image));
 
-  return title || author || description || image
-    ? Object.freeze({ title, author, description, image })
-    : EMPTY_FEED_DETAILS;
+  // A description that is the only field has to be read now: markup that leaves
+  // no text (`<br>`) is an empty result, the same as a missing description.
+  // When the feed already has a title, author or image, the notes wait until
+  // the page actually shows them.
+  if (!(title || author || image)) {
+    const description = rawDescription ? toPlainText(rawDescription) : '';
+
+    return description ? Object.freeze({ title, author, description, image }) : EMPTY_FEED_DETAILS;
+  }
+
+  return Object.freeze(defineLazyDescription({ title, author, image }, rawDescription));
 }
 
 /**
