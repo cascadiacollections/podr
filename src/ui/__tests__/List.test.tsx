@@ -37,6 +37,9 @@ describe('List component', () => {
     }
   ];
 
+  const reorderInitial = [mockResults[0], mockResults[1]];
+  const reorderReversed = [mockResults[1], mockResults[0]];
+
   test('renders with results', () => {
     const onClick = jest.fn();
     const { container } = render(<List results={mockResults} onClick={onClick} />);
@@ -93,5 +96,27 @@ describe('List component', () => {
     rerender(<List results={episodes} onClick={onClick} resetKey="https://example.com/b.rss" />);
     expect(queryByText(/Episode 30/)).not.toBeInTheDocument();
     expect(getAllByTestId('mocked-result')).toHaveLength(30);
+  });
+
+  test('reorders keyed episodes with moveBefore when the list supports it', () => {
+    const onClick = jest.fn();
+    const { container, rerender, getAllByTestId } = render(
+      <List results={reorderInitial} onClick={onClick} />
+    );
+    const list = container.querySelector('ol');
+
+    expect(list).not.toBeNull();
+
+    const moveBefore = jest.fn(function (this: ParentNode, node: Node, child: Node | null) {
+      this.insertBefore(node, child);
+    });
+    Object.defineProperty(list, 'moveBefore', { configurable: true, value: moveBefore });
+
+    rerender(<List results={reorderReversed} onClick={onClick} />);
+
+    const titles = getAllByTestId('mocked-result').map((row) => row.textContent ?? '');
+    expect(titles[0]).toContain('Test Episode 2');
+    expect(titles[1]).toContain('Test Episode 1');
+    expect(moveBefore).toHaveBeenCalled();
   });
 });

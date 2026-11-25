@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modern copilot instructions with security and performance sections
 
 ### Changed
+- Stay on Preact 11.2.0 (already the app runtime) and the matching Signals releases. Episode duration comparisons use Object.is, the search field listens to input directly, and the error boundary accepts the non-Error values Preact 11.2 passes through.
 - Updated all GitHub Actions workflows to use Node.js 24 LTS consistently
 - Updated GitHub Actions cache from v3 to v4
 - Upgraded devcontainer to Node.js 24 with Debian Bookworm

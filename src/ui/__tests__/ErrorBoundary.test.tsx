@@ -10,6 +10,11 @@ const ErrorThrowingComponent = ({ shouldThrow = true }: { shouldThrow?: boolean 
   return <div>No Error</div>;
 };
 
+/** Throws whatever it is given, including null and undefined. */
+const ThrowValue = ({ value }: { value: unknown }): never => {
+  throw value;
+};
+
 // Silence console errors during tests
 const originalConsoleError = console.error;
 beforeAll(() => {
@@ -53,6 +58,42 @@ describe('ErrorBoundary', () => {
     
     expect(screen.getByText('Custom Error UI')).toBeInTheDocument();
     expect(container).toMatchSnapshot();
+  });
+
+  test('renders the fallback when a component throws a string or null', () => {
+    const { unmount } = render(
+      <ErrorBoundary>
+        <ThrowValue value="feed failed" />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('feed failed')).toBeInTheDocument();
+    unmount();
+
+    render(
+      <ErrorBoundary>
+        <ThrowValue value={null} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('Unknown error')).toBeInTheDocument();
+  });
+
+  test('reports a non-Error throw without reading a missing message', () => {
+    const gtag = window.gtag as jest.Mock;
+    gtag.mockClear();
+
+    render(
+      <ErrorBoundary>
+        <ThrowValue value={undefined} />
+      </ErrorBoundary>
+    );
+
+    expect(gtag).toHaveBeenCalledWith('event', 'exception', expect.objectContaining({
+      description: 'error_boundary_Unknown error',
+      fatal: false
+    }));
   });
 
   test('reports the failure through the shared analytics reporter', () => {

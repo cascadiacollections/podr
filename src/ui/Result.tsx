@@ -183,7 +183,8 @@ export const Result: FunctionComponent<IResultProps> = memo(
       prevResult.title === nextResult.title &&
       prevResult.description === nextResult.description &&
       prevResult.pubDate === nextResult.pubDate &&
-      prevResult.enclosure?.duration === nextResult.enclosure?.duration &&
+      // Duration is numeric. Object.is matches Preact 11 hook deps: NaN equals NaN, and -0 does not equal 0.
+      Object.is(prevResult.enclosure?.duration, nextResult.enclosure?.duration) &&
       prevResult.enclosure?.link === nextResult.enclosure?.link
     );
   }

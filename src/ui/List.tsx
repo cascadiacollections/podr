@@ -1,5 +1,6 @@
 import { FunctionComponent, h } from "preact";
-import { memo, useCallback, useEffect, useMemo, useState } from "preact/compat";
+import { memo } from "preact/compat";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { IFeedItem } from "./Result";
 import { Result } from "./Result";
 
@@ -155,7 +156,8 @@ export const List: FunctionComponent<IListProps> = memo(
         prev.description !== next.description ||
         prev.pubDate !== next.pubDate ||
         prev.enclosure?.link !== next.enclosure?.link ||
-        prev.enclosure?.duration !== next.enclosure?.duration
+        // Duration is numeric. Object.is matches Preact 11 hook deps: NaN equals NaN, and -0 does not equal 0.
+        !Object.is(prev.enclosure?.duration, next.enclosure?.duration)
       ) {
         return false;
       }

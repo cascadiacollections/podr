@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { fireEvent, render, screen } from '@testing-library/preact';
-import { Signal } from '@preact/signals';
+import { signal, Signal } from '@preact/signals';
 
 import { APP_CONFIG } from '../../utils/AppContext';
 import { Search } from '../Search';
@@ -40,5 +40,15 @@ describe('Search component', () => {
     fireEvent.change(input, { target: { value: 'a'.repeat(minimum) } });
     fireEvent.submit(input.closest('form') as HTMLFormElement);
     expect(onSearch).toHaveBeenLastCalledWith('a'.repeat(minimum));
+  });
+
+  test('updates the query signal from the input event', () => {
+    const onSearch = jest.fn();
+    const querySignal = signal('');
+
+    render(<Search onSearch={onSearch} querySignal={querySignal} />);
+    fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'serial' } });
+
+    expect(querySignal.value).toBe('serial');
   });
 });
