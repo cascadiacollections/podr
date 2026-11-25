@@ -1,5 +1,4 @@
 import { computed, Signal, signal } from '@preact/signals';
-import { IFeedItem } from '../ui/Result';
 
 declare const PODR_API_BASE_URL: string | undefined;
 
@@ -47,15 +46,14 @@ export interface ITopPodcast {
 }
 
 /**
- * Application context type with reactive signals for state management
+ * Application context type with reactive signals for state management.
+ * Charts, search hits, and episodes are server state and live in the query
+ * cache. What remains here is the listener's own state.
  */
 export interface AppContextType {
   readonly query: Signal<string>;
   readonly favorited: Signal<ReadonlySet<IFeed>>;
   readonly feeds: Signal<ReadonlyArray<IFeed>>;
-  readonly results: Signal<ReadonlyArray<IFeedItem>>;
-  readonly searchResults: Signal<ReadonlyArray<IFeed>>;
-  readonly topResults: Signal<ReadonlyArray<ITopPodcast>>;
 }
 
 /**
@@ -99,15 +97,12 @@ export const APP_CONFIG = {
 /**
  * Creates default context values with proper type safety
  */
-export function createAppState(initialState?: Partial<Pick<AppContextType, 'favorited' | 'results'>>): AppContextType {
+export function createAppState(initialState?: Partial<Pick<AppContextType, 'favorited'>>): AppContextType {
   const favorited = initialState?.favorited ?? signal<ReadonlySet<IFeed>>(new Set());
 
   return {
     query: signal(''),
     favorited,
     feeds: computed(() => Array.from(favorited.value)),
-    results: initialState?.results ?? signal<ReadonlyArray<IFeedItem>>(EMPTY_ARRAY),
-    searchResults: signal<ReadonlyArray<IFeed>>(EMPTY_ARRAY),
-    topResults: signal<ReadonlyArray<ITopPodcast>>(EMPTY_ARRAY),
   } as const;
 }

@@ -106,12 +106,15 @@ describe('App component', () => {
     
     const { container } = render(<App />);
     
-    // Verify fetch was called for static data
-    expect(fetch).toHaveBeenCalledWith('/top-podcasts.json');
+    // The chart request carries the query abort signal
+    expect(fetch).toHaveBeenCalledWith('/top-podcasts.json', expect.objectContaining({
+      signal: expect.any(AbortSignal)
+    }));
     
-    // Wait for top podcasts section to be rendered
+    // The section heading is present while the chart is still loading.
+    // Wait for the podcast itself so the snapshot is the loaded chart.
     await waitFor(() => {
-      expect(screen.getByText('Top podcasts')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Test Podcast' })).toBeInTheDocument();
     });
 
     // Create snapshot after top podcasts have loaded

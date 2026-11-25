@@ -185,7 +185,7 @@ export function extractApplePodcastsId(url: string): string | null {
  * @returns Promise resolving to the RSS feed URL
  * @throws {Error} When the fetch fails or feed URL is not found
  */
-export async function fetchApplePodcastsFeedUrl(podcastId: string): Promise<string> {
+export async function fetchApplePodcastsFeedUrl(podcastId: string, signal?: AbortSignal): Promise<string> {
   if (!podcastId || typeof podcastId !== 'string') {
     throw new Error('Invalid podcast ID: ID must be a non-empty string');
   }
@@ -193,7 +193,7 @@ export async function fetchApplePodcastsFeedUrl(podcastId: string): Promise<stri
   const lookupUrl = `${APPLE_PODCASTS_CONFIG.LOOKUP_API_BASE}?id=${podcastId}&entity=podcast`;
   
   try {
-    const response = await fetch(lookupUrl);
+    const response = signal ? await fetch(lookupUrl, { signal }) : await fetch(lookupUrl);
     
     if (!response.ok) {
       throw new Error(`Apple Podcasts lookup failed with status: ${response.status}`);
@@ -254,8 +254,9 @@ interface IPodcastDetailResponse {
  * @returns The resolved feed
  * @throws {Error} When the worker cannot supply a feed URL
  */
-export async function fetchPodcastDetail(podcastId: string): Promise<IResolvedFeed> {
-  const response = await fetch(`${APP_CONFIG.API_BASE_URL}/podcast/${podcastId}`);
+export async function fetchPodcastDetail(podcastId: string, signal?: AbortSignal): Promise<IResolvedFeed> {
+  const detailUrl = `${APP_CONFIG.API_BASE_URL}/podcast/${podcastId}`;
+  const response = signal ? await fetch(detailUrl, { signal }) : await fetch(detailUrl);
 
   if (!response.ok) {
     throw new Error(`Podcast lookup failed with status: ${response.status}`);
@@ -281,7 +282,7 @@ export async function fetchPodcastDetail(podcastId: string): Promise<IResolvedFe
  * @param feedUrl - The feed URL to resolve
  * @returns Promise resolving to the actual RSS feed and its metadata
  */
-export async function resolveFeed(feedUrl: string): Promise<IResolvedFeed> {
+export async function resolveFeed(feedUrl: string, signal?: AbortSignal): Promise<IResolvedFeed> {
   if (!feedUrl || typeof feedUrl !== 'string') {
     throw new Error('Invalid feed URL: URL must be a non-empty string');
   }
@@ -298,11 +299,16 @@ export async function resolveFeed(feedUrl: string): Promise<IResolvedFeed> {
   }
 
   try {
-    return await fetchPodcastDetail(podcastId);
-  } catch {
+    return await fetchPodcastDetail(podcastId, signal);
+  } catch (error: unknown) {
+    // A cancelled open must not continue into the fallback request
+    if (readErrorName(error) === 'AbortError') {
+      throw error;
+    }
+
     // Fall back to the iTunes lookup API directly, which works from some
     // clients even when the worker route is unavailable
-    return { feedUrl: await fetchApplePodcastsFeedUrl(podcastId) };
+    return { feedUrl: await fetchApplePodcastsFeedUrl(podcastId, signal) };
   }
 }
 
