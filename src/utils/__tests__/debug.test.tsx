@@ -32,6 +32,11 @@ describe('describeRender', () => {
     expect(changedProps({ a: 1, b: 2 }, { a: 1, b: 3, c: 4 })).toEqual(['b', 'c']);
     expect(describeRender({ a: 1 }, {})).toBe('props changed: a');
   });
+
+  it('matches Preact 11 hook equality for NaN and signed zero', () => {
+    expect(changedProps({ n: Number.NaN }, { n: Number.NaN })).toEqual([]);
+    expect(changedProps({ n: 0 }, { n: -0 })).toEqual(['n']);
+  });
 });
 
 describe('installRenderLogger', () => {

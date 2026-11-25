@@ -122,8 +122,10 @@ export const Search: FunctionComponent<ISearchProps> = ({
   /**
    * Keeps an external signal in step with what the field shows.
    * The search itself runs on submit, not on each keystroke.
+   * Preact core fires `input` on each keystroke. `onChange` only does that
+   * when preact/compat rewrites it, which this field does not rely on.
    */
-  const handleChange = useCallback((event: TargetedEvent<HTMLInputElement>) => {
+  const handleInput = useCallback((event: TargetedEvent<HTMLInputElement>) => {
     if (querySignal && !disabled) {
       querySignal.value = event.currentTarget.value;
     }
@@ -162,7 +164,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
           placeholder={placeholder}
           aria-label={searchInputAriaLabel}
           onKeyDown={handleKeyDown}
-          onChange={querySignal ? handleChange : undefined}
+          onInput={querySignal ? handleInput : undefined}
           value={querySignal?.value}
           disabled={disabled || isLoading}
           autoComplete="off"

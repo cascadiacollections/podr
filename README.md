@@ -58,9 +58,9 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 <td>
 
 **🎨 Frontend**
-- [Preact](https://preactjs.com/) - React alternative (3KB)
+- [Preact 11](https://preactjs.com/) - UI runtime
 - [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Preact Signals](https://preactjs.com/guide/v10/signals/) - State management
+- [Preact Signals](https://preactjs.com/guide/v11/signals/) - State management
 - [SCSS](https://sass-lang.com/) + [PostCSS](https://postcss.org/) - Modern styling
 
 </td>

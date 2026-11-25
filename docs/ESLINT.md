@@ -253,4 +253,4 @@ In the bad example, `ExpensiveChild` re-renders every time `count` changes becau
 - [eslint-plugin-react-perf](https://github.com/cvazac/eslint-plugin-react-perf)
 - [React useCallback](https://react.dev/reference/react/useCallback)
 - [React useMemo](https://react.dev/reference/react/useMemo)
-- [Preact Hooks](https://preactjs.com/guide/v10/hooks/)
+- [Preact Hooks](https://preactjs.com/guide/v11/hooks/)

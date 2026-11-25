@@ -23,11 +23,11 @@
 ### Key Dependencies
 ```json
 {
-  "preact": "10.24.0",
-  "@preact/signals": "^2.0.5",
-  "typescript": "5.4.5",
-  "webpack": "5.99.0",
-  "@rushstack/heft": "^0.67.2"
+  "preact": "11.2.0",
+  "@preact/signals": "^2.11.4",
+  "typescript": "6.0.3",
+  "webpack": "5.112.2",
+  "@rushstack/heft": "^1.3.5"
 }
 ```
 
