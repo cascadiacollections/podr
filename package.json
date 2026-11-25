@@ -36,6 +36,7 @@
     "@rushstack/heft-jest-plugin": "^2.0.22",
     "@rushstack/heft-web-rig": "1.4.42",
     "@rushstack/heft-webpack5-plugin": "1.4.2",
+    "@tanstack/preact-query-devtools": "5.108.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/preact": "^3.2.6",
@@ -80,6 +81,9 @@
   },
   "dependencies": {
     "@preact/signals": "^2.11.4",
+    "@tanstack/preact-query": "5.108.1",
+    "@tanstack/preact-query-persist-client": "5.108.1",
+    "@tanstack/query-async-storage-persister": "5.108.1",
     "preact": "11.2.0"
   },
   "resolutions": {

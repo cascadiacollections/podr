@@ -9,7 +9,6 @@ import {
   IPodcastHistoryState,
   scrollToPosition
 } from './appModel';
-import { IFeedError } from './usePodcastFeed';
 
 export interface IPodcastNavigation {
   readonly openPodcast: (feed: IFeed) => void;
@@ -20,17 +19,19 @@ export interface IPodcastNavigation {
 /**
  * Moves between the browse grid and one podcast, using the browser history so
  * Back, Forward, reload, and a shared `?feed=` link all land in the same place.
+ * Opening a podcast only selects it. The episode query runs from that selection
+ * and is cancelled when the selection is cleared.
  */
 export const usePodcastNavigation = (
   feeds: Signal<ReadonlyArray<IFeed>>,
   selectedFeed: Signal<IFeed | null>,
-  isFeedLoading: Signal<boolean>,
-  feedError: Signal<IFeedError | null>,
-  browseScrollRef: { current: number },
-  feedRequestId: { current: number },
-  feedAbortRef: { current: AbortController | null },
-  tryFetchFeed: (feed: IFeed) => Promise<void>
+  browseScrollRef: { current: number }
 ): IPodcastNavigation => {
+  const showBrowse = useCallback(() => {
+    selectedFeed.value = null;
+    scrollToPosition(browseScrollRef.current);
+  }, [browseScrollRef, selectedFeed]);
+
   const openPodcast = useCallback((feed: IFeed) => {
     browseScrollRef.current = window.scrollY;
 
@@ -40,18 +41,9 @@ export const usePodcastNavigation = (
       getPageUrl(feed.feedUrl)
     );
 
-    void tryFetchFeed(feed);
+    selectedFeed.value = feed;
     scrollToPosition(0);
-  }, [browseScrollRef, tryFetchFeed]);
-
-  const showBrowse = useCallback(() => {
-    feedRequestId.current++;
-    feedAbortRef.current?.abort();
-    isFeedLoading.value = false;
-    feedError.value = null;
-    selectedFeed.value = null;
-    scrollToPosition(browseScrollRef.current);
-  }, [browseScrollRef, feedAbortRef, feedError, feedRequestId, isFeedLoading, selectedFeed]);
+  }, [browseScrollRef, selectedFeed]);
 
   const closePodcast = useCallback(() => {
     if ((window.history.state as IPodcastHistoryState | null)?.podrPushed) {
@@ -68,7 +60,7 @@ export const usePodcastNavigation = (
     const linkedFeedUrl = restored ? null : getLinkedFeedUrl();
 
     if (restored) {
-      void tryFetchFeed(restored);
+      selectedFeed.value = restored;
     } else if (linkedFeedUrl) {
       const linked: IFeed = feeds.value.find((feed: IFeed) => feed.feedUrl === linkedFeedUrl) ?? {
         collectionName: '',
@@ -78,14 +70,14 @@ export const usePodcastNavigation = (
       };
 
       window.history.replaceState({ podrFeed: linked } satisfies IPodcastHistoryState, '');
-      void tryFetchFeed(linked);
+      selectedFeed.value = linked;
     }
 
     const onPopState = (event: PopStateEvent): void => {
       const feed = getHistoryFeed(event.state);
 
       if (feed) {
-        void tryFetchFeed(feed);
+        selectedFeed.value = feed;
         scrollToPosition(0);
       } else {
         showBrowse();
@@ -94,7 +86,7 @@ export const usePodcastNavigation = (
 
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [feeds, showBrowse, tryFetchFeed]);
+  }, [feeds, selectedFeed, showBrowse]);
 
   return { openPodcast, closePodcast, showBrowse };
 };

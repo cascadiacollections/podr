@@ -2,12 +2,16 @@ import { signal } from '@preact/signals';
 import { h, JSX } from 'preact';
 import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
+import { PodrQueryProvider } from '../query/QueryProvider';
+import { FEED_ERROR_MESSAGE, feedDataMatches, presentFeed, usePodcastFeedQuery } from '../query/usePodcastFeedQuery';
+import { usePodcastSearchQuery, useSearchTerm } from '../query/usePodcastSearchQuery';
+import { useTopPodcastsQuery } from '../query/useTopPodcastsQuery';
 import { APP_CONFIG, createAppState, EMPTY_ARRAY, IFeed, ITopPodcast } from '../utils/AppContext';
-import { EMPTY_FEED_DETAILS, parseStoredFeedItems } from '../utils/feed';
-import { parseStoredFeeds } from '../utils/helpers';
+import { EMPTY_FEED_DETAILS } from '../utils/feed';
+import { parseStoredFeeds, readErrorMessage } from '../utils/helpers';
 import { isConstrainedConnection, useOnlineStatus } from '../utils/network';
 import { readStoredJson } from '../utils/storage';
-import { IResultsFeed, OFFLINE_MESSAGE, parseResultsFeed, toFeed, toPersistedEpisodes } from './appModel';
+import { OFFLINE_MESSAGE, parseResultsFeed, toFeed } from './appModel';
 import { BrowseView } from './BrowseView';
 import { INowPlaying, PlayerBar } from './PlayerBar';
 import { PodcastView } from './PodcastView';
@@ -15,39 +19,36 @@ import { PromoBanner } from './PromoBanner';
 import { Search } from './Search';
 import { SiteFooter } from './SiteFooter';
 import { useEpisodePlayer } from './useEpisodePlayer';
-import { IFeedError, usePodcastFeed } from './usePodcastFeed';
 import { usePodcastLibrary } from './usePodcastLibrary';
 import { usePodcastNavigation } from './usePodcastNavigation';
-import { usePodcastSearch } from './usePodcastSearch';
 import { useStoredSignal } from './useStoredSignal';
-import { useTopPodcasts } from './useTopPodcasts';
 
-export const App = (): JSX.Element => {
+const NO_EPISODES = EMPTY_ARRAY;
+
+export const App = (): JSX.Element => (
+  <PodrQueryProvider>
+    <AppShell />
+  </PodrQueryProvider>
+);
+
+const AppShell = (): JSX.Element => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const browseScrollRef = useRef(0);
   const documentTitleRef = useRef(document.title);
-  const feedRequestId = useRef(0);
-  const searchRequestId = useRef(0);
-  const feedAbortRef = useRef<AbortController | null>(null);
-  const searchAbortRef = useRef<AbortController | null>(null);
   const isOnline = useOnlineStatus();
 
-  const { query, favorited, feeds, results, searchResults, topResults } = useMemo(
+  const { query, favorited, feeds } = useMemo(
     () => createAppState({
-      favorited: signal(new Set(parseStoredFeeds(readStoredJson(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, [])))),
-      results: signal(parseStoredFeedItems(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, EMPTY_ARRAY))),
+      favorited: signal(new Set(parseStoredFeeds(readStoredJson(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, []))))
     }),
     []
   );
 
-  const { isFeedLoading, isSearching, feedError, selectedFeed, nowPlaying, resultsFeed } = useMemo(
+  const { selectedFeed, nowPlaying, lastOpenedUrl } = useMemo(
     () => ({
-      resultsFeed: signal<IResultsFeed>(parseResultsFeed(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_FEED_KEY, null))),
-      isFeedLoading: signal(false),
-      isSearching: signal(false),
-      feedError: signal<IFeedError | null>(null),
       selectedFeed: signal<IFeed | null>(null),
-      nowPlaying: signal<INowPlaying | undefined>(undefined)
+      nowPlaying: signal<INowPlaying | undefined>(undefined),
+      lastOpenedUrl: signal(parseResultsFeed(readStoredJson(APP_CONFIG.LOCAL_STORAGE.RESULTS_FEED_KEY, null)).feedUrl)
     }),
     []
   );
@@ -56,44 +57,23 @@ export const App = (): JSX.Element => {
   const preferSmallArtwork = useMemo(() => isConstrainedConnection(), []);
 
   useStoredSignal(APP_CONFIG.LOCAL_STORAGE.FEEDS_KEY, feeds);
-  useStoredSignal(APP_CONFIG.LOCAL_STORAGE.RESULTS_KEY, results, toPersistedEpisodes);
-  useStoredSignal(APP_CONFIG.LOCAL_STORAGE.RESULTS_FEED_KEY, resultsFeed);
-  useTopPodcasts(topResults, preferSmallArtwork);
 
-  useEffect(() => {
-    return () => {
-      feedAbortRef.current?.abort();
-      searchAbortRef.current?.abort();
-    };
-  }, []);
-
-  const { tryFetchFeed } = usePodcastFeed(
-    { favorited, results, resultsFeed, isFeedLoading, feedError, selectedFeed },
-    feedRequestId,
-    feedAbortRef
-  );
+  const topQuery = useTopPodcastsQuery(preferSmallArtwork);
+  const { openPodcast, closePodcast } = usePodcastNavigation(feeds, selectedFeed, browseScrollRef);
+  const { term: searchTerm, submit: submitSearch } = useSearchTerm(query);
+  const searchQuery = usePodcastSearchQuery(searchTerm);
+  const feedQuery = usePodcastFeedQuery(selectedFeed, favorited, lastOpenedUrl);
   const onPlayEpisode = useEpisodePlayer(audioRef, selectedFeed, nowPlaying);
   const toggleFavorite = usePodcastLibrary(favorited);
-  const { openPodcast, closePodcast } = usePodcastNavigation(
-    feeds,
-    selectedFeed,
-    isFeedLoading,
-    feedError,
-    browseScrollRef,
-    feedRequestId,
-    feedAbortRef,
-    tryFetchFeed
-  );
-  const onSearch = usePodcastSearch(query, searchResults, isSearching, searchRequestId, searchAbortRef);
 
   // Results are listed on the browse view, so a search leaves the podcast
-  const onSearchFromAnyView = useCallback((searchQuery: string, limit?: number) => {
-    if (searchQuery && selectedFeed.value) {
+  const onSearchFromAnyView = useCallback((searchQueryText: string) => {
+    if (searchQueryText && selectedFeed.value) {
       closePodcast();
     }
 
-    onSearch(searchQuery, limit);
-  }, [closePodcast, onSearch, selectedFeed]);
+    submitSearch(searchQueryText);
+  }, [closePodcast, selectedFeed, submitSearch]);
 
   const toggleSelectedFavorite = useCallback(() => {
     const feed = selectedFeed.value;
@@ -109,22 +89,37 @@ export const App = (): JSX.Element => {
   );
 
   const selected = selectedFeed.value;
-  const selectedName = selected
-    ? (resultsFeed.value.feedUrl === selected.feedUrl && resultsFeed.value.title) || selected.collectionName
+  const feedData = feedQuery.data;
+  const feedReady = Boolean(selected && feedData && feedDataMatches(selected, feedData));
+  const viewFeed = feedReady && selected && feedData ? presentFeed(selected, feedData) : selected;
+  const details = feedReady && feedData ? feedData.details : EMPTY_FEED_DETAILS;
+  const episodes = feedReady && feedData ? feedData.episodes : NO_EPISODES;
+  const selectedName = viewFeed
+    ? details.title || viewFeed.collectionName
     : '';
 
   useEffect(() => {
     const browseTitle = documentTitleRef.current;
-
     document.title = selectedName ? `${selectedName} · Podr` : browseTitle;
   }, [selectedName]);
 
-  const lastOpenedUrl = resultsFeed.value.feedUrl;
-  const isSelectedFavorite = selected ? favoriteUrls.has(selected.feedUrl) : false;
+  const openedUrl = lastOpenedUrl.value;
+  const isSelectedFavorite = viewFeed
+    ? favoriteUrls.has(viewFeed.feedUrl) || (selected ? favoriteUrls.has(selected.feedUrl) : false)
+    : false;
   const topFeeds = useMemo(
-    () => topResults.value.map((podcast: ITopPodcast) => toFeed(podcast, preferSmallArtwork)),
-    [topResults.value, preferSmallArtwork]
+    () => (topQuery.data ?? []).map((podcast: ITopPodcast) => toFeed(podcast, preferSmallArtwork)),
+    [preferSmallArtwork, topQuery.data]
   );
+
+  const searchTermActive = searchTerm.trim().length >= APP_CONFIG.SEARCH.MIN_QUERY_LENGTH;
+  const searchFeeds = searchTermActive ? (searchQuery.data?.feeds ?? []) : [];
+  const searchHeading = searchQuery.data?.term ?? searchTerm.trim();
+  const feedError = feedQuery.isError
+    ? (isOnline
+        ? { message: FEED_ERROR_MESSAGE, reason: readErrorMessage(feedQuery.error) }
+        : { message: OFFLINE_MESSAGE })
+    : undefined;
 
   return (
     <div>
@@ -135,7 +130,11 @@ export const App = (): JSX.Element => {
             <span>Podr</span>
           </a>
         </h1>
-        <Search onSearch={onSearchFromAnyView} querySignal={query} isLoading={isSearching.value} />
+        <Search
+          onSearch={onSearchFromAnyView}
+          querySignal={query}
+          isLoading={searchTermActive && searchQuery.isFetching}
+        />
       </header>
 
       <main className="app-main">
@@ -145,16 +144,14 @@ export const App = (): JSX.Element => {
 
         <PromoBanner />
 
-        {selected ? (
+        {viewFeed ? (
           <PodcastView
-            feed={selected}
-            details={resultsFeed.value.feedUrl === selected.feedUrl ? resultsFeed.value : EMPTY_FEED_DETAILS}
-            episodes={results.value}
-            isLoading={isFeedLoading.value}
+            feed={viewFeed}
+            details={details}
+            episodes={episodes}
+            isLoading={feedQuery.isFetching}
             isFavorite={isSelectedFavorite}
-            error={feedError.value
-              ? isOnline ? feedError.value : { message: OFFLINE_MESSAGE }
-              : undefined}
+            error={feedError}
             currentGuid={nowPlaying.value?.guid}
             onBack={closePodcast}
             onToggleFavorite={toggleSelectedFavorite}
@@ -164,10 +161,10 @@ export const App = (): JSX.Element => {
           <BrowseView
             feeds={feeds.value}
             topFeeds={topFeeds}
-            searchResults={searchResults.value}
-            query={query.value}
+            searchResults={searchFeeds}
+            query={searchHeading}
             favoriteUrls={favoriteUrls}
-            lastOpenedUrl={lastOpenedUrl}
+            lastOpenedUrl={openedUrl}
             onOpen={openPodcast}
             onToggleFavorite={toggleFavorite}
           />
@@ -179,4 +176,4 @@ export const App = (): JSX.Element => {
       <PlayerBar audioRef={audioRef} nowPlaying={nowPlaying.value} />
     </div>
   );
-}
+};

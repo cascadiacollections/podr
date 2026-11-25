@@ -102,11 +102,11 @@ export const Search: FunctionComponent<ISearchProps> = ({
    * Handle the keydown event on the search input with better UX
    */
   const handleKeyDown = useCallback((event: TargetedKeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !disabled && !isLoading) {
+    if (event.key === 'Enter' && !disabled) {
       event.preventDefault();
       executeSearch(event.currentTarget.value);
     }
-  }, [executeSearch, disabled, isLoading]);
+  }, [executeSearch, disabled]);
   
   /**
    * Handle form submission with prevention of default behavior
@@ -114,10 +114,10 @@ export const Search: FunctionComponent<ISearchProps> = ({
   const handleSubmit = useCallback((event: TargetedEvent<HTMLFormElement>) => {
     event.preventDefault();
     
-    if (inputRef.current && !disabled && !isLoading) {
+    if (inputRef.current && !disabled) {
       executeSearch(inputRef.current.value);
     }
-  }, [executeSearch, disabled, isLoading]);
+  }, [executeSearch, disabled]);
   
   /**
    * Keeps an external signal in step with what the field shows.
@@ -166,7 +166,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
           onKeyDown={handleKeyDown}
           onInput={querySignal ? handleInput : undefined}
           value={querySignal?.value}
-          disabled={disabled || isLoading}
+          disabled={disabled}
           autoComplete="off"
           spellcheck={false}
         />
@@ -180,7 +180,7 @@ export const Search: FunctionComponent<ISearchProps> = ({
         type="submit" 
         className={buttonClassName}
         aria-label={submitButtonAriaLabel}
-        disabled={disabled || isLoading}
+        disabled={disabled}
       >
         {isLoading ? (
           <Fragment>
