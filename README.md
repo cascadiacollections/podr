@@ -5,6 +5,7 @@
 [![Node.js CI](https://github.com/cascadiacollections/podr/actions/workflows/node.js.yml/badge.svg)](https://github.com/cascadiacollections/podr/actions/workflows/node.js.yml)
 [![Daily Build](https://github.com/cascadiacollections/podr/actions/workflows/daily-build.yml/badge.svg)](https://github.com/cascadiacollections/podr/actions/workflows/daily-build.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/f066f5b0-8c2c-4a63-a776-5ecb880f76ad/deploy-status)](https://app.netlify.com/sites/podr/deploys)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/cascadiacollections/podr/badge)](https://scorecard.dev/viewer/?uri=github.com/cascadiacollections/podr)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat&logo=preact&logoColor=white)](https://preactjs.com/)
