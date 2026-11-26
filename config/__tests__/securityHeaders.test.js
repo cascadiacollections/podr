@@ -2,6 +2,7 @@
  * Keeps the three hand-written copies of Podr's security headers in step:
  *
  *   netlify.toml                                    the hosted podrapp.com site
+ *   deploy/cloudflare/_headers                      the same site on Cloudflare Pages
  *   deploy/nginx/snippets/podr-security-headers.conf
  *   deploy/caddy/Caddyfile
  *
@@ -83,6 +84,15 @@ function netlifyHeaders(toml) {
   );
 }
 
+/** The headers of the `/*` rule in the Cloudflare Pages _headers file. */
+function pagesHeaders(file) {
+  const block = file.match(/^\/\*\n((?:  .+\n)+)/m);
+  if (!block) throw new Error('_headers has no rule for "/*"');
+  return Object.fromEntries(
+    [...block[1].matchAll(/^  ([A-Za-z-]+): (.*)$/gm)].map((m) => [m[1], m[2]])
+  );
+}
+
 /** Every `add_header Name "value" always;` in the nginx snippet. */
 function nginxHeaders(conf) {
   return Object.fromEntries(
@@ -110,6 +120,7 @@ function parseCsp(policy) {
 }
 
 const netlify = netlifyHeaders(read('netlify.toml'));
+const pages = pagesHeaders(read('deploy/cloudflare/_headers'));
 const nginx = nginxHeaders(read('deploy/nginx/snippets/podr-security-headers.conf'));
 const caddy = caddyHeaders(read('deploy/caddy/Caddyfile'));
 
@@ -119,6 +130,17 @@ describe('security header parity', () => {
       expect(headers['Content-Security-Policy']).toContain("default-src 'self'");
       expect(Object.keys(headers).length).toBeGreaterThanOrEqual(7);
     }
+  });
+
+  it('ships identical headers on Cloudflare Pages and Netlify', () => {
+    expect(pages).toEqual(netlify);
+  });
+
+  it('keeps every _headers line within the Cloudflare Pages limit', () => {
+    const longest = Math.max(
+      ...read('deploy/cloudflare/_headers').split('\n').map((line) => line.length)
+    );
+    expect(longest).toBeLessThanOrEqual(2000);
   });
 
   it('ships identical headers in the nginx and Caddy configs', () => {

@@ -1,0 +1,38 @@
+# Cloudflare Pages headers for the hosted podrapp.com site.
+#
+# The Pages build copies this file to dist/_headers after the webpack build
+# (see the project's build command in docs/CLOUDFLARE_PAGES.md). It is the
+# Pages translation of the [[headers]] blocks in netlify.toml, and
+# config/__tests__/securityHeaders.test.js fails if the security headers in
+# the two files drift.
+#
+# Pages applies every matching rule and joins repeated headers with a comma,
+# so the Cache-Control rules below must not overlap. Anything they do not
+# match gets the Pages default, "public, max-age=0, must-revalidate", which
+# is what the service worker, the manifest, robots.txt and the sitemaps need.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob: https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://itunes.apple.com https://podr-service.cascadiacollections.workers.dev https://*.google-analytics.com https://*.analytics.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; manifest-src 'self'; worker-src 'self'; frame-src 'self' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# Content-hashed webpack bundles ([name]_[contenthash].js|css). A new entry
+# or chunk name needs a line here; without one it is revalidated on every
+# load, which is slower but never stale. Unhashed files at the site root
+# (icons, og-image.png, sw.js) are deliberately left out.
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/app_*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendors_*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Read by ad exchanges, which may cache it for an hour
+/ads.txt
+  Cache-Control: public, max-age=3600
