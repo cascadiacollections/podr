@@ -100,6 +100,25 @@ jobs:
         retention-days: 7 # Only keep artifacts for 7 days to save storage
         if-no-files-found: error
     
+    # podrapp.com is moving to Cloudflare Pages (docs/CLOUDFLARE_PAGES.md).
+    # Pages builds from Git, so the daily refresh asks it for a new production
+    # build through a deploy hook instead of uploading dist/. The step is
+    # skipped where the secret is not set, such as in forks. It runs before
+    # the Netlify deploy so a Netlify failure cannot stop it.
+    - name: Trigger Cloudflare Pages build
+      id: pages-deploy
+      env:
+        CLOUDFLARE_PAGES_DEPLOY_HOOK: ${{ secrets.CLOUDFLARE_PAGES_DEPLOY_HOOK }}
+      run: |
+        if [[ -z "$CLOUDFLARE_PAGES_DEPLOY_HOOK" ]]; then
+          echo "No deploy hook configured; skipping."
+          exit 0
+        fi
+        curl --fail --silent --show-error --output /dev/null \
+          --retry 3 --max-time 30 -X POST "$CLOUDFLARE_PAGES_DEPLOY_HOOK"
+        echo "triggered=true" >> "$GITHUB_OUTPUT"
+      timeout-minutes: 2
+
     - name: Deploy to Netlify
       id: netlify-deploy
       uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668 # v4.0.0
@@ -115,11 +134,14 @@ jobs:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       timeout-minutes: 5
-        
+
     - name: Create deployment summary
       if: always()
       run: |
         echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ steps.pages-deploy.outputs.triggered }}" == "true" ]]; then
+          echo "✅ Cloudflare Pages build triggered" >> $GITHUB_STEP_SUMMARY
+        fi
         if [[ "${{ steps.netlify-deploy.outcome }}" == "success" ]]; then
           echo "✅ Successfully deployed to Netlify" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [Preview URL](${{ steps.netlify-deploy.outputs.deploy-url }})" >> $GITHUB_STEP_SUMMARY
