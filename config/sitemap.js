@@ -217,10 +217,10 @@ class SitemapPlugin {
           const sitemap = renderSitemap({ origin: this.origin, pages, lastmod });
           const robots = renderRobots(this.origin);
 
-          // sitemap.xml is what robots.txt and self-hosters serve. Netlify's
-          // UI sitemap plugin overwrites that filename after the build, so the
-          // same document is also emitted as podr-sitemap.xml and /sitemap.xml
-          // is rewritten to it. See netlify.toml.
+          // sitemap.xml is what robots.txt points at. The same document is
+          // also emitted as podr-sitemap.xml: the hosted site used to publish
+          // it under that name, and the URL keeps resolving for any crawler
+          // that still has it.
           emitText(compilation, 'sitemap.xml', sitemap);
           emitText(compilation, 'podr-sitemap.xml', sitemap);
           emitText(compilation, 'robots.txt', robots);

@@ -113,10 +113,11 @@ yarn type-check        # TypeScript validation (via heft build)
 - **Dev Container**: Automatically configured with Node.js 24
 
 ### Deployment
-- **Platform**: Netlify (automated via GitHub Actions)
+- **Platform**: Cloudflare Pages, which builds `main` through its GitHub integration (see `docs/CLOUDFLARE_PAGES.md`)
 - **Build Command**: `yarn build:ci`
 - **Publish Directory**: `dist/`
-- **Node Version**: 24 (configured in netlify.toml)
+- **Node Version**: 24 (`.node-version`; `NODE_VERSION` in the Pages project settings)
+- **Headers**: `deploy/cloudflare/_headers`, copied into `dist/` by the Pages build command
 
 ## 🎨 Component Patterns
 
@@ -258,7 +259,7 @@ global.fetch = jest.fn().mockImplementation(() =>
 5. Static file generation
 
 ### Deployment Targets
-- **Primary**: Netlify (automated via CI/CD)
+- **Primary**: Cloudflare Pages (builds on every push to `main`)
 - **Manual**: Any static hosting provider
 
 ## 🤝 Contributing Patterns
@@ -315,8 +316,8 @@ When generating code for this project:
 ### CI/CD Pipeline
 - **GitHub Actions**: Automated testing and deployment
 - **Branch Protection**: Main branch requires PR approval and passing checks
-- **Preview Deployments**: Every PR gets a preview URL on Netlify
-- **Daily Builds**: Fresh API data pulled daily for production
+- **Preview Deployments**: Cloudflare Pages builds a preview for branches of this repository
+- **Daily Builds**: The Daily Build workflow triggers a Pages deploy hook so production is rebuilt with fresh API data
 
 ## 🚀 Performance Optimization
 
@@ -330,7 +331,7 @@ When generating code for this project:
 - **Bundle Size**: Target <100KB gzipped for main bundle
 - **Lazy Loading**: Route-based code splitting where applicable
 - **Preact Signals**: Fine-grained reactivity for optimal re-renders
-- **Service Worker**: Offline support and caching (configured in netlify.toml)
+- **Service Worker**: Offline support and caching (`assets/sw.js`)
 
 ---
 

@@ -82,10 +82,15 @@ describe('podcast pages', () => {
   });
 });
 
+/** The distinct hostnames of every <loc> in a sitemap. */
+function locHosts(sitemap) {
+  return [...new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).hostname))];
+}
+
 describe('sitemap and robots documents', () => {
   const pages = [{ feedUrl: DAILY, lastmod: '2026-10-25' }];
 
-  it('uses the canonical origin and never the Netlify hostname', () => {
+  it('uses the canonical origin for every URL', () => {
     const sitemap = renderSitemap({
       origin: 'https://podrapp.com',
       pages,
@@ -98,7 +103,7 @@ describe('sitemap and robots documents', () => {
       '<loc>https://podrapp.com/?feed=https%3A%2F%2Fpodcasts.apple.com%2Fus%2Fpodcast%2Fthe-daily%2Fid1200361736%3Fuo%3D2</loc>'
     );
     expect(sitemap).toContain('<lastmod>2026-10-25</lastmod>');
-    expect(sitemap).not.toContain('netlify.app');
+    expect(locHosts(sitemap)).toEqual(['podrapp.com']);
     expect(sitemap.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
   });
 
@@ -207,44 +212,29 @@ describe('search-file hosting', () => {
   const root = path.resolve(__dirname, '../..');
   const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-  function blocks(toml, name) {
-    return toml
-      .split(new RegExp(`^\\[\\[${name}\\]\\]$`, 'm'))
-      .slice(1)
-      .map((section) => section.split(/^\[\[/m)[0]);
-  }
+  // Cloudflare Pages has no rewrite rule to get wrong: it serves a file that
+  // exists in dist/, and answers any other path with index.html for as long
+  // as the build ships no 404.html. A catch-all in a _redirects file would
+  // replace that with a rule that can shadow robots.txt, ads.txt and the
+  // sitemaps, so neither file may appear.
+  it('leaves the SPA fallback to Cloudflare Pages so crawler files stay files', () => {
+    const shipped = [
+      ...fs.readdirSync(path.join(root, 'assets')),
+      ...fs.readdirSync(path.join(root, 'deploy/cloudflare'))
+    ];
 
-  it('does not let the Netlify SPA fallback swallow crawler files', () => {
-    const toml = read('netlify.toml');
-    const redirects = blocks(toml, 'redirects').map((body) => ({
-      from: body.match(/^\s*from = "([^"]*)"/m)[1],
-      to: body.match(/^\s*to = "([^"]*)"/m)[1],
-      status: Number(body.match(/^\s*status = (\d+)/m)[1]),
-      forceTrue: /^\s*force = true\s*$/m.test(body)
-    }));
+    expect(shipped).toContain('_headers');
+    expect(shipped).toContain('ads.txt');
+    expect(shipped).not.toContain('404.html');
+    expect(shipped).not.toContain('_redirects');
 
-    expect(redirects).toEqual([
-      { from: '/sitemap.xml', to: '/podr-sitemap.xml', status: 200, forceTrue: true },
-      { from: '/*', to: '/index.html', status: 200, forceTrue: false }
-    ]);
-    expect(redirects.filter((rule) => rule.to === '/index.html').every((rule) => !rule.forceTrue)).toBe(
-      true
-    );
+    const webpackConfig = read('webpack.config.js');
+    expect(webpackConfig).not.toContain('404.html');
+    expect(webpackConfig).not.toContain('_redirects');
 
-    const headers = Object.fromEntries(
-      blocks(toml, 'headers').map((body) => {
-        const target = body.match(/^\s*for = "([^"]*)"/m)[1];
-        const type = body.match(/^\s*Content-Type = "([^"]*)"/m);
-        return [target, type ? type[1] : null];
-      })
-    );
-
-    expect(headers['/robots.txt']).toBe('text/plain; charset=utf-8');
-    expect(headers['/ads.txt']).toBe('text/plain; charset=utf-8');
-    expect(headers['/sitemap.xml']).toBe('application/xml; charset=utf-8');
-    expect(headers['/podr-sitemap.xml']).toBe('application/xml; charset=utf-8');
-    expect(toml).toContain('filePath = "netlify-plugin-sitemap.xml"');
-    expect(toml).toContain('baseUrl = "https://podrapp.com"');
+    // Pages picks the Content-Type from the file extension. A rule here could
+    // only override that for the crawler files.
+    expect(read('deploy/cloudflare/_headers')).not.toMatch(/^\s+Content-Type:/im);
   });
 
   it('keeps the service worker from treating those files as the app shell', () => {
@@ -331,7 +321,7 @@ describe('search-file hosting', () => {
     expect(published).toBe(sitemap);
     expect(sitemap).toContain('https://podrapp.com/?feed=');
     expect(sitemap).toContain('the-daily');
-    expect(sitemap).not.toContain('netlify.app');
+    expect(locHosts(sitemap)).toEqual(['podrapp.com']);
     expect(robots).toContain('Sitemap: https://podrapp.com/sitemap.xml');
     expect(ads).toContain('pub-1234567890123456');
     expect(ads).not.toContain(ADS_TXT_PLACEHOLDER);

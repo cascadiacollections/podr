@@ -14,7 +14,8 @@
       one file, so a static <link rel="canonical"> would fold them all into the
       home page. This keeps the path and the feed parameter, drops anything
       else (utm_* and the like), and moves the host to the site origin, so
-      podr.netlify.app points at podrapp.com.
+      any other hostname that serves this build (the podr.pages.dev deploy
+      hostname and its preview subdomains) points at podrapp.com.
     -->
     <script>
       (function () {

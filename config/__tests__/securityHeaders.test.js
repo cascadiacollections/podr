@@ -1,8 +1,7 @@
 /**
- * Keeps the three hand-written copies of Podr's security headers in step:
+ * Keeps the hand-written copies of Podr's security headers in step:
  *
- *   netlify.toml                                    the hosted podrapp.com site
- *   deploy/cloudflare/_headers                      the same site on Cloudflare Pages
+ *   deploy/cloudflare/_headers                      the hosted podrapp.com site (Cloudflare Pages)
  *   deploy/nginx/snippets/podr-security-headers.conf
  *   deploy/caddy/Caddyfile
  *
@@ -10,9 +9,9 @@
  * one connect-src surfaces on the other deployments as a broken feature rather
  * than a failed build (cascadiacollections/podr#140).
  *
- * The two shipped server configs must match exactly. netlify.toml may differ from
- * them only by the allowances declared below, and each allowance has to still be
- * in use, so the list cannot quietly outlive the reason for it.
+ * The two shipped server configs must match exactly. The hosted _headers file may
+ * differ from them only by the allowances declared below, and each allowance has
+ * to still be in use, so the list cannot quietly outlive the reason for it.
  */
 const fs = require('fs');
 const path = require('path');
@@ -36,7 +35,7 @@ const ADSENSE_SOURCES = [
   'https://fundingchoicesmessages.google.com',
 ];
 
-const NETLIFY_ONLY_SOURCES = {
+const HOSTED_ONLY_SOURCES = {
   'script-src': [
     // Google Analytics (gtag), configured for podrapp.com only.
     'https://www.googletagmanager.com',
@@ -61,9 +60,9 @@ const NETLIFY_ONLY_SOURCES = {
 
 /**
  * Whole header values allowed to differ on the hosted site, as
- * [netlify value, server value].
+ * [hosted value, server value].
  */
-const NETLIFY_ONLY_VALUES = {
+const HOSTED_ONLY_VALUES = {
   // podrapp.com is on the HSTS preload list. The server configs leave "preload"
   // out on purpose: it is a commitment a self-hoster has to opt into.
   'Strict-Transport-Security': [
@@ -71,18 +70,6 @@ const NETLIFY_ONLY_VALUES = {
     'max-age=31536000; includeSubDomains',
   ],
 };
-
-/** The [headers.values] of the `for = "/*"` block in netlify.toml. */
-function netlifyHeaders(toml) {
-  const block = toml
-    .split(/^\[\[headers\]\]$/m)
-    .find((section) => /^\s*for = "\/\*"$/m.test(section));
-  if (!block) throw new Error('netlify.toml has no [[headers]] block for "/*"');
-  const values = block.split(/^\s*\[headers\.values\]$/m)[1];
-  return Object.fromEntries(
-    [...values.matchAll(/^\s*([A-Za-z-]+) = "([^"]*)"$/gm)].map((m) => [m[1], m[2]])
-  );
-}
 
 /** The headers of the `/*` rule in the Cloudflare Pages _headers file. */
 function pagesHeaders(file) {
@@ -119,21 +106,16 @@ function parseCsp(policy) {
   return directives;
 }
 
-const netlify = netlifyHeaders(read('netlify.toml'));
 const pages = pagesHeaders(read('deploy/cloudflare/_headers'));
 const nginx = nginxHeaders(read('deploy/nginx/snippets/podr-security-headers.conf'));
 const caddy = caddyHeaders(read('deploy/caddy/Caddyfile'));
 
 describe('security header parity', () => {
   it('parses a CSP and a full header set from every file', () => {
-    for (const headers of [netlify, nginx, caddy]) {
+    for (const headers of [pages, nginx, caddy]) {
       expect(headers['Content-Security-Policy']).toContain("default-src 'self'");
       expect(Object.keys(headers).length).toBeGreaterThanOrEqual(7);
     }
-  });
-
-  it('ships identical headers on Cloudflare Pages and Netlify', () => {
-    expect(pages).toEqual(netlify);
   });
 
   it('keeps every _headers line within the Cloudflare Pages limit', () => {
@@ -153,28 +135,28 @@ describe('security header parity', () => {
     });
   });
 
-  it('sets the same headers on Netlify as on the servers', () => {
-    expect(Object.keys(netlify).sort()).toEqual(Object.keys(nginx).sort());
+  it('sets the same headers on Cloudflare Pages as on the servers', () => {
+    expect(Object.keys(pages).sort()).toEqual(Object.keys(nginx).sort());
   });
 
-  it('matches the server headers on Netlify except for declared values', () => {
+  it('matches the server headers on Cloudflare Pages except for declared values', () => {
     for (const [name, value] of Object.entries(nginx)) {
       if (name === 'Content-Security-Policy') continue;
-      const expected = NETLIFY_ONLY_VALUES[name] ? NETLIFY_ONLY_VALUES[name][0] : value;
-      expect([name, netlify[name]]).toEqual([name, expected]);
-      if (NETLIFY_ONLY_VALUES[name]) {
-        expect([name, value]).toEqual([name, NETLIFY_ONLY_VALUES[name][1]]);
+      const expected = HOSTED_ONLY_VALUES[name] ? HOSTED_ONLY_VALUES[name][0] : value;
+      expect([name, pages[name]]).toEqual([name, expected]);
+      if (HOSTED_ONLY_VALUES[name]) {
+        expect([name, value]).toEqual([name, HOSTED_ONLY_VALUES[name][1]]);
       }
     }
   });
 
-  it('matches the server CSP on Netlify except for declared sources', () => {
+  it('matches the server CSP on Cloudflare Pages except for declared sources', () => {
     const server = parseCsp(nginx['Content-Security-Policy']);
-    const hosted = parseCsp(netlify['Content-Security-Policy']);
+    const hosted = parseCsp(pages['Content-Security-Policy']);
 
     expect(Object.keys(hosted).sort()).toEqual(Object.keys(server).sort());
     for (const directive of Object.keys(server)) {
-      const allowed = NETLIFY_ONLY_SOURCES[directive] || [];
+      const allowed = HOSTED_ONLY_SOURCES[directive] || [];
       const extra = hosted[directive].filter((source) => !server[directive].includes(source));
       const missing = server[directive].filter((source) => !hosted[directive].includes(source));
 
@@ -186,9 +168,9 @@ describe('security header parity', () => {
     }
   });
 
-  it('declares only allowances netlify.toml still uses', () => {
-    const hosted = parseCsp(netlify['Content-Security-Policy']);
-    for (const [directive, sources] of Object.entries(NETLIFY_ONLY_SOURCES)) {
+  it('declares only allowances the hosted _headers file still uses', () => {
+    const hosted = parseCsp(pages['Content-Security-Policy']);
+    for (const [directive, sources] of Object.entries(HOSTED_ONLY_SOURCES)) {
       for (const source of sources) {
         expect({ directive, source, used: hosted[directive].includes(source) }).toEqual({
           directive,

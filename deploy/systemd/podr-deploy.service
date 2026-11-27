@@ -1,7 +1,7 @@
 [Unit]
 # Fetches the latest Podr build and swaps it in. Podr serves as static files, so
 # there is no long-running Podr process: this is a oneshot job, driven by
-# podr-deploy.timer, that replaces the Netlify daily-build-and-deploy loop on a
+# podr-deploy.timer, that replaces the hosted site's daily-build-and-deploy loop on a
 # Debian host.
 Description=Deploy the latest Podr build
 Documentation=https://github.com/cascadiacollections/podr/blob/main/docs/SELF_HOSTING.md

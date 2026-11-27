@@ -224,12 +224,11 @@
             "problemMatcher": []
         },
         {
-            "label": "🚀 Deploy to Netlify",
+            "label": "🚀 Redeploy Cloudflare Pages (Daily Build workflow)",
             "type": "shell",
-            "command": "netlify",
-            "args": ["deploy", "--prod", "--dir=dist"],
+            "command": "gh",
+            "args": ["workflow", "run", "daily-build.yml"],
             "group": "build",
-            "dependsOn": "📦 Build Production",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
