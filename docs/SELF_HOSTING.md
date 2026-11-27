@@ -3,7 +3,8 @@
 Podr builds to a directory of static files. There is no server runtime, no
 serverless function, and no database, so hosting it needs nothing more than a web
 server that can serve files, apply a few headers, and fall back to `index.html`
-for client-side routes. Netlify is a convenience, not a requirement.
+for client-side routes. The hosted site runs on Cloudflare Pages, which is a
+convenience, not a requirement.
 
 This document covers running Podr on your own Debian or FreeBSD host with free
 software only, and configuring analytics that keeps visitor data on your box.
@@ -23,9 +24,11 @@ and install it.
 | `deploy/freebsd/periodic/daily/500.podr-deploy` | FreeBSD: run the deploy daily via `periodic(8)` |
 | `deploy/freebsd/podr.conf` | FreeBSD: deploy settings, installed as `/usr/local/etc/podr.conf` |
 
-The nginx and Caddy configurations are translations of `netlify.toml`, and they
-were verified by serving a real build: same Content-Security-Policy, same
-security headers, same three cache tiers, same SPA fallback.
+The nginx and Caddy configurations do what the hosted site does, and they were
+verified by serving a real build: the same SPA fallback and the same security
+headers as `deploy/cloudflare/_headers`, apart from the hosted-only allowances
+that `config/__tests__/securityHeaders.test.js` declares (analytics, ads, the
+hosted API origin, HSTS preload), plus three cache tiers.
 
 ## Build the artifact
 
@@ -73,9 +76,9 @@ authorize the domain.
 `robots.txt`, `ads.txt`, and `sitemap.xml` are files in `dist/`. The same
 sitemap is also written to `podr-sitemap.xml`. The nginx and Caddy templates
 serve an existing file before falling back to `index.html`. Do not replace
-that with a rewrite that always returns the app shell. Netlify is the
-exception: its sitemap plugin overwrites `sitemap.xml` after the build, so
-`netlify.toml` forces `/sitemap.xml` to `/podr-sitemap.xml`.
+that with a rewrite that always returns the app shell. Cloudflare Pages needs
+no rule for this: it serves a file that exists and falls back to `index.html`
+for everything else.
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
 nginx or Caddy virtual host.
@@ -132,7 +135,7 @@ podr-deploy.sh                     # first deploy
 podr-deploy.sh list
 ```
 
-Then schedule it, replacing the daily Netlify rebuild:
+Then schedule it, replacing the hosted site's daily rebuild:
 
 ```sh
 install -m 644 deploy/systemd/podr-deploy.service /etc/systemd/system/
@@ -255,7 +258,8 @@ Three environment variables select a provider (see `config/analytics.js`):
 [Umami](https://umami.is/), [Plausible](https://plausible.io/self-hosted-web-analytics),
 and [GoatCounter](https://www.goatcounter.com/) are all self-hostable free
 software. `gtag` remains available for the hosted podrapp.com deployment, which
-sets it in `netlify.toml`.
+sets it in its Cloudflare Pages project settings
+(see [CLOUDFLARE_PAGES.md](CLOUDFLARE_PAGES.md)).
 
 ```sh
 PODR_ANALYTICS_PROVIDER=umami \
@@ -287,5 +291,5 @@ upstream. It also means a fully self-hosted build does not grant browser
 connections to `workers.dev`.
 
 If the API is intentionally hosted on a separate origin, add that origin to
-`connect-src`. The hosted Netlify configuration allows the `workers.dev` service
+`connect-src`. The hosted Cloudflare Pages configuration allows the `workers.dev` service
 origin because its default build uses it.

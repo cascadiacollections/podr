@@ -3,8 +3,9 @@
 /**
  * Canonical origin written into sitemap.xml and robots.txt.
  *
- * The hosted site is https://podrapp.com. podr.netlify.app is only the Netlify
- * deploy hostname, and search engines should not be sent there. A self-hosted
+ * The hosted site is https://podrapp.com. podr.pages.dev and its
+ * preview subdomains are only Cloudflare Pages deploy hostnames, and search
+ * engines should not be sent there. A self-hosted
  * build sets PODR_SITE_ORIGIN to its own HTTPS origin.
  */
 

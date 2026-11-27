@@ -3,8 +3,8 @@
 # Debian:  /etc/caddy/Caddyfile
 # FreeBSD: /usr/local/etc/caddy/Caddyfile
 #
-# The Netlify configuration (netlify.toml) translated to Caddy: the SPA fallback,
-# the same security headers, and the same three cache tiers. Caddy provisions and
+# What the hosted podrapp.com site does, written for Caddy: the SPA fallback,
+# the same security headers, and three cache tiers. Caddy provisions and
 # renews TLS itself, so there is no certbot step. See docs/SELF_HOSTING.md.
 
 podr.example.org {
@@ -28,7 +28,7 @@ podr.example.org {
 	@revalidate path /sw.js /service-worker.js /site.webmanifest /manifest.json *.html /
 
 	# ---- Security headers ---------------------------------------------------
-	# Kept in step with netlify.toml and deploy/nginx/snippets/
+	# Kept in step with deploy/cloudflare/_headers and deploy/nginx/snippets/
 	# podr-security-headers.conf by config/__tests__/securityHeaders.test.js.
 	# Content-Security-Policy notes:
 	#   media-src   episode audio is served from whichever CDN a podcast uses,

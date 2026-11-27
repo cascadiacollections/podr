@@ -1,10 +1,12 @@
 # Cloudflare Pages headers for the hosted podrapp.com site.
 #
 # The Pages build copies this file to dist/_headers after the webpack build
-# (see the project's build command in docs/CLOUDFLARE_PAGES.md). It is the
-# Pages translation of the [[headers]] blocks in netlify.toml, and
-# config/__tests__/securityHeaders.test.js fails if the security headers in
-# the two files drift.
+# (see the project's build command in docs/CLOUDFLARE_PAGES.md). Self-hosted
+# copies of the security headers live in
+# deploy/nginx/snippets/podr-security-headers.conf and deploy/caddy/Caddyfile,
+# and config/__tests__/securityHeaders.test.js fails if they drift. Anything
+# only this site needs (Google Analytics, AdSense, the hosted API origin) must
+# be declared there.
 #
 # Pages applies every matching rule and joins repeated headers with a comma,
 # so the Cache-Control rules below must not overlap. Anything they do not

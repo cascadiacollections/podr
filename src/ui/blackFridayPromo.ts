@@ -10,8 +10,7 @@ import { readStoredJson, writeStoredJson } from '../utils/storage';
  * Outside this window the banner renders nothing unless the page URL carries
  * `?promo=bf2026`, which is the preview switch.
  *
- * The hosted site serves Google Analytics (and Netlify's real-user monitoring)
- * and does not serve an ad unit, so the banner may say listening is free, with
+ * The hosted site serves Google Analytics and does not serve an ad unit, so the banner may say listening is free, with
  * no account and no ads. It must not say the site is tracking-free.
  */
 export const BLACK_FRIDAY_PROMO = {

@@ -17,7 +17,6 @@ jobs:
     timeout-minutes: 15 # Set maximum job runtime
     permissions:
       contents: read
-      deployments: write
       security-events: write # For security scanning
     
     steps:
@@ -100,11 +99,10 @@ jobs:
         retention-days: 7 # Only keep artifacts for 7 days to save storage
         if-no-files-found: error
     
-    # podrapp.com is moving to Cloudflare Pages (docs/CLOUDFLARE_PAGES.md).
+    # podrapp.com is hosted on Cloudflare Pages (docs/CLOUDFLARE_PAGES.md).
     # Pages builds from Git, so the daily refresh asks it for a new production
     # build through a deploy hook instead of uploading dist/. The step is
-    # skipped where the secret is not set, such as in forks. It runs before
-    # the Netlify deploy so a Netlify failure cannot stop it.
+    # skipped where the secret is not set, such as in forks.
     - name: Trigger Cloudflare Pages build
       id: pages-deploy
       env:
@@ -119,32 +117,19 @@ jobs:
         echo "triggered=true" >> "$GITHUB_OUTPUT"
       timeout-minutes: 2
 
-    - name: Deploy to Netlify
-      id: netlify-deploy
-      uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668 # v4.0.0
-      with:
-        publish-dir: './dist'
-        production-branch: main
-        production-deploy: true
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Daily scheduled deployment with fresh API data"
-        enable-pull-request-comment: false
-        enable-commit-comment: false
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      timeout-minutes: 5
-
     - name: Create deployment summary
       if: always()
+      env:
+        PAGES_TRIGGERED: ${{ steps.pages-deploy.outputs.triggered }}
+        PAGES_OUTCOME: ${{ steps.pages-deploy.outcome }}
       run: |
         echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
-        if [[ "${{ steps.pages-deploy.outputs.triggered }}" == "true" ]]; then
+        if [[ "$PAGES_TRIGGERED" == "true" ]]; then
           echo "✅ Cloudflare Pages build triggered" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [[ "${{ steps.netlify-deploy.outcome }}" == "success" ]]; then
-          echo "✅ Successfully deployed to Netlify" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [Preview URL](${{ steps.netlify-deploy.outputs.deploy-url }})" >> $GITHUB_STEP_SUMMARY
+        elif [[ "$PAGES_OUTCOME" == "success" ]]; then
+          echo "⏭️ No Cloudflare Pages deploy hook configured; nothing was deployed" >> $GITHUB_STEP_SUMMARY
+        elif [[ "$PAGES_OUTCOME" == "failure" ]]; then
+          echo "❌ Cloudflare Pages deploy hook failed" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ Deployment failed" >> $GITHUB_STEP_SUMMARY
+          echo "❌ Cloudflare Pages build not triggered: an earlier step failed" >> $GITHUB_STEP_SUMMARY
         fi

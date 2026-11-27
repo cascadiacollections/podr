@@ -4,7 +4,6 @@
 
 [![Node.js CI](https://github.com/cascadiacollections/podr/actions/workflows/node.js.yml/badge.svg)](https://github.com/cascadiacollections/podr/actions/workflows/node.js.yml)
 [![Daily Build](https://github.com/cascadiacollections/podr/actions/workflows/daily-build.yml/badge.svg)](https://github.com/cascadiacollections/podr/actions/workflows/daily-build.yml)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/f066f5b0-8c2c-4a63-a776-5ecb880f76ad/deploy-status)](https://app.netlify.com/sites/podr/deploys)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/cascadiacollections/podr/badge)](https://scorecard.dev/viewer/?uri=github.com/cascadiacollections/podr)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -71,7 +70,7 @@ Podr revolutionizes podcast discovery with lightning-fast performance and a beau
 - [Heft](https://rushstack.io/pages/heft/) - Build orchestration
 - [Webpack 5](https://webpack.js.org/) - Module bundling
 - [GitHub Actions](https://github.com/features/actions) - CI/CD
-- [Netlify](https://netlify.com/) - Edge deployment
+- [Cloudflare Pages](https://pages.cloudflare.com/) - Edge deployment
 
 </td>
 </tr>
@@ -351,11 +350,16 @@ yarn test --testNamePattern="search" # Test names containing "search"
 
 ```mermaid
 graph LR
-    A[Push to main] --> B[GitHub Actions]
-    B --> C[Build & Test]
-    C --> D[Deploy to Netlify]
-    D --> E[Live on podrapp.com]
+    A[Push to main] --> B[Cloudflare Pages build]
+    B --> E[Live on podrapp.com]
+    A --> C[GitHub Actions: lint, test, build]
+    F[Daily Build workflow] -->|deploy hook| B
 ```
+
+Cloudflare Pages builds `main` through its GitHub integration; GitHub Actions
+runs the checks alongside it and does not upload the site. The Daily Build
+workflow calls a Pages deploy hook so the inlined top-podcasts data stays
+fresh. See [docs/CLOUDFLARE_PAGES.md](docs/CLOUDFLARE_PAGES.md).
 
 ### 🎯 Deployment Features
 
@@ -388,8 +392,9 @@ graph LR
 # 📦 Build for production
 yarn build:ci               # Optimized production build
 
-# 🚀 Deploy to Netlify (if CLI configured)
-netlify deploy --prod --dir=dist
+# 🚀 Redeploy production without a commit: the Daily Build workflow asks
+# Cloudflare Pages for a fresh build through its deploy hook
+gh workflow run daily-build.yml
 
 # 🔍 Preview deployment locally
 yarn serve                  # Serve built files locally
@@ -397,14 +402,14 @@ yarn serve                  # Serve built files locally
 
 ### 🐧 Self-Hosting on Debian or FreeBSD
 
-Podr builds to plain static files, so Netlify is a convenience rather than a
-requirement. [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) covers running Podr on
+Podr builds to plain static files, so Cloudflare Pages is a convenience rather
+than a requirement. [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) covers running Podr on
 your own Debian host or FreeBSD jail with free software only, and `deploy/` ships
 the configuration:
 
 | Path | Purpose |
 |------|---------|
-| `deploy/nginx/`, `deploy/caddy/` | `netlify.toml` translated to nginx and Caddy — SPA fallback, security headers, cache tiers |
+| `deploy/nginx/`, `deploy/caddy/` | The hosted site's behaviour written for nginx and Caddy — SPA fallback, security headers, cache tiers |
 | `deploy/bin/podr-deploy.sh` | Atomic artifact deploy with `rollback` and `list` |
 | `deploy/systemd/`, `deploy/freebsd/` | Daily deploys via a systemd timer or `periodic(8)` |
 
@@ -521,7 +526,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 <td align="center">
 
 **☁️ Infrastructure**
-[Netlify](https://netlify.com/) - Global edge deployment
+[Cloudflare Pages](https://pages.cloudflare.com/) - Global edge deployment
 [GitHub Actions](https://github.com/features/actions) - CI/CD automation
 
 </td>

@@ -7,8 +7,9 @@
 #   bash scripts/ci.sh test       # one step
 #   bash scripts/ci.sh lint test  # several, in order
 #
-# Requires Node 24 (.node-version) and Yarn 1.22. Netlify runs its own
-# install plus `yarn build:ci` (netlify.toml), the same as the build step.
+# Requires Node 24 (.node-version) and Yarn 1.22. Cloudflare Pages
+# runs its own install plus `yarn build:ci` (docs/CLOUDFLARE_PAGES.md), the
+# same as the build step.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

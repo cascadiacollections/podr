@@ -16,7 +16,7 @@
             "*.tsx": "typescriptreact",
             "*.ts": "typescript",
             "dependabot.yml": "yaml",
-            "netlify.toml": "toml",
+            "_headers": "plaintext",
             ".browserslistrc": "plaintext"
         },
 

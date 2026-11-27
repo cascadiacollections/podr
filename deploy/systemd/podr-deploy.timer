@@ -1,5 +1,5 @@
 [Unit]
-# The Netlify site rebuilds daily so the inlined top-podcasts payload stays
+# The hosted site rebuilds daily so the inlined top-podcasts payload stays
 # fresh; this timer is the self-hosted equivalent.
 Description=Deploy the latest Podr build daily
 Documentation=https://github.com/cascadiacollections/podr/blob/main/docs/SELF_HOSTING.md
