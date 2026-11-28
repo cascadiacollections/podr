@@ -5,18 +5,23 @@ const webpack = require('webpack');
 /**
  * Build-time sitemap.xml and robots.txt.
  *
- * Podcast pages (#154, made linkable in #155) are `/?feed=<feed URL>`. For a
- * top podcast that URL is the Apple Podcasts page the app stores as `feedUrl`.
- * The list is the same top-podcasts payload the page inlines, fetched during a
- * production build and taken from the fallback list otherwise.
+ * The crawlable documents are `/` and `/privacy`. Podcast links are
+ * `/?feed=` on the home document. They are not separate pages, so they are
+ * not listed; the home canonical drops the query string.
+ *
+ * lastmod is never later than the build's UTC date. `/` uses that date.
+ * `/privacy` uses the policy's update date when it is not in the future.
+ * Keep PRIVACY_LASTMOD in step with LAST_UPDATED in src/ui/PrivacyPolicy.tsx.
  */
 
 /** Keep in step with PRIVACY_PATH in src/ui/PrivacyPolicy.tsx. */
 const PRIVACY_PATH = '/privacy';
 
+/** November 13, 2026. Keep in step with LAST_UPDATED in src/ui/PrivacyPolicy.tsx. */
+const PRIVACY_LASTMOD = '2026-11-13';
+
 const PLUGIN_NAME = 'SitemapPlugin';
-const HTTP_URL_PATTERN = /^https?:\/\//i;
-const RELEASE_DATE_PATTERN = /^(\d{4}-\d{2}-\d{2})/;
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * @param {string} value
@@ -32,58 +37,27 @@ function xmlEscape(value) {
 }
 
 /**
- * The address bar URL the app writes when that podcast is opened.
- * Uses URLSearchParams so the encoding matches `getPageUrl` in the client.
- *
- * @param {string} origin
- * @param {string} feedUrl
+ * @param {Date} now
  * @returns {string}
  */
-function podcastPageUrl(origin, feedUrl) {
-  const url = new URL('/', origin);
-  url.searchParams.set('feed', feedUrl);
-  return url.href;
+function utcDay(now) {
+  return now.toISOString().slice(0, 10);
 }
 
 /**
- * @param {unknown} payload
- * @returns {Array<{ feedUrl: string, lastmod?: string }>}
+ * A sitemap lastmod in the future is invalid. Dates we cannot read, and dates
+ * after the build day, become the build day.
+ *
+ * @param {string | undefined} value
+ * @param {string} today
+ * @returns {string}
  */
-function collectPodcastPages(payload) {
-  const entries =
-    payload &&
-    typeof payload === 'object' &&
-    payload.feed &&
-    Array.isArray(payload.feed.entry)
-      ? payload.feed.entry
-      : [];
-
-  const seen = new Set();
-  const pages = [];
-
-  for (const entry of entries) {
-    const label = entry && entry.id && entry.id.label;
-
-    if (typeof label !== 'string' || !HTTP_URL_PATTERN.test(label.trim())) {
-      continue;
-    }
-
-    const feedUrl = label.trim();
-
-    if (seen.has(feedUrl)) {
-      continue;
-    }
-
-    seen.add(feedUrl);
-
-    const release = entry['im:releaseDate'] && entry['im:releaseDate'].label;
-    const lastmod =
-      typeof release === 'string' ? RELEASE_DATE_PATTERN.exec(release.trim()) : null;
-
-    pages.push(lastmod ? { feedUrl, lastmod: lastmod[1] } : { feedUrl });
+function clampLastmod(value, today) {
+  if (typeof value !== 'string' || !DAY_PATTERN.test(value) || value > today) {
+    return today;
   }
 
-  return pages;
+  return value;
 }
 
 /**
@@ -105,21 +79,19 @@ function renderUrl(page) {
 }
 
 /**
- * @param {{ origin: string, pages: Array<{ feedUrl: string, lastmod?: string }>, lastmod?: string }} options
+ * @param {{ origin: string, now?: Date, privacyLastmod?: string }} [options]
  * @returns {string}
  */
-function renderSitemap({ origin, pages, lastmod }) {
+function renderSitemap({ origin, now = new Date(), privacyLastmod = PRIVACY_LASTMOD } = {}) {
+  const today = utcDay(now);
   const urls = [
-    renderUrl({ loc: `${origin}/`, changefreq: 'daily', priority: '1.0', lastmod }),
-    renderUrl({ loc: `${origin}${PRIVACY_PATH}`, changefreq: 'yearly', priority: '0.3' }),
-    ...pages.map((page) =>
-      renderUrl({
-        loc: podcastPageUrl(origin, page.feedUrl),
-        changefreq: 'weekly',
-        priority: '0.8',
-        lastmod: page.lastmod || lastmod
-      })
-    )
+    renderUrl({ loc: `${origin}/`, changefreq: 'daily', priority: '1.0', lastmod: today }),
+    renderUrl({
+      loc: `${origin}${PRIVACY_PATH}`,
+      changefreq: 'yearly',
+      priority: '0.3',
+      lastmod: clampLastmod(privacyLastmod, today)
+    })
   ];
 
   return (
@@ -138,60 +110,14 @@ function renderRobots(origin) {
   return `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
 }
 
-/**
- * @param {{ production: boolean, topPodcastsUrl: string, fallbackData: unknown, fetchImpl?: typeof fetch, timeoutMs?: number }} options
- * @returns {Promise<unknown>}
- */
-async function loadTopPodcasts({ production, topPodcastsUrl, fallbackData, fetchImpl, timeoutMs = 10000 }) {
-  if (!production) {
-    return fallbackData;
-  }
-
-  const fetchFn = fetchImpl || globalThis.fetch;
-
-  if (typeof fetchFn !== 'function') {
-    console.warn('[podr] sitemap: fetch is unavailable; using fallback top podcasts');
-    return fallbackData;
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetchFn(topPodcastsUrl, { signal: controller.signal });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const payload = await response.json();
-
-    if (collectPodcastPages(payload).length === 0) {
-      throw new Error('response did not include any podcast pages');
-    }
-
-    return payload;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[podr] sitemap: ${message}; using fallback top podcasts`);
-    return fallbackData;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 class SitemapPlugin {
   /**
-   * @param {{ production: boolean, origin: string, topPodcastsUrl: string, fallbackData: unknown, fetchImpl?: typeof fetch, timeoutMs?: number, now?: () => Date }} options
+   * @param {{ origin: string, now?: () => Date, privacyLastmod?: string }} options
    */
   constructor(options) {
-    this.production = options.production;
     this.origin = options.origin;
-    this.topPodcastsUrl = options.topPodcastsUrl;
-    this.fallbackData = options.fallbackData;
-    this.fetchImpl = options.fetchImpl;
-    this.timeoutMs = options.timeoutMs;
     this.now = options.now || (() => new Date());
+    this.privacyLastmod = options.privacyLastmod;
   }
 
   /**
@@ -205,16 +131,11 @@ class SitemapPlugin {
           stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
         },
         async () => {
-          const payload = await loadTopPodcasts({
-            production: this.production,
-            topPodcastsUrl: this.topPodcastsUrl,
-            fallbackData: this.fallbackData,
-            fetchImpl: this.fetchImpl,
-            timeoutMs: this.timeoutMs
+          const sitemap = renderSitemap({
+            origin: this.origin,
+            now: this.now(),
+            privacyLastmod: this.privacyLastmod
           });
-          const pages = collectPodcastPages(payload);
-          const lastmod = this.now().toISOString().slice(0, 10);
-          const sitemap = renderSitemap({ origin: this.origin, pages, lastmod });
           const robots = renderRobots(this.origin);
 
           // sitemap.xml is what robots.txt points at. The same document is
@@ -225,7 +146,7 @@ class SitemapPlugin {
           emitText(compilation, 'podr-sitemap.xml', sitemap);
           emitText(compilation, 'robots.txt', robots);
 
-          console.log(`[podr] sitemap: ${pages.length} podcast page(s) on ${this.origin}`);
+          console.log(`[podr] sitemap: / and /privacy on ${this.origin}`);
         }
       );
     });
@@ -249,11 +170,9 @@ function emitText(compilation, name, text) {
 }
 
 module.exports = {
+  PRIVACY_LASTMOD,
   PRIVACY_PATH,
   SitemapPlugin,
-  collectPodcastPages,
-  loadTopPodcasts,
-  podcastPageUrl,
   renderRobots,
   renderSitemap
 };

@@ -409,7 +409,7 @@ the configuration:
 
 | Path | Purpose |
 |------|---------|
-| `deploy/nginx/`, `deploy/caddy/` | The hosted site's behaviour written for nginx and Caddy — SPA fallback, security headers, cache tiers |
+| `deploy/nginx/`, `deploy/caddy/` | The hosted site's behaviour written for nginx and Caddy — real files, 404s, security headers, cache tiers |
 | `deploy/bin/podr-deploy.sh` | Atomic artifact deploy with `rollback` and `list` |
 | `deploy/systemd/`, `deploy/freebsd/` | Daily deploys via a systemd timer or `periodic(8)` |
 

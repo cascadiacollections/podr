@@ -229,6 +229,16 @@ button {
   padding: var(--space-5) var(--space-4);
 }
 
+/* The sentence crawlers see in the prerendered home document, and that the
+   browse view keeps on screen after the app replaces that document. */
+.home-lede {
+  max-width: 40rem;
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
 .app-footer {
   display: flex;
   flex-wrap: wrap;

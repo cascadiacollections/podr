@@ -5,18 +5,22 @@ const path = require('path');
 
 const { ADS_TXT_PLACEHOLDER, applyAdsPublisherId, resolveAdsConfig } = require('../ads');
 const {
+  PRIVACY_LASTMOD,
   PRIVACY_PATH,
-  collectPodcastPages,
-  loadTopPodcasts,
-  podcastPageUrl,
   renderRobots,
   renderSitemap
 } = require('../sitemap');
 const { DEFAULT_SITE_ORIGIN, resolveSiteConfig } = require('../site');
-const fallbackTopPodcasts = require('../top-podcasts-fallback');
 
-const DAILY =
-  'https://podcasts.apple.com/us/podcast/the-daily/id1200361736?uo=2';
+/** Every <loc> in a sitemap, in order. */
+function locs(sitemap) {
+  return [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+}
+
+/** Every <lastmod> in a sitemap, in order. */
+function lastmods(sitemap) {
+  return [...sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((match) => match[1]);
+}
 
 describe('resolveSiteConfig', () => {
   it('defaults to the canonical podrapp.com origin', () => {
@@ -43,68 +47,43 @@ describe('resolveSiteConfig', () => {
   });
 });
 
-describe('podcast pages', () => {
-  it('builds the same ?feed= URL the app puts in the address bar', () => {
-    expect(podcastPageUrl('https://podrapp.com', DAILY)).toBe(
-      'https://podrapp.com/?feed=https%3A%2F%2Fpodcasts.apple.com%2Fus%2Fpodcast%2Fthe-daily%2Fid1200361736%3Fuo%3D2'
-    );
-  });
-
-  it('keeps ampersands inside the feed value percent-encoded', () => {
-    const loc = podcastPageUrl('https://podrapp.com', 'https://example.com/rss?a=1&b=2');
-
-    expect(loc).toBe(
-      'https://podrapp.com/?feed=https%3A%2F%2Fexample.com%2Frss%3Fa%3D1%26b%3D2'
-    );
-    expect(loc).not.toContain('&b=');
-  });
-
-  it('reads Apple page URLs from a top-podcasts payload and skips junk', () => {
-    const pages = collectPodcastPages({
-      feed: {
-        entry: [
-          { id: { label: DAILY }, 'im:releaseDate': { label: '2026-10-25T03:00:00-07:00' } },
-          { id: { label: `  ${DAILY}  ` } },
-          { id: { label: 'not a url' } },
-          { id: { label: 'javascript:alert(1)' } },
-          null,
-          { title: { label: 'no id' } }
-        ]
-      }
-    });
-
-    expect(pages).toEqual([{ feedUrl: DAILY, lastmod: '2026-10-25' }]);
-  });
-
-  it('returns no pages for a payload that is not a top-podcasts feed', () => {
-    expect(collectPodcastPages(null)).toEqual([]);
-    expect(collectPodcastPages({ feed: { entry: 'nope' } })).toEqual([]);
-  });
-});
-
-/** The distinct hostnames of every <loc> in a sitemap. */
-function locHosts(sitemap) {
-  return [...new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).hostname))];
-}
-
 describe('sitemap and robots documents', () => {
-  const pages = [{ feedUrl: DAILY, lastmod: '2026-10-25' }];
+  const now = new Date('2026-11-28T00:00:00.000Z');
 
-  it('uses the canonical origin for every URL', () => {
+  it('lists only the home page and the privacy policy', () => {
+    const sitemap = renderSitemap({ origin: 'https://podrapp.com', now });
+
+    expect(locs(sitemap)).toEqual([
+      'https://podrapp.com/',
+      `https://podrapp.com${PRIVACY_PATH}`
+    ]);
+    expect(sitemap).not.toContain('?feed=');
+    expect(sitemap).not.toContain('feed=');
+    expect(lastmods(sitemap)).toEqual(['2026-11-28', PRIVACY_LASTMOD]);
+    expect(sitemap.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+    expect(locs(sitemap).every((loc) => new URL(loc).search === '')).toBe(true);
+  });
+
+  it('never emits a lastmod after the build day', () => {
     const sitemap = renderSitemap({
       origin: 'https://podrapp.com',
-      pages,
-      lastmod: '2026-11-01'
+      now: new Date('2026-01-15T12:00:00.000Z'),
+      privacyLastmod: '2099-12-02'
     });
 
-    expect(sitemap).toContain('<loc>https://podrapp.com/</loc>');
-    expect(sitemap).toContain(`<loc>https://podrapp.com${PRIVACY_PATH}</loc>`);
-    expect(sitemap).toContain(
-      '<loc>https://podrapp.com/?feed=https%3A%2F%2Fpodcasts.apple.com%2Fus%2Fpodcast%2Fthe-daily%2Fid1200361736%3Fuo%3D2</loc>'
-    );
-    expect(sitemap).toContain('<lastmod>2026-10-25</lastmod>');
-    expect(locHosts(sitemap)).toEqual(['podrapp.com']);
-    expect(sitemap.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+    expect(lastmods(sitemap)).toEqual(['2026-01-15', '2026-01-15']);
+    expect(sitemap).not.toContain('2099');
+    expect(sitemap).not.toContain('?feed=');
+  });
+
+  it('replaces a privacy date that is not a day', () => {
+    const sitemap = renderSitemap({
+      origin: 'https://podrapp.com',
+      now,
+      privacyLastmod: 'November 13, 2026'
+    });
+
+    expect(lastmods(sitemap)).toEqual(['2026-11-28', '2026-11-28']);
   });
 
   it('points robots.txt at that sitemap', () => {
@@ -113,70 +92,15 @@ describe('sitemap and robots documents', () => {
     );
   });
 
-  it('keeps the privacy path aligned with the page', () => {
+  it('keeps the privacy path and update date aligned with the page', () => {
     const source = fs.readFileSync(
       path.join(__dirname, '../../src/ui/PrivacyPolicy.tsx'),
       'utf8'
     );
 
     expect(source).toContain(`PRIVACY_PATH = '${PRIVACY_PATH}'`);
-  });
-});
-
-describe('loadTopPodcasts', () => {
-  it('does not call the network for a development build', async () => {
-    const fetchImpl = jest.fn();
-    const payload = await loadTopPodcasts({
-      production: false,
-      topPodcastsUrl: 'https://podr.example.org/?q=toppodcasts',
-      fallbackData: fallbackTopPodcasts,
-      fetchImpl
-    });
-
-    expect(fetchImpl).not.toHaveBeenCalled();
-    expect(collectPodcastPages(payload)).toHaveLength(3);
-  });
-
-  it('uses a successful production response', async () => {
-    const live = { feed: { entry: [{ id: { label: DAILY } }] } };
-    const fetchImpl = jest.fn(async () => ({
-      ok: true,
-      json: async () => live
-    }));
-
-    const payload = await loadTopPodcasts({
-      production: true,
-      topPodcastsUrl: 'https://podr.example.org/?q=toppodcasts&limit=10',
-      fallbackData: fallbackTopPodcasts,
-      fetchImpl
-    });
-
-    expect(payload).toBe(live);
-    expect(fetchImpl).toHaveBeenCalledWith(
-      'https://podr.example.org/?q=toppodcasts&limit=10',
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
-  });
-
-  it('falls back when the production request fails or has no pages', async () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const fetchImpl = jest.fn(async () => ({
-      ok: true,
-      json: async () => ({ feed: { entry: [] } })
-    }));
-
-    const payload = await loadTopPodcasts({
-      production: true,
-      topPodcastsUrl: 'https://podr.example.org/?q=toppodcasts',
-      fallbackData: fallbackTopPodcasts,
-      fetchImpl
-    });
-
-    expect(collectPodcastPages(payload).map((page) => page.feedUrl)).toEqual(
-      fallbackTopPodcasts.feed.entry.map((entry) => entry.id.label)
-    );
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    expect(source).toContain("const LAST_UPDATED = 'November 13, 2026'");
+    expect(PRIVACY_LASTMOD).toBe('2026-11-13');
   });
 });
 
@@ -208,44 +132,7 @@ describe('ads.txt publisher id', () => {
   );
 });
 
-describe('search-file hosting', () => {
-  const root = path.resolve(__dirname, '../..');
-  const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
-
-  // Cloudflare Pages has no rewrite rule to get wrong: it serves a file that
-  // exists in dist/, and answers any other path with index.html for as long
-  // as the build ships no 404.html. A catch-all in a _redirects file would
-  // replace that with a rule that can shadow robots.txt, ads.txt and the
-  // sitemaps, so neither file may appear.
-  it('leaves the SPA fallback to Cloudflare Pages so crawler files stay files', () => {
-    const shipped = [
-      ...fs.readdirSync(path.join(root, 'assets')),
-      ...fs.readdirSync(path.join(root, 'deploy/cloudflare'))
-    ];
-
-    expect(shipped).toContain('_headers');
-    expect(shipped).toContain('ads.txt');
-    expect(shipped).not.toContain('404.html');
-    expect(shipped).not.toContain('_redirects');
-
-    const webpackConfig = read('webpack.config.js');
-    expect(webpackConfig).not.toContain('404.html');
-    expect(webpackConfig).not.toContain('_redirects');
-
-    // Pages picks the Content-Type from the file extension. A rule here could
-    // only override that for the crawler files.
-    expect(read('deploy/cloudflare/_headers')).not.toMatch(/^\s+Content-Type:/im);
-  });
-
-  it('keeps the service worker from treating those files as the app shell', () => {
-    const sw = read('assets/sw.js');
-
-    expect(sw).toContain("url.pathname === '/robots.txt'");
-    expect(sw).toContain("url.pathname === '/ads.txt'");
-    expect(sw).toContain("url.pathname === '/sitemap.xml'");
-    expect(sw).toContain("url.pathname === '/podr-sitemap.xml'");
-  });
-
+describe('sitemap emission', () => {
   it('emits sitemap.xml, robots.txt, and a rewritten ads.txt', () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'podr-sitemap-'));
     const root = path.resolve(__dirname, '../..');
@@ -265,9 +152,7 @@ describe('search-file hosting', () => {
       const webpack = require(${JSON.stringify(path.join(root, 'node_modules/webpack'))});
       const { SitemapPlugin } = require(${JSON.stringify(path.join(root, 'config/sitemap.js'))});
       const CopyAssetsPlugin = require(${JSON.stringify(path.join(root, 'webpack-plugins/copy-assets-plugin.js'))});
-      const fallbackTopPodcasts = require(${JSON.stringify(path.join(root, 'config/top-podcasts-fallback.js'))});
       const directory = ${JSON.stringify(directory)};
-      const daily = ${JSON.stringify(DAILY)};
 
       webpack({
         mode: 'none',
@@ -280,15 +165,8 @@ describe('search-file hosting', () => {
             publisherId: 'pub-1234567890123456'
           }),
           new SitemapPlugin({
-            production: true,
             origin: 'https://podrapp.com',
-            topPodcastsUrl: 'https://podr.example.org/?q=toppodcasts&limit=10',
-            fallbackData: fallbackTopPodcasts,
-            fetchImpl: async () => ({
-              ok: true,
-              json: async () => ({ feed: { entry: [{ id: { label: daily } }] } })
-            }),
-            now: () => new Date('2026-11-01T00:00:00.000Z')
+            now: () => new Date('2026-11-28T00:00:00.000Z')
           })
         ]
       }, (error, stats) => {
@@ -319,9 +197,9 @@ describe('search-file hosting', () => {
     const ads = fs.readFileSync(path.join(dist, 'ads.txt'), 'utf8');
 
     expect(published).toBe(sitemap);
-    expect(sitemap).toContain('https://podrapp.com/?feed=');
-    expect(sitemap).toContain('the-daily');
-    expect(locHosts(sitemap)).toEqual(['podrapp.com']);
+    expect(locs(sitemap)).toEqual(['https://podrapp.com/', 'https://podrapp.com/privacy']);
+    expect(sitemap).not.toContain('?feed=');
+    expect(lastmods(sitemap).every((day) => day <= '2026-11-28')).toBe(true);
     expect(robots).toContain('Sitemap: https://podrapp.com/sitemap.xml');
     expect(ads).toContain('pub-1234567890123456');
     expect(ads).not.toContain(ADS_TXT_PLACEHOLDER);

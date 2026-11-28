@@ -41,17 +41,28 @@ Environment variables, for both production and preview:
   step with the self-hosted nginx and Caddy configurations in `deploy/`.
   Anything only the hosted site allows (Google Analytics, AdSense, the hosted
   API origin, HSTS preload) is declared in that test.
-- **Client-side routes** need no rule. Pages serves a file that exists, and
-  `index.html` for a path with no matching file as long as `dist/` has no
-  `404.html`. Do not add a catch-all `_redirects` rule.
+- **`/` and `/privacy` are files.** The build emits `index.html`,
+  `privacy.html`, and `privacy/index.html`, each with its own title,
+  description, canonical, and visible text. `privacy.html` is what Pages
+  serves at `/privacy` (`/privacy.html` redirects there). `privacy/index.html`
+  is what Pages serves at `/privacy/`. Podcast links are `/?feed=` on `/`, so
+  they are the home document; their canonical is `https://podrapp.com/` with
+  no query string. Do not add a catch-all `_redirects` rule: it would turn
+  unknown paths back into 200s and can shadow `robots.txt`, `ads.txt`, and
+  the sitemaps.
+- **Unknown paths return 404.** A top-level `404.html` disables the Pages SPA
+  fallback, so a path with no file is that document with status 404 rather
+  than the home page. The app still opens a `/?feed=` link, because that URL's
+  path is `/`.
 - **`/sitemap.xml`, `/robots.txt` and `/ads.txt`** are files in `dist/` and are
   served as such, with the Content-Type Pages derives from the extension.
+  The sitemap lists `/` and `/privacy` only.
 - **Long-lived caching** applies to the content-hashed bundles only. Everything
   else, including the service worker, the manifest and the icons, gets the
   Pages default of `public, max-age=0, must-revalidate`.
 - **`/index.html`** redirects to `/`. Pages does this for every `.html` URL.
-- **Crawlers that do not run JavaScript** receive the app shell. Pages has no
-  prerendering.
+- **Crawlers that do not run JavaScript** receive the prerendered text inside
+  `#root`. The app replaces that node when it starts.
 
 ## History
 

@@ -2,9 +2,10 @@
 
 Podr builds to a directory of static files. There is no server runtime, no
 serverless function, and no database, so hosting it needs nothing more than a web
-server that can serve files, apply a few headers, and fall back to `index.html`
-for client-side routes. The hosted site runs on Cloudflare Pages, which is a
-convenience, not a requirement.
+server that can serve files and apply a few headers. `/` and `/privacy` are
+files. Any other path is `404.html` with status 404. Podcast links stay on
+`/?feed=` and need no extra route. The hosted site runs on Cloudflare Pages,
+which is a convenience, not a requirement.
 
 This document covers running Podr on your own Debian or FreeBSD host with free
 software only, and configuring analytics that keeps visitor data on your box.
@@ -15,7 +16,7 @@ and install it.
 
 | Path | Purpose |
 | --- | --- |
-| `deploy/nginx/podr.conf` | nginx server block: TLS, SPA fallback, security headers, cache tiers |
+| `deploy/nginx/podr.conf` | nginx server block: TLS, real 404s, security headers, cache tiers |
 | `deploy/nginx/snippets/podr-security-headers.conf` | The security headers, included by every location in the server block |
 | `deploy/caddy/Caddyfile` | The same deployment for Caddy, which provisions TLS itself |
 | `deploy/bin/podr-deploy.sh` | Fetches a build artifact and swaps it in atomically; also `rollback` and `list` |
@@ -25,8 +26,8 @@ and install it.
 | `deploy/freebsd/podr.conf` | FreeBSD: deploy settings, installed as `/usr/local/etc/podr.conf` |
 
 The nginx and Caddy configurations do what the hosted site does, and they were
-verified by serving a real build: the same SPA fallback and the same security
-headers as `deploy/cloudflare/_headers`, apart from the hosted-only allowances
+verified by serving a real build: the same 404 for unknown paths and the same
+security headers as `deploy/cloudflare/_headers`, apart from the hosted-only allowances
 that `config/__tests__/securityHeaders.test.js` declares (analytics, ads, the
 hosted API origin, HSTS preload), plus three cache tiers.
 
@@ -65,8 +66,8 @@ talks to a third-party converter
 `PODR_SITE_ORIGIN` is the origin written into `sitemap.xml` and `robots.txt`.
 It defaults to `https://podrapp.com`. Set it to the HTTPS origin of a
 self-hosted site so the sitemap does not send crawlers to podrapp.com. The
-sitemap lists `/`, `/privacy`, and one `/?feed=` URL per top podcast from the
-build's top-podcasts payload.
+sitemap lists `/` and `/privacy` only. `/?feed=` links are the home document,
+not separate pages, and `lastmod` is never a date after the build.
 
 `PODR_ADSENSE_PUBLISHER_ID`, when set to `pub-` plus 16 digits, replaces the
 placeholder in the built `ads.txt`. Leave it unset to keep the placeholder.
@@ -75,10 +76,10 @@ authorize the domain.
 
 `robots.txt`, `ads.txt`, and `sitemap.xml` are files in `dist/`. The same
 sitemap is also written to `podr-sitemap.xml`. The nginx and Caddy templates
-serve an existing file before falling back to `index.html`. Do not replace
-that with a rewrite that always returns the app shell. Cloudflare Pages needs
-no rule for this: it serves a file that exists and falls back to `index.html`
-for everything else.
+serve an existing file, then `404.html` with status 404. Do not replace that
+with a rewrite that always returns the home document. Cloudflare Pages does
+the same when the build contains a top-level `404.html`.
+
 Run the API process under the host's normal supervisor (a systemd service on
 Debian or `daemon(8)`/`runit` in a FreeBSD jail), and proxy it through the same
 nginx or Caddy virtual host.

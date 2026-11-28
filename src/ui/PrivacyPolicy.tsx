@@ -5,9 +5,14 @@ import { SiteFooter } from './SiteFooter';
 
 export const PRIVACY_PATH = '/privacy';
 
+/** Keep in step with PRIVACY_LASTMOD in config/sitemap.js (2026-11-13). */
+const LAST_UPDATED = 'November 13, 2026';
+
+/** The <title> of the prerendered /privacy document. config/pages.js reads this. */
+export const PRIVACY_DOCUMENT_TITLE = 'Privacy policy · Podr';
+
 const CONTACT_EMAIL = 'kevin@cascadiacollections.com';
 const MEASUREMENT_ID = 'G-19Z3SPSJPY';
-const LAST_UPDATED = 'November 13, 2026';
 
 /**
  * The privacy policy for podrapp.com. AdSense requires one that names the
@@ -15,7 +20,7 @@ const LAST_UPDATED = 'November 13, 2026';
  */
 export const PrivacyPolicy = (): JSX.Element => {
   useEffect(() => {
-    document.title = 'Privacy policy · Podr';
+    document.title = PRIVACY_DOCUMENT_TITLE;
   }, []);
 
   return (

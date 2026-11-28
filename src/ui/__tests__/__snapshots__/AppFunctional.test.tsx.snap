@@ -51,6 +51,11 @@ exports[`App component loads top podcasts on mount 1`] = `
     <main
       class="app-main"
     >
+      <p
+        class="home-lede"
+      >
+        Podr is a free, open source podcast player for the web. Search podcasts, star your favorites to keep them offline, and listen right in the browser.
+      </p>
       <section
         aria-labelledby="top-podcasts-heading"
         class="section"
@@ -233,6 +238,11 @@ exports[`App component renders without crashing 1`] = `
     <main
       class="app-main"
     >
+      <p
+        class="home-lede"
+      >
+        Podr is a free, open source podcast player for the web. Search podcasts, star your favorites to keep them offline, and listen right in the browser.
+      </p>
       <section
         aria-labelledby="top-podcasts-heading"
         class="section"

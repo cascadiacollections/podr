@@ -2,7 +2,6 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
@@ -11,6 +10,7 @@ const { ApiInlinerPlugin } = require('./packages/webpack-api-inliner-plugin');
 const { CONSENT_REGIONS, resolveAdsConfig } = require('./config/ads');
 const { resolveAnalyticsConfig } = require('./config/analytics');
 const { resolveApiConfig } = require('./config/api');
+const { createHtmlPlugins } = require('./config/pages');
 const { SitemapPlugin } = require('./config/sitemap');
 const { resolveSiteConfig } = require('./config/site');
 const fallbackTopPodcasts = require('./config/top-podcasts-fallback');
@@ -158,35 +158,22 @@ function createWebpackConfig({ production }) {
         // Replaces the ads.txt placeholder when PODR_ADSENSE_PUBLISHER_ID is set
         publisherId: ads.publisherId
       }),
-      // robots.txt and sitemap.xml. Generated rather than copied so the podcast
-      // pages follow the top-podcasts list fetched for this build.
+      // robots.txt and sitemap.xml. Only / and /privacy: ?feed= links are the
+      // home document, not separate crawl targets.
       new SitemapPlugin({
-        production,
-        origin: site.origin,
-        topPodcastsUrl: api.topPodcastsUrl,
-        fallbackData: fallbackTopPodcasts
+        origin: site.origin
       }),
-      new HtmlWebpackPlugin({
-        template: 'assets/index.html',
-        favicon: 'assets/favicon.ico',
-        // Consumed by assets/index.html. Empty for an unconfigured build, which
-        // is what keeps a default Podr build free of third-party requests.
-        analyticsSnippet: analytics.snippet,
-        // Google Consent Mode defaults ship only alongside gtag
-        analyticsProvider: analytics.provider,
-        // Canonical, Open Graph and JSON-LD URLs (PODR_SITE_ORIGIN, config/site.js)
+      // index.html, privacy.html, privacy/index.html, and 404.html. The
+      // template reads these options; an unconfigured build leaves
+      // analyticsSnippet empty, which is what keeps it free of third-party
+      // requests.
+      ...createHtmlPlugins({
+        production,
         siteOrigin: site.origin,
-        // Loads the Funding Choices consent prompt when set
+        analyticsSnippet: analytics.snippet,
+        analyticsProvider: analytics.provider,
         adsPublisherId: ads.publisherId,
-        consentRegions: CONSENT_REGIONS,
-        minify: production ? {
-          collapseWhitespace: true,
-          removeComments: true,
-          removeRedundantAttributes: true,
-          removeScriptTypeAttributes: true,
-          removeStyleLinkTypeAttributes: true,
-          useShortDoctype: true
-        } : false
+        consentRegions: CONSENT_REGIONS
       }),
       ...(production ? [new MiniCssExtractPlugin({
         filename: '[name]_[contenthash].css'
