@@ -49,8 +49,10 @@ describe('prerendered documents', () => {
 
   it('puts a heading and the visible copy in each document body', () => {
     for (const page of PAGES) {
+      const text = new DOMParser().parseFromString(page.body, 'text/html').body.textContent || '';
+
       expect(page.body).toMatch(/<h1[\s>]/);
-      expect(page.body.replace(/<[^>]+>/g, '').trim().length).toBeGreaterThan(40);
+      expect(text.trim().length).toBeGreaterThan(40);
     }
 
     const home = PAGES.find((page) => page.id === 'home');
