@@ -1,6 +1,7 @@
 import { Fragment, FunctionComponent, h } from 'preact';
 
 import { IFeed } from '../utils/AppContext';
+import { HOME_LEDE } from './homeCopy';
 import { PodcastCard } from './PodcastCard';
 
 /**
@@ -105,6 +106,7 @@ export const BrowseView: FunctionComponent<IBrowseViewProps> = ({
 
   return (
     <Fragment>
+      <p className="home-lede">{HOME_LEDE}</p>
       {searchResults.length > 0 ? (
         <section className="section" aria-labelledby="search-results-heading">
           <div className="section__header">

@@ -2,21 +2,41 @@
 // (production) before any component module loads. See docs/DEBUGGING.md.
 import './utils/debug';
 import './app.scss';
-import { h, render } from 'preact';
+import { h, JSX, render } from 'preact';
 
 // Import modern functional component instead of class component
 import { App } from './ui/AppFunctional';
 import { ErrorBoundary } from './ui/ErrorBoundary';
-import { PRIVACY_PATH, PrivacyPolicy } from './ui/PrivacyPolicy';
+import { NotFound } from './ui/NotFound';
+import { PrivacyPolicy } from './ui/PrivacyPolicy';
+import { resolvePage } from './ui/routes';
 import { registerServiceWorker, unregisterServiceWorker } from './utils/registerSW';
 
 const rootEl: HTMLElement | null = document.getElementById('root');
 
+/**
+ * `/` (including `/?feed=` podcast links) and `/privacy` are real documents.
+ * Any other path is the 404 document. Replacing #root keeps the prerendered
+ * text for crawlers that do not run this script.
+ */
+const Page = (): JSX.Element => {
+  const page = resolvePage(window.location.pathname);
+
+  if (page === 'privacy') {
+    return <PrivacyPolicy />;
+  }
+
+  if (page === 'not-found') {
+    return <NotFound />;
+  }
+
+  return <App />;
+};
+
 if (typeof window !== 'undefined' && rootEl) {
   render(
     <ErrorBoundary>
-      {/* The one other page: a full load from the footer link, so no router */}
-      {window.location.pathname.replace(/\/+$/, '') === PRIVACY_PATH ? <PrivacyPolicy /> : <App />}
+      <Page />
     </ErrorBoundary>,
     rootEl
   );

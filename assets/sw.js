@@ -9,7 +9,8 @@
  * names, so a new deploy retires every previous cache.
  *
  * Strategies, by what the request is for:
- *   navigation      network first, falling back to the cached app shell
+ *   navigation      network first. Known pages fall back to the cached home
+ *                   shell; an unknown path falls back as a 404
  *   app assets      stale while revalidate (instant paint, refreshed in background)
  *   podcast APIs    network first, falling back to the last good response
  *   artwork         left to the browser (see the fetch handler)
@@ -184,25 +185,73 @@ async function networkFirst(request, cacheName, event) {
 }
 
 /**
- * Network first with the app shell as the offline fallback
+ * Trailing slashes do not make a different document. Kept in step with
+ * resolvePage in src/ui/routes.ts.
+ * @param {string} pathname
+ * @returns {string}
+ */
+function normalizePath(pathname) {
+  const trimmed = pathname.replace(/\/+$/, '');
+  return trimmed || '/';
+}
+
+/**
+ * The home document is the only offline shell. Caching /privacy or a 404
+ * under /index.html would replace that shell with a different page.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+function isAppShellPath(pathname) {
+  const path = normalizePath(pathname);
+  return path === '/' || path === '/index.html';
+}
+
+/**
+ * Documents the server actually has. Anything else is a 404, including when
+ * the network is down and the cached body is the home shell.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+function isKnownPath(pathname) {
+  return isAppShellPath(pathname) || normalizePath(pathname) === '/privacy';
+}
+
+/**
+ * Network first. The response is returned as the server sent it, including a
+ * 404. Only a successful load of the home document updates the offline shell.
  * @param {Request} request
  * @param {FetchEvent} [event]
  * @returns {Promise<Response>}
  */
 async function handleNavigation(request, event) {
+  const path = new URL(request.url).pathname;
+
   try {
     const response = await fetch(request);
-    runInBackground(event, putSafely(SHELL_CACHE, '/index.html', response.clone()));
+
+    if (response && response.ok && isAppShellPath(path)) {
+      runInBackground(event, putSafely(SHELL_CACHE, '/index.html', response.clone()));
+    }
+
     return response;
   } catch (error) {
     const cache = await caches.open(SHELL_CACHE);
     const cached = (await cache.match('/index.html')) || (await cache.match('/'));
 
-    if (cached) {
+    if (!cached) {
+      throw error;
+    }
+
+    if (isKnownPath(path)) {
       return cached;
     }
 
-    throw error;
+    const body = cached.clone();
+    return new Response(body.body, {
+      status: 404,
+      statusText: 'Not Found',
+      headers: body.headers
+    });
   }
 }
 
@@ -216,8 +265,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   // Crawler and ad-exchange files are real responses, not app routes. Leaving
-  // them unhandled also keeps a visit from being stored as the offline shell:
-  // handleNavigation caches every successful navigation under /index.html.
+  // them unhandled also keeps a visit from being stored as the offline shell.
   if (
     url.pathname === '/robots.txt' ||
     url.pathname === '/ads.txt' ||

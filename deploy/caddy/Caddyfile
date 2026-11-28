@@ -42,6 +42,8 @@ podr.example.org {
 	#               PODR_ANALYTICS_PROVIDER, add that origin to script-src and
 	#               connect-src (the build prints it).
 	header {
+		# defer so these headers are also set on the 404 from handle_errors.
+		defer
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; media-src 'self' https: blob:; connect-src 'self' https://itunes.apple.com; manifest-src 'self'; worker-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 		X-Frame-Options "DENY"
 		X-XSS-Protection "1; mode=block"
@@ -64,12 +66,18 @@ podr.example.org {
 	@manifest path /site.webmanifest /manifest.json
 	header @manifest Content-Type "application/manifest+json"
 
-	# ---- Static files and the SPA fallback ----------------------------------
+	# ---- Static files and unknown paths ------------------------------------
 	# precompressed serves the .gz files webpack's CompressionPlugin already
-	# emitted rather than compressing on every request. try_files serves a
-	# real file before index.html, which is what keeps /robots.txt, /ads.txt,
-	# and /sitemap.xml from being answered with the app shell.
-	try_files {path} {path}/ /index.html
+	# emitted rather than compressing on every request. A real file wins,
+	# including / (index.html), /privacy (privacy/index.html or privacy.html),
+	# /robots.txt, /ads.txt, and /sitemap.xml. Anything else is 404.html with
+	# status 404. Do not fall back to index.html.
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+
+	try_files {path} {path}/ {path}.html =404
 	file_server {
 		precompressed gzip
 	}

@@ -4,8 +4,7 @@
  * Top podcasts used when the API cannot be reached at build time.
  *
  * Development builds always use this list (the inliner does too). A production
- * build uses it only if the live top-podcasts request fails, so the sitemap
- * still names real podcast pages instead of shipping with none.
+ * build uses it only if the live top-podcasts request fails.
  *
  * `id.label` is the address the app stores as `feedUrl` and puts in `?feed=`.
  */

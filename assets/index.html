@@ -2,47 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Podr | Listen to your favorite podcasts</title>
-    <meta name="description" content="Podr is a free, open source podcast player for the web. Search podcasts, star your favorites to keep them offline, and listen right in the browser.">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <meta name="description" content="<%= htmlWebpackPlugin.options.description %>">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#faf8f6" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+    <% if (htmlWebpackPlugin.options.robots) { %>
+    <meta name="robots" content="<%= htmlWebpackPlugin.options.robots %>">
+    <% } %>
     <!--
-      Canonical URL. The page is a single-page app: / and /privacy, and every
-      podcast page (/?feed=<url>, listed in sitemap.xml) is served from this
-      one file, so a static <link rel="canonical"> would fold them all into the
-      home page. This keeps the path and the feed parameter, drops anything
-      else (utm_* and the like), and moves the host to the site origin, so
-      any other hostname that serves this build (the podr.pages.dev deploy
-      hostname and its preview subdomains) points at podrapp.com.
+      Static canonical, so a crawler that does not run JavaScript still sees
+      it. Each document has its own. /?feed= podcast links are this home
+      document, and the home canonical is the origin with no query string.
+      Preview hostnames therefore point at the configured site origin too.
     -->
-    <script>
-      (function () {
-        var here = new URL(location.href);
-        var canonical = new URL(here.pathname, <%= JSON.stringify(htmlWebpackPlugin.options.siteOrigin) %>);
-        var feed = here.searchParams.get('feed');
-        if (feed) canonical.searchParams.set('feed', feed);
-        var link = document.createElement('link');
-        link.rel = 'canonical';
-        link.href = canonical.href;
-        document.head.appendChild(link);
-      })();
-    </script>
+    <% if (htmlWebpackPlugin.options.canonicalUrl) { %>
+    <link rel="canonical" href="<%= htmlWebpackPlugin.options.canonicalUrl %>">
+    <% } %>
     <meta property="og:site_name" content="Podr">
-    <meta property="og:title" content="Podr: an open source podcast player for the web">
-    <meta property="og:description" content="Search podcasts, star your favorites, and listen right in the browser. Free and MIT licensed.">
+    <meta property="og:title" content="<%= htmlWebpackPlugin.options.ogTitle %>">
+    <meta property="og:description" content="<%= htmlWebpackPlugin.options.ogDescription %>">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<%= htmlWebpackPlugin.options.siteOrigin %>/">
+    <% if (htmlWebpackPlugin.options.canonicalUrl) { %>
+    <meta property="og:url" content="<%= htmlWebpackPlugin.options.canonicalUrl %>">
+    <% } %>
     <meta property="og:image" content="<%= htmlWebpackPlugin.options.siteOrigin %>/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Podr, an open source podcast player for the web: search podcasts, keep your favorites, listen in the browser.">
     <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Podr: an open source podcast player for the web">
-    <meta name="twitter:description" content="Search podcasts, star your favorites, and listen right in the browser. Free and MIT licensed.">
+    <meta name="twitter:title" content="<%= htmlWebpackPlugin.options.ogTitle %>">
+    <meta name="twitter:description" content="<%= htmlWebpackPlugin.options.ogDescription %>">
     <meta name="twitter:image" content="<%= htmlWebpackPlugin.options.siteOrigin %>/og-image.png">
+    <% if (htmlWebpackPlugin.options.jsonLd === 'app') { %>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -62,6 +56,18 @@
       "author": { "@type": "Organization", "name": "Cascadia Collections", "url": "https://cascadiacollections.com/" }
     }
     </script>
+    <% } else if (htmlWebpackPlugin.options.jsonLd === 'privacy') { %>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Privacy policy",
+      "url": "<%= htmlWebpackPlugin.options.canonicalUrl %>",
+      "description": <%= JSON.stringify(htmlWebpackPlugin.options.description) %>,
+      "isPartOf": { "@id": "<%= htmlWebpackPlugin.options.siteOrigin %>/#app" }
+    }
+    </script>
+    <% } %>
     <link rel="manifest" href="/site.webmanifest">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -123,6 +129,14 @@
     <%= htmlWebpackPlugin.options.analyticsSnippet || '' %>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Visible text for crawlers that do not run JavaScript. The app replaces
+      #root when it starts. Home, privacy, and the 404 document each pass
+      their own body. The interpolation below must stay raw: the escaped
+      form would turn the markup into text and the page would have no heading.
+    -->
+    <div id="root">
+      <%= htmlWebpackPlugin.options.bodyHtml %>
+    </div>
   </body>
 </html>
